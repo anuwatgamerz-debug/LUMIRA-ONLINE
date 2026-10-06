@@ -63,44 +63,44 @@ legacy('kingjel',  { n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk:
 
 // ---- Region 1: Elyndra Heartland (Lv1-30)
 // Beginner Meadow (Lv1-8): passive only, beginner protection
-m('dewslime',  'สไลม์น้ำค้าง', 2, 'slime', 'passive', { spr: 'm_jellop', tint: [190, 1.1, 8], beginner: true, d: 'สไลม์ใสที่เกิดจากน้ำค้างยามเช้า' });
-m('sprout',    'สไปรต์ดอกตูม', 3, 'plant', 'passive', { spr: 'm_leafling', tint: [25, 1.15, 10], scale: 0.85, beginner: true, d: 'ต้นอ่อนซุกซนที่เดินได้' });
-m('fluffle',   'ฟลัฟเฟิล', 4, 'beast', 'coward', { spr: 'm_jellop', tint: [-30, 0.25, 30], scale: 0.9, spd: 3.2, beginner: true, d: 'ก้อนขนปุยขี้ตกใจ วิ่งหนีเมื่อบาดเจ็บ' });
-m('hopper',    'ด้วงกระโดดทุ่ง', 5, 'insect', 'passive', { spr: 'm_crab', tint: [80, 1.2, 0], scale: 0.85, beginner: true, d: 'ด้วงเปลือกเขียวกระโดดไปมาในหญ้า' });
-m('budling',   'บัดลิงทุ่งดอกไม้', 7, 'plant', 'assist', { spr: 'm_leafling', tint: [-60, 1.2, 6], d: 'เรียกพวกเดียวกันมาช่วยเมื่อถูกโจมตี' });
+m('dewslime',  'สไลม์น้ำค้าง', 2, 'slime', 'passive', { spr: 'm_lpc_slime', tint: [70, 1.1, 8], beginner: true, d: 'สไลม์ใสที่เกิดจากน้ำค้างยามเช้า' });
+m('sprout',    'สไปรต์ดอกตูม', 3, 'plant', 'passive', { spr: 'm_lpc_flower', tint: [60, 1.1, 6], scale: 0.62, beginner: true, d: 'ต้นอ่อนซุกซนที่เดินได้' });
+m('fluffle',   'ฟลัฟเฟิล', 4, 'beast', 'coward', { spr: 'm_lpc_slime', tint: [-100, 0.35, 25], spd: 3.2, beginner: true, d: 'ก้อนขนปุยขี้ตกใจ วิ่งหนีเมื่อบาดเจ็บ' });
+m('hopper',    'ด้วงกระโดดทุ่ง', 5, 'insect', 'passive', { spr: 'm_lpc_beetle', tint: [70, 1.2, 0], scale: 0.85, beginner: true, d: 'ด้วงเปลือกเขียวกระโดดไปมาในหญ้า' });
+m('budling',   'บัดลิงทุ่งดอกไม้', 7, 'plant', 'assist', { spr: 'm_lpc_flower', tint: [-40, 1.1, 4], scale: 0.6, d: 'เรียกพวกเดียวกันมาช่วยเมื่อถูกโจมตี' });
 // Greenwood Forest (Lv8-18)
-m('mossslime', 'สไลม์มอส', 8, 'slime', 'passive', { spr: 'm_jellop', tint: [70, 0.9, -10], scale: 1.1, d: 'สไลม์ที่มีมอสขึ้นเต็มตัว' });
-m('thornsprite', 'สไปรต์หนาม', 10, 'plant', 'aggressive', { spr: 'm_cactimp', tint: [60, 0.9, -6], aggro: 4, d: 'ภูตหนามหวงถิ่น' });
-m('barkbeetle', 'ด้วงเปลือกไม้', 11, 'insect', 'pack', { spr: 'm_crab', tint: [-10, 0.7, -14], d: 'ด้วงแข็งที่อยู่กันเป็นฝูง' });
-m('mossgoblin', 'ก็อบลินมอส', 12, 'goblin', 'assist', { spr: 'h_hood_m', tint: [95, 1.1, -4], scale: 0.78, d: 'ก็อบลินขี้ขโมยแห่งป่ากรีนวูด' });
-m('goblinsling', 'ก็อบลินนักสลิง', 13, 'goblin', 'ranged', { spr: 'h_rogue_m', tint: [100, 1.0, -8], scale: 0.76, range: 5, d: 'ยิงหินจากระยะไกล' });
+m('mossslime', 'สไลม์มอส', 8, 'slime', 'passive', { spr: 'm_lpc_slime', tint: [-30, 0.8, -8], d: 'สไลม์ที่มีมอสขึ้นเต็มตัว' });
+m('thornsprite', 'สไปรต์หนาม', 10, 'plant', 'aggressive', { spr: 'm_lpc_imp', tint: [110, 0.9, -4], scale: 0.8, aggro: 4, d: 'ภูตหนามหวงถิ่น' });
+m('barkbeetle', 'ด้วงเปลือกไม้', 11, 'insect', 'pack', { spr: 'm_lpc_beetle', d: 'ด้วงแข็งที่อยู่กันเป็นฝูง' });
+m('mossgoblin', 'ก็อบลินมอส', 12, 'goblin', 'assist', { spr: 'm_lpc_goblin', scale: 1, d: 'ก็อบลินขี้ขโมยแห่งป่ากรีนวูด' });
+m('goblinsling', 'ก็อบลินนักสลิง', 13, 'goblin', 'ranged', { spr: 'm_lpc_goblin', tint: [20, 1, 6], scale: 1, range: 5, d: 'ยิงหินจากระยะไกล' });
 m('wisp',      'วิสป์กรีนวูด', 14, 'spirit', 'caster', { spr: 'proc:wisp', tint: [110, 1, 0], aggro: 5, d: 'ดวงไฟวิญญาณที่ยิงเวทใส่ผู้บุกรุก' });
-m('thornwolf', 'หมาป่าหนาม', 15, 'beast', 'pack', { spr: 'proc:wolf', tint: [0, 1, 0], d: 'หมาป่าขนเขียวที่ล่าเป็นฝูง' });
-m('bramblekin', 'แบรมเบิลคิน', 16, 'plant', 'aggressive', { spr: 'm_leafling', tint: [-95, 0.8, -18], scale: 1.25, role: 'elite', d: 'พืชเสื่อมที่ถูกพลังมืดครอบงำ' });
+m('thornwolf', 'หมาป่าหนาม', 15, 'beast', 'pack', { spr: 'm_lpc_wolf', tint: [60, 0.8, 0], d: 'หมาป่าขนเขียวที่ล่าเป็นฝูง' });
+m('bramblekin', 'แบรมเบิลคิน', 16, 'plant', 'aggressive', { spr: 'm_lpc_flower', tint: [-120, 0.8, -14], scale: 0.8, role: 'elite', d: 'พืชเสื่อมที่ถูกพลังมืดครอบงำ' });
 // Moonlit Creek (Lv14-24)
-m('creekcrab', 'ปูลำธาร', 14, 'aquatic', 'passive', { spr: 'm_crab', tint: [180, 1.1, 0], d: 'ปูกระดองฟ้าแห่งลำธาร' });
-m('moonslime', 'สไลม์จันทร์', 16, 'slime', 'assist', { spr: 'm_jellop', tint: [230, 0.9, 12], d: 'สไลม์เรืองแสงยามค่ำคืน' });
-m('nightmoth', 'มอธราตรี', 17, 'insect', 'coward', { spr: 'proc:moth', tint: [0, 1, 0], spd: 3.4, d: 'แมลงกลางคืนบินว่อน' });
-m('pondlurker', 'ตัวซุ่มบ่อ', 19, 'aquatic', 'aggressive', { spr: 'm_cactimp', tint: [160, 0.8, -10], scale: 1.05, aggro: 4, d: 'ซุ่มอยู่ใต้ใบบัวรอเหยื่อ' });
+m('creekcrab', 'ปูลำธาร', 14, 'aquatic', 'passive', { spr: 'm_lpc_beetle', tint: [170, 1.1, 0], d: 'ปูกระดองฟ้าแห่งลำธาร' });
+m('moonslime', 'สไลม์จันทร์', 16, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [120, 0.9, 12], d: 'สไลม์เรืองแสงยามค่ำคืน' });
+m('nightmoth', 'มอธราตรี', 17, 'insect', 'coward', { spr: 'm_lpc_bee', tint: [200, 0.9, 0], scale: 1.2, spd: 3.4, d: 'แมลงกลางคืนบินว่อน' });
+m('pondlurker', 'ตัวซุ่มบ่อ', 19, 'aquatic', 'aggressive', { spr: 'm_lpc_snake', tint: [60, 0.9, -4], scale: 1.3, aggro: 4, d: 'ซุ่มอยู่ใต้ใบบัวรอเหยื่อ' });
 m('lanternspirit', 'วิญญาณตะเกียง', 20, 'spirit', 'healer', { spr: 'proc:wisp', tint: [-150, 1, 10], d: 'รักษามอนสเตอร์รอบตัว' });
-m('willowwraith', 'ภูตต้นหลิว', 22, 'undead', 'caster', { spr: 'm_mosshog', tint: [130, 0.7, -6], d: 'วิญญาณผูกพันกับต้นหลิวเก่า' });
-m('froglord', 'กบหมอผี', 23, 'aquatic', 'caster', { spr: 'm_leafling', tint: [140, 1.1, -8], scale: 1.1, d: 'กบที่ร่ายเวทน้ำได้' });
+m('willowwraith', 'ภูตต้นหลิว', 22, 'undead', 'caster', { spr: 'm_lpc_ghost', tint: [60, 1.3, -10], d: 'วิญญาณผูกพันกับต้นหลิวเก่า' });
+m('froglord', 'กบหมอผี', 23, 'aquatic', 'caster', { spr: 'm_lpc_imp', tint: [150, 0.9, -6], d: 'กบที่ร่ายเวทน้ำได้' });
 // Old Mine (Lv20-30)
-m('cavebat', 'ค้างคาวถ้ำ', 20, 'beast', 'pack', { spr: 'proc:bat', tint: [0, 1, 0], spd: 3.8, d: 'บินเป็นฝูงในความมืด' });
-m('minegoblin', 'ก็อบลินขุดแร่', 21, 'goblin', 'coward', { spr: 'h_barb_m', tint: [90, 0.9, -6], scale: 0.78, d: 'ขโมยแร่แล้ววิ่งหนี' });
-m('crystalcrawler', 'ตัวคลานผลึก', 23, 'insect', 'aggressive', { spr: 'm_crab', tint: [260, 1.3, 14], scale: 1.1, aggro: 4, d: 'แมลงที่มีผลึกงอกบนหลัง' });
-m('rustbot', 'หุ่นสนิมเหมือง', 24, 'machine', 'aggressive', { spr: 'proc:golem', tint: [20, 0.9, 0], aspd: 1900, d: 'หุ่นขุดแร่เก่าที่ยังทำงานผิดพลาด' });
+m('cavebat', 'ค้างคาวถ้ำ', 20, 'beast', 'pack', { spr: 'm_lpc_bat', spd: 3.8, d: 'บินเป็นฝูงในความมืด' });
+m('minegoblin', 'ก็อบลินขุดแร่', 21, 'goblin', 'coward', { spr: 'm_lpc_goblin', tint: [-40, 0.8, -6], scale: 1, d: 'ขโมยแร่แล้ววิ่งหนี' });
+m('crystalcrawler', 'ตัวคลานผลึก', 23, 'insect', 'aggressive', { spr: 'm_lpc_beetle', tint: [200, 1.3, 10], scale: 1.1, aggro: 4, d: 'แมลงที่มีผลึกงอกบนหลัง' });
+m('rustbot', 'หุ่นสนิมเหมือง', 24, 'machine', 'aggressive', { spr: 'm_lpc_golem', tint: [30, 0.6, -6], scale: 0.8, aspd: 1900, d: 'หุ่นขุดแร่เก่าที่ยังทำงานผิดพลาด' });
 m('skeletonminer', 'โครงกระดูกคนงาน', 25, 'undead', 'aggressive', { spr: 'm_dunewolf', tint: [30, 0.6, 8], d: 'คนงานเหมืองที่ไม่เคยได้กลับบ้าน' });
-m('golemite', 'โกเลมไมต์', 27, 'elemental', 'passive', { spr: 'proc:golem', tint: [200, 0.4, -6], scale: 1.2, hpMul: 1.3, d: 'ก้อนหินมีชีวิต อึดมาก' });
-m('oreelemental', 'ธาตุแร่เงินจันทร์', 28, 'elemental', 'caster', { spr: 'proc:golem', tint: [180, 0.9, 16], d: 'แร่ที่ดูดพลังรูนจนมีชีวิต' });
-m('tarslime',  'สไลม์น้ำมันดิน', 26, 'slime', 'assist', { spr: 'm_jellop', tint: [0, 0.1, -40], scale: 1.15, d: 'เหนียวหนึบ ช้า แต่ตีแรง' });
+m('golemite', 'โกเลมไมต์', 27, 'elemental', 'passive', { spr: 'm_lpc_golem', tint: [0, 0.2, 0], scale: 0.9, hpMul: 1.3, d: 'ก้อนหินมีชีวิต อึดมาก' });
+m('oreelemental', 'ธาตุแร่เงินจันทร์', 28, 'elemental', 'caster', { spr: 'm_lpc_golem', tint: [60, 1.2, 10], scale: 0.85, d: 'แร่ที่ดูดพลังรูนจนมีชีวิต' });
+m('tarslime',  'สไลม์น้ำมันดิน', 26, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [0, 0.1, -35], d: 'เหนียวหนึบ ช้า แต่ตีแรง' });
 // event / quest monsters
-m('raider',    'ก็อบลินจู่โจม', 10, 'goblin', 'aggressive', { spr: 'h_barb_m', tint: [80, 1.1, -10], scale: 0.8, aggro: 9, respawn: 0, expMul: 0.5, d: 'ผู้รุกรานหมู่บ้านในบททดสอบแวนการ์ด' });
+m('raider',    'ก็อบลินจู่โจม', 10, 'goblin', 'aggressive', { spr: 'm_lpc_goblin', tint: [-70, 1, -8], scale: 1, aggro: 9, respawn: 0, expMul: 0.5, d: 'ผู้รุกรานหมู่บ้านในบททดสอบแวนการ์ด' });
 m('target',    'เป้าซ้อมยิง', 1, 'machine', 'dummy', { spr: 'proc:dummy', hpMul: 0.15, exp: 0, jexp: 0, d: 'เป้าสำหรับฝึกยิงธนู' });
-m('banditlook', 'โจรเฝ้าค่าย', 14, 'goblin', 'aggressive', { spr: 'h_hood_m', tint: [0, 0.6, -14], aggro: 4, d: 'โจรในค่ายกลางป่า ระวังอย่าให้เห็น' });
+m('banditlook', 'โจรเฝ้าค่าย', 14, 'goblin', 'aggressive', { spr: 'm_lpc_goblin', tint: [0, 0.4, -10], scale: 1, aggro: 4, d: 'โจรในค่ายกลางป่า ระวังอย่าให้เห็น' });
 // bosses
 m('thornwood', 'เอลเดอร์ ธอร์นวูด', 18, 'plant', 'boss', {
-  spr: 'm_leafling', tint: [-40, 0.7, -22], scale: 2.4, respawn: 900, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', skills: ['root_slam', 'summon'], minions: 'bramblekin',
+  spr: 'm_lpc_flower', tint: [-150, 0.9, -18], scale: 1.5, respawn: 900, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', skills: ['root_slam', 'summon'], minions: 'bramblekin',
   phases: [{ at: 0.6, atk: 1.25, msg: 'รากไม้ทั่วป่าสั่นสะเทือน!' }, { at: 0.3, atk: 1.5, spd: 1.3, msg: 'ธอร์นวูดคลุ้มคลั่ง!' }],
   d: 'ต้นไม้โบราณที่ถูกพลังเสื่อมจากเศษรูนกลืนกิน',
 });

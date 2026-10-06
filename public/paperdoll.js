@@ -7,8 +7,9 @@
 // shield -> headgear, back items behind (or over the back in the N view); aura is drawn by the engine.
 // A character is drawn in HD only when every layer it needs exists in the HD set (never half HD, half v1), and
 // when the "HD characters" setting is on. Anything not loaded yet falls back to v1, then to the old sprites.
-let CHR = null, CHRHD = null;
+let CHR = null, CHRHD = null, CHRLPC = null;
 (function loadChr() { fetch('assets/characters/chars.json').then(r => r.json()).then(m => { CHR = m; }).catch(() => setTimeout(loadChr, 3000)); })();
+(function loadLpc() { fetch('assets/chr_lpc/chars.json').then(r => r.json()).then(m => { CHRLPC = m; }).catch(() => setTimeout(loadLpc, 3000)); })();
 (function loadHd() { fetch('assets/chr_hd/chars.json').then(r => r.json()).then(m => { CHRHD = m; }).catch(() => setTimeout(loadHd, 3000)); })();
 const PD_ROWS = ['N', 'W', 'S', 'E'];
 // armor item -> armor look (tunic colour comes from the outfit colour chosen at creation)
@@ -78,12 +79,12 @@ function pdDraw(S, L, look, anim, tt, row, x, y, alpha, g, scale) {
   const fw = Array.isArray(S.frame) ? S.frame[0] : S.frame, fh = Array.isArray(S.frame) ? S.frame[1] : S.frame;
   const px = S.pivot[0], py = S.pivot[1] + 2; // feet land 2px above y, like the older sprites
   const sx = (k % G.cols) * fw, sy = Math.floor(k / G.cols) * fh;
-  const bow = L._wt === 'bow' && S.variants && S.variants.bow && S.variants.bow[grp];
+  const bow = L._wt && S.variants && S.variants[L._wt] && S.variants[L._wt][grp]; // weapon-specific pose group (bow draw, spear thrust ...)
   const tint = S.tint || ['hair'];
   const ims = [];
   for (const part of S.order[view]) {
     const nm = L[part]; if (!nm) continue;
-    const gg = bow && S.bowGroups.includes(nm) ? S.variants.bow[grp] : grp;
+    const gg = bow && S.bowGroups.includes(nm) ? bow : grp;
     const im = pdImage(S, nm, gg, tint.includes(part) ? look.hc | 0 : 0); if (!im) return false; ims.push(im);
   }
   g.save(); g.translate(Math.round(x), Math.round(y));
@@ -98,6 +99,10 @@ let lastPaperSet = null;
 // draw one character; returns false if nothing could be drawn yet (caller uses the old renderer meanwhile)
 function drawPaper(look, gear, anim, tt, row, x, y, alpha = 1, g = ctx, scale = 1) {
   look = look || {};
+  if (CHRLPC && hdWanted()) { // LPC set (Liberated Pixel Cup art): preferred whenever every layer exists
+    const L = paperLayers(look, gear, CHRLPC, true);
+    if (L && pdDraw(CHRLPC, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'lpc'; return true; }
+  }
   if (CHRHD && hdWanted()) {
     const L = paperLayers(look, gear, CHRHD, true);
     if (L && pdDraw(CHRHD, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'hd'; return true; }
@@ -109,7 +114,7 @@ function drawPaper(look, gear, anim, tt, row, x, y, alpha = 1, g = ctx, scale = 
 // how far above the feet the top of a drawn character is (for badges, bubbles, level-up text)
 function heroTopOf(set, vis) {
   const tall = { wizard: 16, witch: 14, knight: 10, party: 10, traveler: 6, jelcrown: 6, ironcrown: 6, cap: 4, iron: 4, hood_green: 4, hood: 4 };
-  return set === 'hd' ? 58 + (tall[vis] || 0) : 46 + (tall[vis] || 0);
+  return set === 'hd' ? 58 + (tall[vis] || 0) : set === 'lpc' ? 50 + (tall[vis] || 0) : 46 + (tall[vis] || 0);
 }
 // aura layer (engine-drawn, so it never bakes glow into sprites): soft ring on the ground + slow rising motes
 function drawAura(g, x, y, col, t, front) {

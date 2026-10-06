@@ -13,8 +13,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_house_large_village_6x4": {
 "w": 192,
@@ -30,8 +31,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_inn_village_7x5": {
 "w": 224,
@@ -47,8 +49,9 @@
 24,
 56
 ],
-"facade": 96,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_potion_shop_village_6x5": {
 "w": 192,
@@ -64,8 +67,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_weapon_shop_village_5x4": {
 "w": 160,
@@ -81,8 +85,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_armor_shop_village_6x5": {
 "w": 192,
@@ -98,8 +103,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_blacksmith_village_5x4": {
 "w": 160,
@@ -115,8 +121,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_storage_village_5x4": {
 "w": 160,
@@ -132,8 +139,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_chapel_village_7x5": {
 "w": 224,
@@ -149,8 +157,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 120,
+"kind": "house",
+"src": "lpc"
 },
 "bld_class_hall_village_8x5": {
 "w": 256,
@@ -166,8 +175,9 @@
 24,
 56
 ],
-"facade": 96,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_house_small_capital_5x4": {
 "w": 160,
@@ -183,8 +193,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_house_large_capital_6x4": {
 "w": 192,
@@ -200,8 +211,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_inn_capital_7x5": {
 "w": 224,
@@ -217,8 +229,9 @@
 24,
 56
 ],
-"facade": 96,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_weapon_shop_capital_6x5": {
 "w": 192,
@@ -234,8 +247,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_armor_shop_capital_6x5": {
 "w": 192,
@@ -251,8 +265,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_blacksmith_capital_5x4": {
 "w": 160,
@@ -268,8 +283,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_workshop_capital_5x4": {
 "w": 160,
@@ -285,8 +301,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_storage_capital_5x4": {
 "w": 160,
@@ -302,8 +319,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_bank_capital_5x4": {
 "w": 160,
@@ -319,8 +337,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_library_capital_5x4": {
 "w": 160,
@@ -336,8 +355,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_guild_hall_capital_8x5": {
 "w": 256,
@@ -353,8 +373,9 @@
 24,
 56
 ],
-"facade": 96,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_class_hall_capital_6x4": {
 "w": 192,
@@ -370,8 +391,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 96,
+"kind": "house",
+"src": "lpc"
 },
 "bld_sanctuary_capital_7x5": {
 "w": 224,
@@ -387,8 +409,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 120,
+"kind": "house",
+"src": "lpc"
 },
 "bld_town_hall_capital_8x5": {
 "w": 256,
@@ -404,8 +427,9 @@
 24,
 56
 ],
-"facade": 96,
-"kind": "house"
+"facade": 120,
+"kind": "house",
+"src": "lpc"
 },
 "bld_market_capital_6x5": {
 "w": 192,
@@ -422,7 +446,8 @@
 56
 ],
 "facade": 72,
-"kind": "house"
+"kind": "house",
+"src": "lpc"
 },
 "bld_special_shop_capital_6x5": {
 "w": 192,
@@ -438,8 +463,9 @@
 24,
 56
 ],
-"facade": 72,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_garrison_capital_8x5": {
 "w": 256,
@@ -455,8 +481,9 @@
 24,
 56
 ],
-"facade": 96,
-"kind": "house"
+"facade": 112,
+"kind": "house",
+"src": "lpc"
 },
 "bld_castle_gate_capital_8x5": {
 "w": 256,
@@ -473,231 +500,258 @@
 64
 ],
 "facade": 72,
-"kind": "gate"
+"kind": "gate",
+"src": "lpc"
 },
 "tree_oak_01": {
-"w": 92,
-"h": 120,
-"ax": 46,
-"ay": 114,
+"w": 125,
+"h": 151,
+"ax": 62,
+"ay": 151,
 "path": "world/trees/tree_oak_01",
 "fade": [
-6.560000000000002,
-2.640000000000015,
-78.88,
-74.24
+4,
+2,
+117,
+121
 ],
-"trunk": 6
+"trunk": 6,
+"src": "lpc"
 },
 "tree_oak_02": {
-"w": 97,
-"h": 126,
-"ax": 48,
-"ay": 120,
+"w": 95,
+"h": 118,
+"ax": 47,
+"ay": 117,
 "path": "world/trees/tree_oak_02",
 "fade": [
-6.520000000000003,
-2.8799999999999955,
-82.96,
-78.08
+4,
+2,
+87,
+87
 ],
-"trunk": 6
+"trunk": 6,
+"src": "lpc"
 },
 "tree_oak_03": {
-"w": 93,
-"h": 121,
-"ax": 46,
-"ay": 115,
+"w": 83,
+"h": 106,
+"ax": 41,
+"ay": 100,
 "path": "world/trees/tree_oak_03",
 "fade": [
-6.219999999999999,
-2.680000000000007,
-79.56,
-74.88
+4,
+2,
+75,
+70
 ],
-"trunk": 6
+"trunk": 6,
+"src": "lpc"
 },
 "tree_pine_01": {
-"w": 66,
-"h": 112,
-"ax": 33,
-"ay": 106,
+"w": 84,
+"h": 146,
+"ax": 42,
+"ay": 139,
 "path": "world/trees/tree_pine_01",
 "fade": [
-5.0,
-2.0,
-56.0,
-84.0
+4,
+2,
+76,
+109
 ],
-"trunk": 4
+"trunk": 6,
+"src": "lpc"
 },
 "tree_pine_02": {
-"w": 55,
-"h": 116,
-"ax": 27,
-"ay": 110,
+"w": 63,
+"h": 147,
+"ax": 31,
+"ay": 147,
 "path": "world/trees/tree_pine_02",
 "fade": [
--2.120000000000001,
-1.8400000000000034,
-58.24,
-87.36
+4,
+2,
+55,
+117
 ],
-"trunk": 4
+"trunk": 6,
+"src": "lpc"
 },
 "tree_pine_snow_01": {
-"w": 66,
-"h": 112,
-"ax": 33,
-"ay": 106,
+"w": 63,
+"h": 147,
+"ax": 31,
+"ay": 147,
 "path": "world/trees/tree_pine_snow_01",
 "fade": [
-5.0,
-2.0,
-56.0,
-84.0
+4,
+2,
+55,
+117
 ],
-"trunk": 4
+"trunk": 6,
+"src": "lpc"
 },
 "veg_grass_01": {
-"w": 20,
-"h": 14,
-"ax": 10,
-"ay": 12,
-"path": "world/vegetation/veg_grass_01"
+"w": 31,
+"h": 27,
+"ax": 15,
+"ay": 25,
+"path": "world/vegetation/veg_grass_01",
+"src": "lpc"
 },
 "veg_grass_02": {
-"w": 20,
-"h": 14,
-"ax": 10,
-"ay": 12,
-"path": "world/vegetation/veg_grass_02"
+"w": 18,
+"h": 15,
+"ax": 9,
+"ay": 13,
+"path": "world/vegetation/veg_grass_02",
+"src": "lpc"
 },
 "veg_tallgrass_01": {
-"w": 28,
-"h": 22,
-"ax": 14,
-"ay": 20,
-"path": "world/vegetation/veg_tallgrass_01"
+"w": 12,
+"h": 20,
+"ax": 6,
+"ay": 19,
+"path": "world/vegetation/veg_tallgrass_01",
+"src": "lpc"
 },
 "veg_flowers_red_01": {
-"w": 24,
-"h": 16,
-"ax": 12,
-"ay": 14,
-"path": "world/vegetation/veg_flowers_red_01"
+"w": 30,
+"h": 22,
+"ax": 15,
+"ay": 21,
+"path": "world/vegetation/veg_flowers_red_01",
+"src": "lpc"
 },
 "veg_flowers_gold_01": {
-"w": 24,
-"h": 16,
-"ax": 12,
-"ay": 14,
-"path": "world/vegetation/veg_flowers_gold_01"
+"w": 30,
+"h": 22,
+"ax": 15,
+"ay": 21,
+"path": "world/vegetation/veg_flowers_gold_01",
+"src": "lpc"
 },
 "veg_flowers_violet_01": {
-"w": 24,
-"h": 16,
-"ax": 12,
-"ay": 14,
-"path": "world/vegetation/veg_flowers_violet_01"
+"w": 30,
+"h": 22,
+"ax": 15,
+"ay": 21,
+"path": "world/vegetation/veg_flowers_violet_01",
+"src": "lpc"
 },
 "veg_flowers_white_01": {
-"w": 24,
-"h": 16,
-"ax": 12,
-"ay": 14,
-"path": "world/vegetation/veg_flowers_white_01"
+"w": 30,
+"h": 22,
+"ax": 15,
+"ay": 21,
+"path": "world/vegetation/veg_flowers_white_01",
+"src": "lpc"
 },
 "veg_bush_01": {
-"w": 40,
+"w": 31,
 "h": 30,
-"ax": 20,
-"ay": 27,
-"path": "world/vegetation/veg_bush_01"
+"ax": 16,
+"ay": 30,
+"path": "world/vegetation/veg_bush_01",
+"src": "lpc"
 },
 "veg_bush_small_01": {
-"w": 26,
-"h": 19,
-"ax": 13,
-"ay": 16,
-"path": "world/vegetation/veg_bush_small_01"
+"w": 31,
+"h": 30,
+"ax": 15,
+"ay": 30,
+"path": "world/vegetation/veg_bush_small_01",
+"src": "lpc"
 },
 "veg_fern_01": {
-"w": 30,
-"h": 20,
+"w": 31,
+"h": 57,
 "ax": 15,
-"ay": 18,
-"path": "world/vegetation/veg_fern_01"
+"ay": 57,
+"path": "world/vegetation/veg_fern_01",
+"src": "lpc"
 },
 "veg_mushroom_01": {
-"w": 18,
-"h": 16,
-"ax": 9,
-"ay": 15,
-"path": "world/vegetation/veg_mushroom_01"
+"w": 28,
+"h": 28,
+"ax": 14,
+"ay": 28,
+"path": "world/vegetation/veg_mushroom_01",
+"src": "lpc"
 },
 "veg_reed_01": {
 "w": 24,
-"h": 30,
+"h": 53,
 "ax": 12,
-"ay": 28,
-"path": "world/vegetation/veg_reed_01"
+"ay": 53,
+"path": "world/vegetation/veg_reed_01",
+"src": "lpc"
 },
 "veg_herb_01": {
-"w": 22,
-"h": 18,
-"ax": 11,
-"ay": 16,
-"path": "world/vegetation/veg_herb_01"
+"w": 27,
+"h": 25,
+"ax": 13,
+"ay": 24,
+"path": "world/vegetation/veg_herb_01",
+"src": "lpc"
 },
 "veg_cactus_01": {
 "w": 28,
-"h": 40,
+"h": 86,
 "ax": 14,
-"ay": 38,
-"path": "world/vegetation/veg_cactus_01"
+"ay": 80,
+"path": "world/vegetation/veg_cactus_01",
+"src": "lpc"
 },
 "rock_small_01": {
-"w": 27,
-"h": 23,
-"ax": 13,
-"ay": 19,
-"path": "world/rocks/rock_small_01"
+"w": 59,
+"h": 43,
+"ax": 29,
+"ay": 41,
+"path": "world/rocks/rock_small_01",
+"src": "lpc"
 },
 "rock_small_02": {
-"w": 27,
-"h": 23,
-"ax": 13,
-"ay": 19,
-"path": "world/rocks/rock_small_02"
+"w": 55,
+"h": 54,
+"ax": 27,
+"ay": 54,
+"path": "world/rocks/rock_small_02",
+"src": "lpc"
 },
 "rock_medium_03": {
-"w": 38,
-"h": 32,
-"ax": 19,
-"ay": 28,
-"path": "world/rocks/rock_medium_03"
+"w": 56,
+"h": 53,
+"ax": 28,
+"ay": 51,
+"path": "world/rocks/rock_medium_03",
+"src": "lpc"
 },
 "rock_medium_04": {
-"w": 38,
-"h": 32,
-"ax": 19,
-"ay": 28,
-"path": "world/rocks/rock_medium_04"
+"w": 58,
+"h": 57,
+"ax": 29,
+"ay": 57,
+"path": "world/rocks/rock_medium_04",
+"src": "lpc"
 },
 "rock_large_05": {
-"w": 52,
-"h": 43,
-"ax": 26,
-"ay": 39,
-"path": "world/rocks/rock_large_05"
+"w": 64,
+"h": 87,
+"ax": 32,
+"ay": 81,
+"path": "world/rocks/rock_large_05",
+"src": "lpc"
 },
 "rock_ore_01": {
-"w": 38,
-"h": 32,
-"ax": 19,
-"ay": 28,
-"path": "world/rocks/rock_ore_01"
+"w": 56,
+"h": 53,
+"ax": 28,
+"ay": 51,
+"path": "world/rocks/rock_ore_01",
+"src": "lpc"
 },
 "rock_crystal_01": {
 "w": 38,
@@ -707,201 +761,228 @@
 "path": "world/rocks/rock_crystal_01"
 },
 "prop_barrel_01": {
-"w": 22,
-"h": 28,
-"ax": 11,
-"ay": 25,
-"path": "world/props/prop_barrel_01"
+"w": 28,
+"h": 38,
+"ax": 14,
+"ay": 37,
+"path": "world/props/prop_barrel_01",
+"src": "lpc"
 },
 "prop_crate_01": {
-"w": 26,
-"h": 28,
-"ax": 13,
-"ay": 25,
-"path": "world/props/prop_crate_01"
+"w": 32,
+"h": 64,
+"ax": 16,
+"ay": 64,
+"path": "world/props/prop_crate_01",
+"src": "lpc"
 },
 "prop_sack_01": {
-"w": 20,
-"h": 22,
-"ax": 10,
-"ay": 20,
-"path": "world/props/prop_sack_01"
+"w": 64,
+"h": 63,
+"ax": 32,
+"ay": 62,
+"path": "world/props/prop_sack_01",
+"src": "lpc"
 },
 "prop_cart_01": {
-"w": 48,
-"h": 34,
-"ax": 24,
-"ay": 31,
-"path": "world/props/prop_cart_01"
+"w": 60,
+"h": 57,
+"ax": 30,
+"ay": 57,
+"path": "world/props/prop_cart_01",
+"src": "lpc"
 },
 "prop_bench_01": {
-"w": 40,
-"h": 22,
-"ax": 20,
-"ay": 19,
-"path": "world/props/prop_bench_01"
+"w": 63,
+"h": 28,
+"ax": 31,
+"ay": 24,
+"path": "world/props/prop_bench_01",
+"src": "lpc"
 },
 "prop_lamp_01": {
 "w": 18,
-"h": 66,
+"h": 96,
 "ax": 9,
-"ay": 63,
+"ay": 96,
 "path": "world/props/prop_lamp_01",
 "glow": [
 9,
 10
-]
+],
+"src": "lpc"
 },
 "prop_sign_sword_01": {
-"w": 30,
-"h": 40,
-"ax": 15,
-"ay": 37,
-"path": "world/props/prop_sign_sword_01"
+"w": 32,
+"h": 28,
+"ax": 16,
+"ay": 28,
+"path": "world/props/prop_sign_sword_01",
+"src": "lpc"
 },
 "prop_sign_potion_01": {
-"w": 30,
-"h": 40,
-"ax": 15,
-"ay": 37,
-"path": "world/props/prop_sign_potion_01"
+"w": 32,
+"h": 28,
+"ax": 16,
+"ay": 28,
+"path": "world/props/prop_sign_potion_01",
+"src": "lpc"
 },
 "prop_sign_bed_01": {
-"w": 30,
-"h": 40,
-"ax": 15,
-"ay": 37,
-"path": "world/props/prop_sign_bed_01"
+"w": 32,
+"h": 28,
+"ax": 16,
+"ay": 28,
+"path": "world/props/prop_sign_bed_01",
+"src": "lpc"
 },
 "prop_fence_01": {
-"w": 34,
-"h": 24,
-"ax": 17,
-"ay": 21,
-"path": "world/props/prop_fence_01"
+"w": 32,
+"h": 29,
+"ax": 16,
+"ay": 27,
+"path": "world/props/prop_fence_01",
+"src": "lpc"
 },
 "prop_well_01": {
-"w": 44,
-"h": 52,
-"ax": 22,
-"ay": 47,
-"path": "world/props/prop_well_01"
+"w": 64,
+"h": 95,
+"ax": 32,
+"ay": 94,
+"path": "world/props/prop_well_01",
+"src": "lpc"
 },
 "prop_stall_01": {
-"w": 56,
-"h": 52,
-"ax": 28,
-"ay": 48,
-"path": "world/props/prop_stall_01"
+"w": 128,
+"h": 168,
+"ax": 64,
+"ay": 166,
+"path": "world/props/prop_stall_01",
+"src": "lpc"
 },
 "prop_tent_01": {
-"w": 52,
-"h": 44,
-"ax": 26,
-"ay": 41,
-"path": "world/props/prop_tent_01"
+"w": 123,
+"h": 123,
+"ax": 61,
+"ay": 123,
+"path": "world/props/prop_tent_01",
+"src": "lpc"
 },
 "prop_campfire_01": {
-"w": 28,
-"h": 24,
-"ax": 14,
-"ay": 21,
+"w": 32,
+"h": 49,
+"ax": 16,
+"ay": 49,
 "path": "world/props/prop_campfire_01",
 "glow": [
 14,
 10
-]
+],
+"src": "lpc"
 },
 "prop_weaponrack_01": {
-"w": 40,
-"h": 40,
-"ax": 20,
-"ay": 36,
-"path": "world/props/prop_weaponrack_01"
+"w": 55,
+"h": 59,
+"ax": 27,
+"ay": 59,
+"path": "world/props/prop_weaponrack_01",
+"src": "lpc"
 },
 "prop_anvil_01": {
-"w": 30,
-"h": 22,
-"ax": 15,
-"ay": 19,
-"path": "world/props/prop_anvil_01"
+"w": 26,
+"h": 17,
+"ax": 13,
+"ay": 17,
+"path": "world/props/prop_anvil_01",
+"src": "lpc"
 },
 "prop_hay_01": {
-"w": 34,
-"h": 24,
-"ax": 17,
-"ay": 21,
-"path": "world/props/prop_hay_01"
+"w": 51,
+"h": 45,
+"ax": 25,
+"ay": 45,
+"path": "world/props/prop_hay_01",
+"src": "lpc"
 },
 "prop_flag_blue_01": {
-"w": 24,
-"h": 60,
-"ax": 6,
-"ay": 57,
-"path": "world/props/prop_flag_blue_01"
+"w": 32,
+"h": 62,
+"ax": 16,
+"ay": 62,
+"path": "world/props/prop_flag_blue_01",
+"src": "lpc"
 },
 "prop_flag_red_01": {
-"w": 24,
-"h": 60,
-"ax": 6,
-"ay": 57,
-"path": "world/props/prop_flag_red_01"
+"w": 32,
+"h": 62,
+"ax": 16,
+"ay": 62,
+"path": "world/props/prop_flag_red_01",
+"src": "lpc"
 },
 "prop_flag_gold_01": {
-"w": 24,
-"h": 60,
-"ax": 6,
-"ay": 57,
-"path": "world/props/prop_flag_gold_01"
+"w": 32,
+"h": 62,
+"ax": 16,
+"ay": 62,
+"path": "world/props/prop_flag_gold_01",
+"src": "lpc"
 },
 "prop_bucket_01": {
-"w": 16,
-"h": 16,
-"ax": 8,
-"ay": 14,
-"path": "world/props/prop_bucket_01"
+"w": 22,
+"h": 32,
+"ax": 11,
+"ay": 32,
+"path": "world/props/prop_bucket_01",
+"src": "lpc"
 },
 "prop_lumber_01": {
-"w": 44,
-"h": 22,
-"ax": 22,
-"ay": 20,
-"path": "world/props/prop_lumber_01"
+"w": 62,
+"h": 63,
+"ax": 31,
+"ay": 63,
+"path": "world/props/prop_lumber_01",
+"src": "lpc"
 },
 "prop_wheelbarrow_01": {
-"w": 34,
-"h": 24,
-"ax": 16,
-"ay": 21,
-"path": "world/props/prop_wheelbarrow_01"
+"w": 64,
+"h": 55,
+"ax": 32,
+"ay": 49,
+"path": "world/props/prop_wheelbarrow_01",
+"src": "lpc"
 },
 "prop_fountain_01": {
-"w": 64,
-"h": 52,
-"ax": 32,
-"ay": 48,
+"w": 62,
+"h": 60,
+"ax": 31,
+"ay": 60,
 "path": "world/props/prop_fountain_01",
-"glow": null
+"glow": null,
+"src": "lpc"
 },
 "prop_statue_01": {
-"w": 32,
-"h": 60,
-"ax": 16,
-"ay": 57,
-"path": "world/props/prop_statue_01"
+"w": 24,
+"h": 58,
+"ax": 12,
+"ay": 58,
+"path": "world/props/prop_statue_01",
+"src": "lpc"
 },
 "prop_wall_h_01": {
 "w": 32,
 "h": 44,
 "ax": 16,
 "ay": 40,
-"path": "world/props/prop_wall_h_01"
+"path": "world/props/prop_wall_h_01",
+"src": "lpc"
 },
 "prop_wall_v_01": {
 "w": 32,
 "h": 44,
 "ax": 16,
 "ay": 40,
-"path": "world/props/prop_wall_v_01"
+"path": "world/props/prop_wall_v_01",
+"src": "lpc"
 }
 }

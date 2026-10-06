@@ -82,8 +82,10 @@ function staticTests(R) {
   // ---- palette / black / shadow on every pixel of every sprite
   const off = [], black = [], semi = [];
   const ims = {};
+  const EXT = new Set(Object.values(W).filter(m => m.src === 'lpc').map(m => A(m.path + '.png')));
   for (const f of files) {
     const im = ims[f] = readPNG(f), seen = new Set();
+    if (EXT.has(f)) continue; // external LPC art (docs/ASSET_LICENSES.md) keeps its own palette
     for (let i = 0; i < im.px.length; i += 4) {
       const a = im.px[i + 3]; if (!a) continue;
       if (a < 255) { if (!(im.px[i] === 20 && im.px[i + 1] === 16 && im.px[i + 2] === 24)) { semi.push(path.basename(f)); break; } continue; }
@@ -172,7 +174,7 @@ function staticTests(R) {
   //      ground shadow falls to the lower-right of the anchor
   const lightBad = [], shadowBad = [];
   const RI = rampIndex();
-  for (const k of Object.keys(W).filter(k => /^(tree|rock|veg_bush|prop_barrel|prop_well|bld)_/.test(k))) {
+  for (const k of Object.keys(W).filter(k => /^(tree|rock|veg_bush|prop_barrel|prop_well|bld)_/.test(k) && W[k].src !== 'lpc')) {
     if (/^(bld|prop_well)_/.test(k)) { // big man-made shapes: same material is lighter on the left than on the right
       const im = ims[A(W[k].path + '.png')], b = bbox(im), cnt = {}, sum = {};
       for (let y = b.t; y <= b.b; y++) for (let x = b.l; x <= b.r; x++) { const [r, g, bl, a] = im.at(x, y); if (a !== 255) continue; const ri = RI.get(hexOf(r, g, bl)); if (!ri) continue; const side = x < (b.l + b.r) / 2 ? 0 : 1; const c = cnt[ri[0]] = cnt[ri[0]] || [0, 0], s2 = sum[ri[0]] = sum[ri[0]] || [0, 0]; c[side]++; s2[side] += ri[1]; }
@@ -367,9 +369,9 @@ async function browserTests(srv, R) {
           const meas = (look, gr, set) => { const c = document.createElement('canvas'); c.width = 96; c.height = 120; const g = c.getContext('2d'); HUD.S.chrHD = set === 'hd'; lastPaperSet = null; const ok = drawPaper(look, gr, 'idle', 0, 2, 48, 100, 1, g); const d = g.getImageData(0, 0, 96, 120).data; let t = 999, b = -1, sum = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) { const y = Math.floor((i >> 2) / 96); t = Math.min(t, y); b = Math.max(b, y); sum = (sum * 31 + d[i - 3] + d[i - 2] * 7 + i) % 1000003; } HUD.S.chrHD = true; return { ok, set: lastPaperSet, h: b - t + 1, top: 100 - t, sum }; };
           o.hd = meas(e.look, gear, 'hd'); o.v1 = meas(e.look, gear, 'v1');
           o.plate = meas(e.look, { ...gear, arm: 304 }, 'hd'); o.sword = meas(e.look, { ...gear, wpn: 1 && Object.values(ITEMS).find(i => i.wt === 'greatsword').id }, 'hd');
-          o.hat = meas(e.look, { ...gear, head: 'wizard' }, 'hd'); o.hatTop = heroTopOf('hd', 'wizard'); o.bareTop = heroTopOf('hd', '');
+          o.hat = meas(e.look, { ...gear, head: 'wizard' }, 'hd'); o.hatTop = heroTopOf(o.hd.set, 'wizard'); o.bareTop = heroTopOf(o.hd.set, '');
           const want = { shop: 'merchant', smith: 'blacksmith', m_vanguard: 'vanguard', m_ranger: 'ranger' };
-          o.npc = Object.entries(want).map(([id, k]) => { const n = map.npcs.find(q => q.id === id); return n && meas(n.look, {}, 'hd').set === 'hd' ? null : id; }).filter(Boolean);
+          o.npc = Object.entries(want).map(([id, k]) => { const n = map.npcs.find(q => q.id === id); return n && ['hd', 'lpc'].includes(meas(n.look, {}, 'hd').set) ? null : id; }).filter(Boolean);
           const kid = map.npcs.find(q => q.id === 'kid'); o.kid = kid ? meas(kid.look, {}, 'hd').set : 'none';
           HUD.S.chrHD = false; lastPaperSet = null; drawPaper(e.look, gear, 'idle', 0, 2, 48, 100, 1, document.createElement('canvas').getContext('2d')); o.off = lastPaperSet; HUD.S.chrHD = true;
           const c = document.createElement('canvas').getContext('2d'); o.aura = (() => { try { drawAura(c, 30, 30, '#8fd0ff', 1, false); drawAura(c, 30, 30, '#8fd0ff', 1, true); return true; } catch (er) { return false; } })();
@@ -377,12 +379,13 @@ async function browserTests(srv, R) {
         });
         await measure(); await pg.waitForTimeout(1500);   // first pass loads the sheets these looks need
         const h = await measure();
-        R.ok(h.hd.ok && h.hd.set === 'hd' && h.v1.set === 'v1', 'hd[game]: the player is drawn from the HD set; the v1 set is used when HD is switched off', JSON.stringify([h.hd.set, h.v1.set]));
-        R.ok(h.hd.h / h.v1.h >= 1.12 && h.hd.h / h.v1.h <= 1.3, 'hd[game]: HD character is drawn ~+15..25% larger than v1 at the same position', (h.hd.h / h.v1.h).toFixed(2) + ` (${h.hd.h}px vs ${h.v1.h}px)`);
-        R.ok(h.plate.sum !== h.hd.sum && h.sword.sum !== h.hd.sum && h.hat.sum !== h.hd.sum && h.plate.set === 'hd' && h.sword.set === 'hd' && h.hat.set === 'hd', 'hd[game]: equipped armor, weapon and headgear change the drawn HD character');
+        const HDS = s => s === 'hd' || s === 'lpc';
+        R.ok(h.hd.ok && HDS(h.hd.set) && h.v1.set === 'v1', 'hd[game]: the player is drawn from the HD/LPC set; the v1 set is used when HD is switched off', JSON.stringify([h.hd.set, h.v1.set]));
+        R.ok(h.hd.h / h.v1.h >= (h.hd.set === 'lpc' ? 1.0 : 1.12) && h.hd.h / h.v1.h <= 1.3, 'hd[game]: HD/LPC character is drawn at least as large as v1 at the same position', (h.hd.h / h.v1.h).toFixed(2) + ` (${h.hd.h}px vs ${h.v1.h}px)`);
+        R.ok(h.plate.sum !== h.hd.sum && h.sword.sum !== h.hd.sum && h.hat.sum !== h.hd.sum && HDS(h.plate.set) && HDS(h.sword.set) && HDS(h.hat.set), 'hd[game]: equipped armor, weapon and headgear change the drawn HD character');
         R.ok(h.bareTop >= h.hd.top && h.hatTop >= h.hat.top, 'hd[game]: badges / bubbles sit above the head and the headgear', `bare ${h.bareTop}>=${h.hd.top}, hat ${h.hatTop}>=${h.hat.top}`);
         R.ok(!h.npc.length, 'hd[game]: prototype NPCs (merchant, blacksmith, vanguard master, ranger master) render in HD', h.npc.join(','));
-        R.ok(h.kid === 'v1' && h.off === 'v1', 'hd[game]: looks outside the prototype stay whole in v1 (never half HD); the setting turns HD off', h.kid + '/' + h.off);
+        R.ok((h.kid === 'v1' || h.kid === 'lpc') && h.off === 'v1', 'hd[game]: other looks are drawn whole (LPC or v1, never half HD); the setting turns HD off', h.kid + '/' + h.off);
         R.ok(h.aura, 'hd[game]: aura layer is drawn by the engine (not baked into sprites)');
       }
       R.ok(!errs.length, `art[${mapId}]: no page errors`, errs.slice(0, 3).join(' | '));

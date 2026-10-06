@@ -99,6 +99,14 @@ const PAL = {
   [DIRT]: ['#b0814f', '#a87a4a', '#ba8d5c', '#9f7346'].map(hex), // brown ramp
   [WATER]: ['#3c86c9', '#4590d2', '#3479bc', '#4b98d8'].map(hex),
 };
+// LPC ground textures (assets/ground_lpc.png: rows grass, dark grass, dirt, sand, cave floor; 3 x 32px variants each)
+const GTEX = { d: null, row: { [GRASS]: 0, [DGRASS]: 1, [DIRT]: 2, [SAND]: 3 } };
+(function loadGround() { const i = new Image(); i.onload = () => { const c = mkCanvas(i.width, i.height), g = c.getContext('2d'); g.drawImage(i, 0, 0); GTEX.d = g.getImageData(0, 0, i.width, i.height).data; GTEX.w = i.width; if (typeof CAVE !== 'undefined') GTEX.row[CAVE] = 4; if (typeof map !== 'undefined' && map && ground) bakeMap(map); }; i.src = 'assets/ground_lpc.png'; })();
+function gtex(c, x, y) {
+  const r = GTEX.row[c]; if (!GTEX.d || r === undefined) return null;
+  const h = hash(Math.floor(x / 32) * 3 + 11, Math.floor(y / 32) * 5 + 7), v = h < 0.2 ? 0 : h < 0.5 ? 1 : 2;
+  const i = ((r * 32 + (y & 31)) * GTEX.w + v * 32 + (x & 31)) * 4; return [GTEX.d[i], GTEX.d[i + 1], GTEX.d[i + 2]];
+}
 let ground = null, props = [], portals = [], waterPx = [], miniC = null;
 function classOf(v, m) {
   const E = envOf(m);
@@ -159,12 +167,12 @@ function genGround(m) {
       if (get(x, y + 1) !== ROCKW && get(x, y + 1) !== 255) col = [24, 20, 26]; else if (get(x, y - 1) !== ROCKW && get(x, y - 1) !== 255) col = [96, 88, 104];
       else if (r < 0.03) col = [70, 64, 78];
     } else {
-      const p = PAL[c]; const n = vnoise(x / 9 + c * 30, y / 9);
-      col = p[n < 0.3 ? 3 : n < 0.55 ? 0 : n < 0.8 ? 1 : 2];
-      if (r < 0.04) col = p[(Math.floor(r * 100)) % 4];
+      const p = PAL[c]; const n = vnoise(x / 9 + c * 30, y / 9), tx = gtex(c, x, y);
+      col = tx || p[n < 0.3 ? 3 : n < 0.55 ? 0 : n < 0.8 ? 1 : 2];
+      if (!tx && r < 0.04) col = p[(Math.floor(r * 100)) % 4];
       if (c === GRASS || c === DGRASS) {
         // blades
-        if (r > 0.965) col = c === GRASS ? [134, 201, 93] : [92, 168, 80];
+        if (tx) { if (n > 0.72) col = col.map(q => q + 8); else if (n < 0.25) col = col.map(q => q - 6); } else if (r > 0.965) col = c === GRASS ? [134, 201, 93] : [92, 168, 80];
         else if (hash(x, y - 1) > 0.965 || hash(x * 7 + 3, (y - 1) * 13 + 1) > 0.965) col = c === GRASS ? [70, 138, 52] : [44, 112, 46];
         // dark rim where grass meets other ground
         const nb = [get(x, y + 1), get(x, y - 1), get(x + 1, y), get(x - 1, y)];
@@ -813,7 +821,7 @@ function frame(t) {
       if (person) { charShadow(x, y); if (n.look.aura) drawAura(ctx, x, y, n.look.aura, tn, false); } else shadow(x, y, 9);
       lastPaperSet = null; drawNpc(n, x, y, tn);
       if (person && n.look.aura) drawAura(ctx, x, y, n.look.aura, tn, true);
-      const top = person && lastPaperSet === 'hd' ? heroTopOf('hd', n.look.head) + 20 : 60; // the 24px badge sits fully above the head / headgear
+      const top = person && (lastPaperSet === 'hd' || lastPaperSet === 'lpc') ? heroTopOf(lastPaperSet, n.look.head) + 20 : 60; // the 24px badge sits fully above the head / headgear
       const b = Math.round(Math.sin(tn * 4) * 2); drawNpcBadge(n, x, y - top + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
   }
   drawNodes(list, vx0, vy0, vx1, vy1, tn, t);
@@ -842,7 +850,7 @@ function frame(t) {
       if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, false);
       lastPaperSet = null;
       drawHero(e.look, an, at, e.row ?? 2, x, y, 1, e.head, ctx, { wpn: e.wpn, arm: e.arm, cls: e.cls });
-      e.top = lastPaperSet === 'hd' ? heroTopOf('hd', typeof e.head === 'string' ? e.head : (e.head && ITEMS[e.head] && ITEMS[e.head].vis) || '') : 60;
+      e.top = lastPaperSet === 'hd' || lastPaperSet === 'lpc' ? heroTopOf(lastPaperSet, typeof e.head === 'string' ? e.head : (e.head && ITEMS[e.head] && ITEMS[e.head].vis) || '') : 60;
       if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, true);
       hpBar(x, y + 4, e.hp / e.maxhp, 24, '#58d65a');
       if (HUD.S.names || id === myId) labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : '#c8f7c5', 'pc']);

@@ -22,12 +22,12 @@
 | `public/assets/equipment/shields/` | โล่ round/kite (`eq_shield_*`) | `tools/art/build_characters.py` | LUMIRA original |
 | `public/assets/equipment/headgear/` | หมวก 21 แบบ 4 ทิศ (`eq_head_*`) | `tools/art/build_characters.py` | LUMIRA original |
 | `public/assets/characters/chars.json` | ข้อมูลเลเยอร์/เฟรม/ลำดับการวาด | `tools/art/build_characters.py` | LUMIRA original |
-| `public/assets/world/buildings/` | อาคารหมู่บ้าน/เมืองหลวง 28 แบบ (`bld_*`) | `tools/art/world_assets.py` | LUMIRA original |
-| `public/assets/world/trees/` | ต้นโอ๊ก ต้นสน ต้นสนหิมะ (`tree_*`) | `tools/art/world_assets.py` | LUMIRA original |
-| `public/assets/world/vegetation/` | หญ้า ดอกไม้ พุ่มไม้ เฟิร์น เห็ด กก สมุนไพร กระบองเพชร (`veg_*`) | `tools/art/world_assets.py` | LUMIRA original |
-| `public/assets/world/rocks/` | หิน แร่ ผลึก (`rock_*`) | `tools/art/world_assets.py` | LUMIRA original |
-| `public/assets/world/props/` | พร็อพเมือง/ป่า 29 แบบ (`prop_*`) | `tools/art/world_assets.py` | LUMIRA original |
-| `public/assets/world/world.json` | ขนาด จุดยึด กล่องโปร่งใสของต้นไม้ | `tools/art/world_assets.py` | LUMIRA original |
+| `public/assets/world/buildings/` | อาคารหมู่บ้าน/เมืองหลวง (`bld_*`) ประกอบจากชิ้นส่วน LPC | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
+| `public/assets/world/trees/` | ต้นไม้ (`tree_*`) จาก [LPC] Trees / Plant Repack | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
+| `public/assets/world/vegetation/` | หญ้า พุ่มไม้ ดอกไม้ ฯลฯ (`veg_*`) จาก LPC | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
+| `public/assets/world/rocks/` | หิน แร่ (`rock_*`) จาก [LPC] Rocks; `rock_crystal_01` เป็นงาน LUMIRA | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
+| `public/assets/world/props/` | พร็อพ (`prop_*`) จาก LPC | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
+| `public/assets/world/world.json` | ขนาด จุดยึด กล่องโปร่งใสของต้นไม้ (`src: "lpc"` = ภาพจาก LPC) | `tools/art/lpc/build_world.py` | ข้อมูลของโปรเจกต์ |
 | `public/assets/chr_hd/base/` | HD ร่างกายพื้นฐานชาย/หญิง (ต้นแบบ) | `tools/art/build_characters_hd.py` | LUMIRA original |
 | `public/assets/chr_hd/face/` | HD หน้า (ตา คิ้ว ปาก แก้ม) | `tools/art/build_characters_hd.py` | LUMIRA original |
 | `public/assets/chr_hd/hair/` | HD ทรงผม 6 แบบ | `tools/art/build_characters_hd.py` | LUMIRA original |
@@ -47,7 +47,27 @@ python3 tools/art/world_assets.py       # อาคาร ธรรมชาต�
 python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้นแบบ)
 ```
 
-พื้น (หญ้า ดิน ทางหิน สะพานไม้ น้ำ/แม่น้ำ) วาดตอนรันใน `public/game.js` (`genGround`) ด้วยสีจาก palette เดียวกัน ไม่มีไฟล์ภาพ
+พื้นหญ้า/ดิน/ทราย/ถ้ำ ใช้ลาย LPC จาก `public/assets/ground_lpc.png` (หัวข้อ 1.5); ทางหิน สะพานไม้ น้ำ วาดตอนรันใน `public/game.js` (`genGround`)
+
+## 1.5 LPC Art Pass (ต.ค. 2026) — ภาพจาก OpenGameArt.org (สัญญาอนุญาตเปิด ต้องให้เครดิต)
+
+ภาพที่ผู้เล่นเห็นตอนนี้ (ตัวละคร NPC อาคาร ต้นไม้ หิน พร็อพ พื้น และมอนสเตอร์ส่วนใหญ่) มาจากงาน Liberated Pixel Cup (LPC)
+ภาพถูกตัด ประกอบ และเปลี่ยนสีสำหรับ LUMIRA (เป็นงานดัดแปลง จึงใช้สัญญาอนุญาตเดิมของต้นฉบับ — CC-BY-SA ต้องแจกต่อด้วยสัญญาเดียวกัน)
+ไฟล์เครดิตต้นฉบับครบอยู่ใน `docs/credits/lpc/` (ห้ามลบ) และสรุปไว้ใน `public/credits.html`
+สคริปต์ที่ใช้สร้าง: `tools/art/lpc/` (อ้างอิง path ไฟล์ต้นฉบับในเครื่องที่สร้าง)
+
+| โฟลเดอร์ / ไฟล์ | ที่มา (OpenGameArt) | ผู้สร้าง | สัญญาอนุญาต |
+|---|---|---|---|
+| `public/assets/chr_lpc/` | Universal LPC Spritesheet Character Generator (github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) | ดูรายไฟล์ใน `docs/credits/lpc/LPC_CHARACTERS_CREDITS.csv` | CC-BY-SA 3.0 / GPL 3.0 / OGA-BY 3.0 (ตามไฟล์) |
+| `public/assets/world/` (อาคาร หลังคา ผนัง หน้าต่าง ประตู) | [LPC] City outside, [LPC] Forest tiles — Reemax; LPC Tile Atlas / Atlas2 — adrix89 (รวบรวม); [LPC] Walls, [LPC] Thatched-roof Cottage, [LPC] Medieval Village Decorations — bluecarrot16 และคณะ; [LPC] Adobe Building Set — Sharm / William.Thompsonj; LPC submission — Daniel Eddeland (daneeklu) | ดูไฟล์ใน `docs/credits/lpc/` | CC-BY-SA 3.0 / GPL 3.0 (Medieval Decorations: CC-BY-SA 3.0/4.0; Adobe: CC-BY/OGA-BY) |
+| `public/assets/world/trees/`, `vegetation/`, `rocks/` | [LPC] Trees, [LPC] Rocks — bluecarrot16 และคณะ; [LPC] Plant Repack — William.Thompsonj (รวบรวม) | `CREDITS-trees.txt`, `CREDITS-rocks.txt` | CC-BY-SA 3.0 (Rocks: CC-BY-SA 3.0/4.0) |
+| `public/assets/ground_lpc.png` (พื้นหญ้า ดิน ทราย ถ้ำ) | [LPC] Terrain Repack — William.Thompsonj (รวบรวม) | `terrain-repack-Attribution.txt` | CC-BY-SA 3.0 / GPL 3.0 |
+| `public/assets/m_lpc_slime/flower/snake/bat/ghost/bee.png` | [LPC] Monsters | Charles Sanchez (CharlesGabriel), bagzie, bluecarrot16 | CC-BY-SA 3.0 / GPL 3.0 |
+| `public/assets/m_lpc_goblin.png`, `m_lpc_golem.png` | [LPC] Goblin, [LPC] Golem | Stephen "Redshrike" Challener (ศิลปิน), William.Thompsonj (contributor) | CC-BY 3.0 / OGA-BY 3.0 / GPL |
+| `public/assets/m_lpc_imp.png`, `m_lpc_wolf.png` | [LPC] Imp, [LPC] Wolf Animation | William.Thompsonj (ฐานจากงาน LPC ของ Redshrike) | CC-BY 3.0 / OGA-BY 3.0 / GPL |
+| `public/assets/m_lpc_beetle.png` | LPC beetle (เปลี่ยนสีจากเทาเป็นน้ำตาล) | Stephen Challener (Redshrike), hosted by OpenGameArt.org | CC-BY 3.0 / CC-BY-SA 3.0 / OGA-BY 3.0 |
+
+ลิงก์: https://opengameart.org/content/lpc-monsters · /lpc-goblin · /lpc-golem · /lpc-imp · /lpc-wolf-animation · /lpc-beetle · /lpc-terrain-repack · /lpc-tile-atlas · /lpc-tile-atlas2 · /lpc-forest-tiles · /lpc-city-outside · /lpc-thatched-roof-cottage · /lpc-adobe-building-set · /lpc-medieval-village-decorations · /lpc-walls · /lpc-rocks · /lpc-trees · /lpc-plant-repack
 
 ## 2. ภาพเดิมที่ยังใช้อยู่ (บุคคลที่สาม)
 
@@ -60,5 +80,5 @@ python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้น�
 
 ## 3. สิ่งที่ยังต้องทำ
 
-- มอนสเตอร์ยังใช้สไปรต์เดิม (LPC/KayKit/procedural) ยังไม่ได้ทำใหม่ตาม Art Bible (จะทำในชุด Region ถัดไป)
+- มอนสเตอร์ส่วนใหญ่ใช้ชุด LPC แล้ว (หัวข้อ 1.5); วิสป์/วิญญาณตะเกียง/เป้าซ้อม ยังวาดด้วยโค้ด, โครงกระดูกยังใช้ชีตเดิม
 - เมื่อเพิ่มภาพจากแหล่งภายนอก ต้องเพิ่มแถวในตารางที่ 2 พร้อมลิงก์ที่มา ผู้สร้าง และสัญญาอนุญาตก่อน commit
