@@ -4,12 +4,16 @@ const $ = id => document.getElementById(id);
 const cv = $('game'); const ctx = cv.getContext('2d');
 const TP = 32; // art pixels per tile
 let DPR = 1, Z = 2, VW = 0, VH = 0, DW = 0, DH = 0;
+// art pixels visible across the short side of the screen, per view-distance setting
+const ZOOM_ART = { near: 400, normal: 520, far: 660 };
 function resize() {
   DPR = Math.min(3, devicePixelRatio || 1);
   DW = Math.round(innerWidth * DPR); DH = Math.round(innerHeight * DPR);
   cv.width = DW; cv.height = DH; cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
-  Z = Math.max(1, Math.round(DPR * Math.max(1, Math.floor(Math.min(innerWidth / 380, innerHeight / 260)))));
+  // integer device pixels per art pixel keeps the pixel art crisp
+  Z = Math.max(1, Math.round(DPR * Math.min(innerWidth, innerHeight) / (ZOOM_ART[HUD.S.zoom] || ZOOM_ART.normal)));
   VW = DW / Z; VH = DH / Z;
+  HUD.layout();
 }
 addEventListener('resize', resize); resize();
 
@@ -239,13 +243,13 @@ const now = () => performance.now() / 1000;
 function onMsg(m) {
   switch (m.t) {
     case 'err': $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
-    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) img('m_' + k); break;
+    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) img('m_' + k); break;
     case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; closeWins(); bakeMap(map); for (const n of map.npcs) img(NPC_SPR[n.look]); break;
     case 'me': me = m.c; updHud(); break;
     case 's': snap(m); break;
     case 'fx': onFx(m); break;
     case 'sys': log(m.m, m.col || '#ffe9a8'); break;
-    case 'chat': log(`${m.from}: ${m.m}`, '#ffffff'); bubbles.set(m.id, { m: m.m, until: performance.now() + 5000 }); break;
+    case 'chat': onChat(m); break;
     case 'dlg': openDlg(m); break;
     case 'dlgclose': closeWins(); break;
     case 'shop': openShop(m); break;
@@ -296,12 +300,14 @@ function updHud() {
   $('xpb').style.width = (me.exp / me.next * 100) + '%'; $('hX').textContent = (me.exp / me.next * 100).toFixed(1) + '%';
   $('hZ').textContent = me.zeny.toLocaleString();
   const s = me.q.step;
-  $('qt').innerHTML = QT[s] ? `${QT[s].replace('\n', '<br>')} <span class="num" style="color:#ffe39a">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ กลับไปหาไอริส</span>' : ''}` : 'จบบททดสอบแล้ว!';
+  $('qt').innerHTML = QT[s] ? `${QT[s].replace('\n', '<br>')} <span class="num qk">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ กลับไปหาไอริส</span>' : ''}` : 'จบบททดสอบแล้ว!';
   if (me.hp > 0) $('dead').style.display = 'none';
   const pot = me.inv.find(s => s.id === 1); $('potq').textContent = pot ? pot.q : 0;
   drawPortrait();
   if ($('wBag').style.display === 'block') renderBag();
   if ($('wStat').style.display === 'block') renderStat();
+  if ($('wEquip').style.display === 'block') renderEquip();
+  if ($('wQuest').style.display === 'block') renderQuest();
   if ($('wShop').style.display === 'block' && shopMode === 'sell') renderSell();
 }
 let portraitT = 0;
@@ -312,10 +318,44 @@ function drawPortrait() {
   const c = L.cell, a = L.anims.walk, o = (c - 64) / 2;
   g.drawImage(im, o + 16, (a[0] + 2) * c + o + 6, 32, 32, 0, 2, 32, 32);
 }
-function log(t, col) {
-  const d = document.createElement('div'); d.textContent = t; d.style.color = col || '#fff'; $('log').appendChild(d);
-  while ($('log').children.length > 30) $('log').firstChild.remove();
+// ------------------------------------------------------------ chat (compact 4-line log + full window with channels)
+const chatLog = []; let chTab = 'all';
+const CH_TAG = { world: '[โลก] ', whisper: '[กระซิบ] ', party: '[ปาร์ตี้] ', guild: '[กิลด์] ' };
+const CH_NOTE = { all: 'ส่งในช่องท้องถิ่น (ผู้เล่นในแผนที่นี้) · พิมพ์ /w ชื่อ ข้อความ เพื่อกระซิบ', sys: 'ช่องนี้แสดงข้อความระบบเท่านั้น', local: 'ส่งถึงผู้เล่นในแผนที่เดียวกัน', world: 'ส่งถึงผู้เล่นทุกคนในเซิร์ฟเวอร์ (ทุก 3 วินาที)', whisper: 'ข้อความส่วนตัวถึงผู้เล่นที่ออนไลน์', party: 'ยังไม่ได้อยู่ในปาร์ตี้', guild: 'ยังไม่ได้เข้าร่วมกิลด์' };
+function addChat(ch, text, col) {
+  chatLog.push({ ch, text, col }); if (chatLog.length > 150) chatLog.shift();
+  renderLog(); if ($('wChat').style.display === 'block') renderChatList();
 }
+function log(t, col) { addChat('sys', t, col || '#ffe9a8'); }
+function chatLine(e) { const d = document.createElement('div'); d.textContent = (CH_TAG[e.ch] || '') + e.text; if (e.col) d.style.color = e.col; else d.className = 'ch-' + e.ch; return d; }
+function renderLog() { const l = $('log'); l.textContent = ''; for (const e of chatLog.slice(-4)) l.appendChild(chatLine(e)); }
+function renderChatList() {
+  const l = $('chlist'); l.textContent = '';
+  const list = chatLog.filter(e => chTab === 'all' || e.ch === chTab);
+  for (const e of list) l.appendChild(chatLine(e));
+  if (!list.length) l.innerHTML = '<div class="note">ยังไม่มีข้อความ</div>';
+  l.scrollTop = l.scrollHeight;
+  const locked = chTab === 'party' || chTab === 'guild' || chTab === 'sys';
+  $('ci').disabled = $('cs').disabled = locked;
+  $('wto').style.display = chTab === 'whisper' ? 'block' : 'none';
+  $('chnote').textContent = CH_NOTE[chTab] || '';
+}
+function onChat(m) {
+  const ch = m.ch || 'local', mine = me && m.from === me.name;
+  const text = ch === 'whisper' ? (mine ? `ถึง ${m.to}: ${m.m}` : `จาก ${m.from}: ${m.m}`) : `${m.from}: ${m.m}`;
+  addChat(ch, text, ch === 'local' ? '#ffffff' : null);
+  if (ch === 'local') bubbles.set(m.id, { m: m.m, until: performance.now() + 5000 });
+  if (ch === 'whisper' && !mine && !$('wto').value) $('wto').value = m.from; // quick reply
+}
+function sendChat() {
+  const v = $('ci').value.trim(); if (!v) return;
+  let o = { t: 'chat', ch: chTab === 'world' || chTab === 'whisper' ? chTab : 'local', m: v };
+  const w = /^\/w\s+(\S+)\s+(.+)$/.exec(v);
+  if (w) o = { t: 'chat', ch: 'whisper', to: w[1], m: w[2] };
+  else if (o.ch === 'whisper') { o.to = $('wto').value.trim(); if (!o.to) { $('chnote').textContent = 'ใส่ชื่อผู้รับก่อน'; return; } }
+  send(o); $('ci').value = '';
+}
+function openChat(focus) { closeWins(); renderChatList(); $('wChat').style.display = 'block'; if (focus) $('ci').focus(); }
 function closeWins() { for (const w of document.querySelectorAll('.win')) w.style.display = 'none'; }
 document.querySelectorAll('.win .x').forEach(b => b.onclick = closeWins);
 function openDlg(m) {
@@ -364,24 +404,93 @@ function renderBag() {
     g.appendChild(d);
   });
 }
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pct = (a, b) => Math.max(0, Math.min(100, a / b * 100));
 function renderStat() {
   const N = { str: 'STR พลัง', agi: 'AGI ว่องไว', vit: 'VIT อึด', int: 'INT ปัญญา', dex: 'DEX แม่นยำ', luk: 'LUK โชค' };
-  let h = `<div style="margin-bottom:8px">แต้มเหลือ: <b class="num" style="color:var(--gold)">${me.pts}</b></div><div class="stats">`;
+  let h = `<div class="chead"><canvas id="cport" width="32" height="32"></canvas><div><div style="font-size:1.6rem;font-weight:500">${esc(me.name)}</div><div style="color:var(--dim)">${CLS_TH[(me.look && me.look.cc | 0) % 5] || ''} · Lv ${me.lv}</div>`
+    + `<div class="bar hp"><i style="width:${pct(me.hp, me.maxhp)}%"></i><b class="num">HP ${me.hp} / ${me.maxhp}</b></div><div class="bar sp"><i style="width:${pct(me.sp, me.maxsp)}%"></i><b class="num">SP ${me.sp} / ${me.maxsp}</b></div></div></div>`;
+  h += `<div style="margin-bottom:8px">แต้มเหลือ: <b class="num" style="color:var(--gold)">${me.pts}</b></div><div class="stats">`;
   for (const k in N) h += `<div class="s"><span>${N[k]}</span><span class="num">${me.st[k]} <button data-s="${k}" ${me.pts ? '' : 'disabled'}>+</button></span></div>`;
   h += `</div><div class="stats" style="margin-top:10px;color:var(--dim)"><div>ATK ${me.atk}</div><div>DEF ${me.def}</div><div>HIT ${me.hit}</div><div>FLEE ${me.flee}</div><div>CRIT ${me.crit}%</div><div>ความเร็วตี ${(1000 / me.aspd).toFixed(2)}/วิ</div></div>`;
   $('statbody').innerHTML = h;
   $('statbody').querySelectorAll('button[data-s]').forEach(b => b.onclick = () => send({ t: 'stat', s: b.dataset.s }));
+  const cp = $('cport').getContext('2d'); cp.imageSmoothingEnabled = false; cp.drawImage($('portrait'), 0, 0);
+}
+const EQS = [['wpn', 'อาวุธ'], ['head', 'หมวก'], ['arm', 'เสื้อ']];
+const statOf = it => it.atk ? `ATK +${it.atk}` : it.def ? `DEF +${it.def}` : it.heal ? `HP +${it.heal}` : it.sp ? `SP +${it.sp}` : '';
+function renderEquip() {
+  const b = $('equipbody'); b.innerHTML = `<div class="note" style="margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด) · ATK ${me.atk} · DEF ${me.def}</div>`;
+  const eg = document.createElement('div'); eg.className = 'grid';
+  for (const [k, lab] of EQS) {
+    const d = document.createElement('div'); d.className = 'slot eq'; const id = me.eq[k];
+    if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else d.textContent = lab + ' (ว่าง)';
+    eg.appendChild(d);
+  }
+  b.appendChild(eg);
+  b.insertAdjacentHTML('beforeend', '<div class="note" style="margin:10px 0 6px">อุปกรณ์ในกระเป๋า (แตะเพื่อสวม)</div>');
+  const l = document.createElement('div'); l.className = 'list';
+  me.inv.forEach((s, i) => {
+    const it = ITEMS[s.id]; if (it.ty !== 'eq') return;
+    const d = document.createElement('div'); d.className = 'li'; d.appendChild(iconCanvas(s.id));
+    d.insertAdjacentHTML('beforeend', `<div class="grow">${esc(it.n)}<br><small style="color:var(--dim)">${(EQS.find(e => e[0] === it.slot) || [, ''])[1]} · ${statOf(it)}</small></div>`);
+    const btn = document.createElement('button'); btn.textContent = 'สวม'; btn.onclick = () => send({ t: 'use', i, id: s.id }); d.appendChild(btn); l.appendChild(d);
+  });
+  if (!l.children.length) l.innerHTML = '<div class="note">ไม่มีอุปกรณ์ในกระเป๋า</div>';
+  b.appendChild(l);
+}
+function renderSkills() {
+  $('skillbody').innerHTML = `<div class="list"><div class="li"><i class="pi" data-icon="skill"></i><div class="grow"><b>Bash</b> <small class="num" style="color:#8fb8ff">SP 8</small><br><small style="color:var(--dim)">ฟันแรง ×2.2 โดนแน่นอน · ปุ่ม Bash หรือคีย์ Q</small></div></div></div><div class="note" style="margin-top:10px">สกิลของแต่ละอาชีพจะเปิดเพิ่มในอัปเดตถัดไป</div>`;
+  HUD.applyIcons($('skillbody'));
+}
+function renderQuest() {
+  const s = me.q.step; let h = '';
+  if (QT[s]) h += `<div class="li" style="display:block"><b style="color:var(--gold)">ภารกิจหลัก ${s + 1}/${QT.length}</b><br>${QT[s].replace('\n', '<br>')}<br>ความคืบหน้า <span class="num qk">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ สำเร็จ — กลับไปหาไอริสเพื่อรับรางวัล</span>' : ''}</div>`;
+  else h += '<div class="li">ผ่านภารกิจหลักทั้งหมดแล้ว! รอบทต่อไปเร็วๆ นี้</div>';
+  for (let i = 0; i < s && i < QT.length; i++) h += `<div class="note">✔ ${QT[i].replace('\n', ' ')}</div>`;
+  h += '<div class="note" style="margin-top:10px">รับ/ส่งภารกิจกับ ไอริส ที่ลานกลางเมืองโซลคารา</div>';
+  $('questbody').innerHTML = h;
+}
+function renderSettings() {
+  document.querySelectorAll('#wSet .seg[data-k]').forEach(sg => sg.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(HUD.S[sg.dataset.k]) === b.dataset.v)));
+}
+document.querySelectorAll('#wSet .seg[data-k] button').forEach(b => b.onclick = () => {
+  const v = b.dataset.v; HUD.S[b.parentNode.dataset.k] = v === 'true' ? true : v === 'false' ? false : isNaN(+v) ? v : +v;
+  HUD.saveSettings(); resize(); renderSettings();
+});
+$('bFull').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => { }); } catch (e) { } };
+const MORE = [['char', 'ตัวละคร', 'pport'], ['skill', 'สกิล', 'bSkill'], ['equip', 'อุปกรณ์', 'bEquip'], ['bag', 'กระเป๋า', 'bBag'], ['quest', 'เควส', 'bQuest'], ['map', 'แผนที่', 'bMap'],
+  ['party', 'ปาร์ตี้', 'bParty'], ['guild', 'กิลด์', 'bGuild'], ['auto', 'ออโต้', 'bAuto'], ['chat', 'แชท', 'bChat'], ['gear', 'ตั้งค่า', 'bSet'],
+  ['quest', 'เครดิตภาพ', () => open('credits.html', '_blank')], ['more', 'ออกจากระบบ', () => { if (confirm('ออกจากระบบ?')) { me = null; try { ws.close(); } catch (e) { } location.reload(); } }]];
+function renderMore() {
+  const g = $('moregrid'); g.innerHTML = '';
+  for (const [ic, lab, act] of MORE) {
+    const b = document.createElement('button'); b.dataset.icon = ic; b.textContent = lab;
+    b.onclick = () => { closeWins(); typeof act === 'function' ? act() : $(act).click(); };
+    g.appendChild(b);
+  }
+  HUD.applyIcons(g);
 }
 const toggleWin = (w, f) => () => { const v = $(w).style.display === 'block'; closeWins(); if (!v) { f && f(); $(w).style.display = 'block'; } };
 $('bBag').onclick = toggleWin('wBag', renderBag);
-$('bStat').onclick = toggleWin('wStat', renderStat);
-$('bMap').onclick = toggleWin('wMap', renderBigMap);
+$('pport').onclick = toggleWin('wStat', renderStat);
+$('bMap').onclick = $('mm').onclick = toggleWin('wMap', renderBigMap);
+$('bEquip').onclick = toggleWin('wEquip', renderEquip);
+$('bSkill').onclick = toggleWin('wSkill', renderSkills);
+$('bQuest').onclick = $('quest').onclick = toggleWin('wQuest', renderQuest);
+$('bParty').onclick = toggleWin('wParty');
+$('bGuild').onclick = toggleWin('wGuild');
+$('bSet').onclick = toggleWin('wSet', renderSettings);
+$('bMore').onclick = toggleWin('wMore', renderMore);
+$('log').onclick = $('bChat').onclick = () => openChat(false);
+$('chtabs').querySelectorAll('button').forEach(b => b.onclick = () => { chTab = b.dataset.ch; $('chtabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderChatList(); });
 function nearest(kind, maxd = 12) { const m = ents.get(myId); if (!m) return 0; let best = 0, bd = maxd; for (const [id, e] of ents) { if (e.kind !== kind) continue; const d = Math.hypot(e.x - m.x, e.y - m.y); if (d < bd) { bd = d; best = id; } } return best; }
 $('bAtk').onclick = () => { let id = selected && ents.has(selected) ? selected : nearest('m'); if (id) { selected = id; send({ t: 'attack', id }); } else log('ไม่มีมอนสเตอร์ใกล้ๆ', '#b9a98e'); };
 $('skill').onclick = () => { const id = selected && ents.has(selected) ? selected : nearest('m', 6); if (id) { selected = id; send({ t: 'skill', id }); } };
 $('bPot').onclick = () => { if (!me) return; const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i, id: 1 }); else log('ไม่มียาแดง', '#ff8b8b'); };
 $('bPick').onclick = () => { const id = nearest('d', 8); if (id) send({ t: 'pick', id }); };
-function setAuto(v) { auto = v; $('bAuto').classList.toggle('on', v); }
+function setAuto(v) { auto = v; $('bAuto').classList.toggle('on', v); $('bAutoT').classList.toggle('on', v); }
+$('bAutoT').onclick = () => $('bAuto').click();
 $('bAuto').onclick = () => { setAuto(!auto); log(auto ? 'เปิดโหมดออโต้ — ตีมอนใกล้ๆ อัตโนมัติ' : 'ปิดโหมดออโต้', '#9fe7ff'); };
 setInterval(() => {
   if (!auto || !me || me.hp <= 0) return;
@@ -390,8 +499,7 @@ setInterval(() => {
   if (!selected || !ents.has(selected)) { const id = nearest('m', 14); if (id) { selected = id; send({ t: 'attack', id }); } }
 }, 700);
 $('bRes').onclick = () => { send({ t: 'respawn' }); $('dead').style.display = 'none'; };
-function sendChat() { const v = $('ci').value.trim(); if (v) send({ t: 'chat', m: v }); $('ci').value = ''; $('ci').blur(); }
-$('cs').onclick = sendChat; $('ci').onkeydown = e => { if (e.key === 'Enter') sendChat(); e.stopPropagation(); };
+$('cs').onclick = sendChat; $('ci').onkeydown = $('wto').onkeydown = e => { if (e.key === 'Enter') sendChat(); if (e.key === 'Escape') { closeWins(); e.target.blur(); } e.stopPropagation(); };
 function renderBigMap() {
   if (!miniC) return; const c = $('bmc'); c.width = map.w * 4; c.height = map.h * 4; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(miniC, 0, 0, c.width, c.height);
   for (const n of map.npcs) { g.fillStyle = '#ffd34d'; g.fillRect(n.x * 4, n.y * 4, 4, 4); }
@@ -425,33 +533,69 @@ cv.addEventListener('pointerdown', e => {
   clickMark = { x: tx, y: ty, t: performance.now() };
   send({ t: 'move', x: tx, y: ty });
 });
-// joystick
+// ------------------------------------------------------------ joystick (floating, 8 directions) + keyboard
 let joy = null;
-const J = $('joy'), K = $('knob');
-J.addEventListener('pointerdown', e => { e.preventDefault(); J.setPointerCapture(e.pointerId); joy = { id: e.pointerId, dx: 0, dy: 0 }; joyMove(e); });
-J.addEventListener('pointermove', e => { if (joy && e.pointerId === joy.id) joyMove(e); });
-const joyEnd = e => { if (joy && e.pointerId === joy.id) { joy = null; K.style.transform = ''; } };
-J.addEventListener('pointerup', joyEnd); J.addEventListener('pointercancel', joyEnd);
+const JZ = $('joyzone'), J = $('joy'), K = $('knob');
+JZ.addEventListener('pointerdown', e => {
+  if (joy || !me) return; e.preventDefault(); try { JZ.setPointerCapture(e.pointerId); } catch (er) { }
+  const zr = JZ.getBoundingClientRect(), jr = J.getBoundingClientRect(), R = jr.width / 2;
+  let cx = jr.left + R, cy = jr.top + R;
+  if (HUD.S.joy !== 'fixed') { // floating: the base jumps under the finger (kept inside the zone)
+    cx = Math.max(zr.left + R, Math.min(zr.right - R, e.clientX)); cy = Math.max(zr.top + R, Math.min(zr.bottom - R, e.clientY));
+    J.style.left = (cx - zr.left - R) + 'px'; J.style.top = (cy - zr.top - R) + 'px'; J.style.bottom = 'auto';
+  }
+  joy = { id: e.pointerId, cx, cy, R, dx: 0, dy: 0 }; J.classList.add('act'); joyMove(e);
+});
+JZ.addEventListener('pointermove', e => { if (joy && e.pointerId === joy.id) joyMove(e); });
+const joyEnd = e => { if (!joy || e.pointerId !== joy.id) return; joy = null; K.style.transform = ''; J.classList.remove('act'); J.style.left = J.style.top = J.style.bottom = ''; walkTick(); };
+JZ.addEventListener('pointerup', joyEnd); JZ.addEventListener('pointercancel', joyEnd); JZ.addEventListener('lostpointercapture', joyEnd);
 function joyMove(e) {
-  const r = J.getBoundingClientRect(); let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-  const R = r.width / 2 - 20, l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
+  let dx = e.clientX - joy.cx, dy = e.clientY - joy.cy; const R = joy.R * 0.62, l = Math.hypot(dx, dy);
+  if (l > R) { dx *= R / l; dy *= R / l; }
   K.style.transform = `translate(${dx}px,${dy}px)`; joy.dx = dx / R; joy.dy = dy / R;
+  walkTick();
+}
+const SOLID_T = new Set([2, 3, 5, 6, 7, 9]); // same as server SOLID
+const DIR8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+function tileFree(x, y) { return !!map && x >= 0 && y >= 0 && x < map.w && y < map.h && !SOLID_T.has(map.t[y * map.w + x]) && !map.npcs.some(n => n.x === x && n.y === y); }
+function stepOk(x, y, dx, dy) { return tileFree(x + dx, y + dy) && (!(dx && dy) || (tileFree(x + dx, y) && tileFree(x, y + dy))); }
+// a reachable tile 1-2 steps away in the wanted direction; slides along walls instead of stopping dead
+function walkTarget(dx, dy) {
+  const e = ents.get(myId); if (!e) return null; const x = Math.round(e.tx), y = Math.round(e.ty);
+  const tries = dx && dy ? [[dx, dy], [dx, 0], [0, dy]] : dx ? [[dx, 0], [dx, 1], [dx, -1]] : [[0, dy], [1, dy], [-1, dy]];
+  for (const [ax, ay] of tries) if (stepOk(x, y, ax, ay)) return stepOk(x + ax, y + ay, ax, ay) ? [x + ax * 2, y + ay * 2] : [x + ax, y + ay];
+  return null;
 }
 const keys = {};
+function inputDir() {
+  let dx = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0), dy = (keys.s || keys.arrowdown ? 1 : 0) - (keys.w || keys.arrowup ? 1 : 0);
+  if (joy && Math.hypot(joy.dx, joy.dy) > 0.28) [dx, dy] = DIR8[(Math.round(Math.atan2(joy.dy, joy.dx) / (Math.PI / 4)) + 8) % 8];
+  return dx || dy ? DIR8.findIndex(d => d[0] === dx && d[1] === dy) : -1;
+}
+let walkDir = -1, walkAt = 0;
+function walkTick() {
+  if (!me || !map || me.hp <= 0) return;
+  const d = inputDir(), t = performance.now();
+  if (d < 0) { // released: stop on the nearest tile instead of finishing the 2-tile look-ahead
+    if (walkDir >= 0) { const [dx, dy] = DIR8[walkDir], e = ents.get(myId); walkDir = -1; if (e) send({ t: 'move', x: Math.round(e.tx + dx * 0.45), y: Math.round(e.ty + dy * 0.45) }); }
+    return;
+  }
+  if (t - walkAt < (d === walkDir ? 180 : 70)) return;
+  walkDir = d; walkAt = t; selected = 0;
+  const tg = walkTarget(...DIR8[d]); if (tg) send({ t: 'move', x: tg[0], y: tg[1] });
+}
+setInterval(walkTick, 100);
 addEventListener('keydown', e => {
   if (!me || document.activeElement instanceof HTMLInputElement) return; // login form / chat box
   const k = e.key.toLowerCase(); keys[k] = 1;
   if (e.repeat && k !== ' ') return;
-  if (k === 'enter') $('ci').focus(); if (k === '1') $('bPot').click(); if (k === 'q') $('skill').click(); if (k === 'i') $('bBag').click(); if (k === ' ') { e.preventDefault(); $('bAtk').click(); } if (k === 'm') $('bMap').click();
+  if (k === 'enter') { e.preventDefault(); openChat(true); } if (k === 'escape') closeWins();
+  if (k === '1') $('bPot').click(); if (k === 'q') $('skill').click(); if (k === 'i') $('bBag').click(); if (k === 'c') $('pport').click();
+  if (k === ' ') { e.preventDefault(); $('bAtk').click(); } if (k === 'm') $('bMap').click();
+  walkTick();
 });
 addEventListener('blur', () => { for (const k in keys) keys[k] = 0; }); // don't keep walking after alt-tab
-addEventListener('keyup', e => { keys[e.key.toLowerCase()] = 0; });
-setInterval(() => {
-  if (!me || !map) return; const e = ents.get(myId); if (!e) return;
-  let dx = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0), dy = (keys.s || keys.arrowdown ? 1 : 0) - (keys.w || keys.arrowup ? 1 : 0);
-  if (joy && Math.hypot(joy.dx, joy.dy) > 0.3) { const a = Math.atan2(joy.dy, joy.dx); dx = Math.round(Math.cos(a)); dy = Math.round(Math.sin(a)); }
-  if (dx || dy) { selected = 0; send({ t: 'move', x: Math.round(e.tx) + dx * 2, y: Math.round(e.ty) + dy * 2 }); }
-}, 200);
+addEventListener('keyup', e => { keys[e.key.toLowerCase()] = 0; walkTick(); });
 
 // ------------------------------------------------------------ render
 function shadow(x, y, rw) { ctx.fillStyle = 'rgba(16,20,10,0.3)'; const rh = Math.max(2, Math.round(rw * 0.4)); for (let i = -rh; i <= rh; i++) { const w = Math.round(rw * Math.sqrt(1 - (i / (rh + 0.5)) ** 2)); ctx.fillRect(Math.round(x) - w, Math.round(y) + i, w * 2, 1); } }
@@ -462,12 +606,13 @@ function entAnim(e, name, tn) {
   return [META.lpc[name] ? 'stand' : 'idle', tn + e.ph];
 }
 const labels = []; // text drawn later at device res: [x,y,text,color,kind]
-let lastT = performance.now();
+let lastT = performance.now(), fpsN = 0, fpsT = 0;
 function frame(t) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.1, (t - lastT) / 1000); lastT = t; const tn = t / 1000;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
   if (!map || !ground) { drawTitle(t); return; }
+  fpsN++; if (t - fpsT > 500) { const f = $('fps'); f.style.display = HUD.S.fps ? 'block' : 'none'; if (HUD.S.fps) f.textContent = Math.round(fpsN * 1000 / (t - fpsT)) + ' FPS'; fpsN = 0; fpsT = t; }
   for (const e of ents.values()) {
     const k = Math.min(1, dt * 12), dx = e.tx - e.x, dy = e.ty - e.y, d = Math.hypot(dx, dy);
     if (d > 4) { e.x = e.tx; e.y = e.ty; } else { e.x += dx * k; e.y += dy * k; }
@@ -508,14 +653,14 @@ function frame(t) {
       if (fl) ctx.filter = 'none';
       const info = MOBN[e.type]; const hh = big ? 92 : (META.lpc[nm] ? 56 : 34);
       if (e.hp < e.maxhp) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d');
-      if (info) labels.push([x, y + 6, `${info.n}`, info.boss ? '#ff8b8b' : '#ffffff', info.boss ? 'boss' : 'mob', info.lv]);
+      if (info && HUD.S.names) labels.push([x, y + 6, `${info.n}`, info.boss ? '#ff8b8b' : '#ffffff', info.boss ? 'boss' : 'mob', info.lv]);
     } });
     else if (e.kind === 'p') list.push({ y, f: () => {
       const nm = heroOf(e.look); shadow(x, y, 10);
       const [an, at] = entAnim(e, nm, tn);
       drawChar(nm, an, at, e.row ?? 2, x, y, 1);
       hpBar(x, y + 4, e.hp / e.maxhp, 24, '#58d65a');
-      labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : '#c8f7c5', 'pc']);
+      if (HUD.S.names || id === myId) labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : '#c8f7c5', 'pc']);
       const b = bubbles.get(id); if (b && b.until > t) labels.push([x, y - 60, b.m, '#2a1f3a', 'bubble']);
     } });
   }
@@ -624,6 +769,7 @@ function drawTitle(t) {
   const sx = ((tn * 22 + 4 * 46 + 30) % (w + 80)) - 40; drawChar('m_jellop', 'walk', tn, 3, sx, y);
 }
 requestAnimationFrame(frame);
+HUD.applyIcons();
 
 // ------------------------------------------------------------ login / create
 let mode = 'login';

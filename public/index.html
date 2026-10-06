@@ -31,67 +31,117 @@ input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;bord
 .sel{display:flex;gap:6px;align-items:center;margin-top:6px}.sel button{padding:4px 12px}.sel span{flex:1;text-align:center;font-size:15px}
 #err{color:#ff8b8b;min-height:20px;font-size:13px;text-align:center;margin-top:8px}
 #credit{position:fixed;right:8px;bottom:6px;font-size:10px;z-index:21}#credit a{color:#ffe39acc}
-#hud{position:fixed;inset:0;pointer-events:none;z-index:5;display:none}
+/* ---------------- HUD: everything below is sized in rem; html font-size = 10px * --ui (set by hud.js) */
+html{font-size:calc(10px * var(--ui,1))}
+:root{--sl:max(8px,env(safe-area-inset-left));--sr:max(8px,env(safe-area-inset-right));--st:max(6px,env(safe-area-inset-top));--sb:max(6px,env(safe-area-inset-bottom))}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:5;display:none;font-size:1.2rem}
 #hud>*{pointer-events:auto}
-#pstat{position:absolute;left:max(8px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top));width:236px;padding:6px 8px 6px 64px;font-size:12px}
-#portrait{position:absolute;left:6px;top:6px;width:52px;height:52px;border:2px solid var(--gold2);border-radius:50%;background:radial-gradient(#3b4a8a,#151b38);image-rendering:pixelated}
-#pstat .nm{display:flex;justify-content:space-between;font-weight:500}
-#lvb{position:absolute;left:13px;top:54px;background:#0a0d1c;border:1px solid var(--gold);border-radius:8px;padding:0 6px;font-size:10px;color:var(--gold)}
-.bar{height:11px;background:#0a0d1c;border:1px solid #000;margin-top:3px;position:relative;overflow:hidden;border-radius:2px}
-.bar i{position:absolute;inset:0 auto 0 0;background:var(--hp);box-shadow:inset 0 3px 0 #ffffff40,inset 0 -2px 0 #0004}
-.bar b{position:absolute;inset:0;font-size:9px;line-height:11px;text-align:center;font-weight:400;text-shadow:1px 1px 0 #000}
-#zeny{color:var(--dim);font-size:11px;margin-top:2px}#zeny span{color:var(--gold)}
-#menu{position:absolute;top:max(8px,env(safe-area-inset-top));left:266px;display:flex;gap:6px}
-#menu button{width:52px;height:52px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;line-height:1.1;background:linear-gradient(180deg,#2b3566,#171d3c)}
-#menu button .ic{font-size:22px;filter:drop-shadow(1px 1px 0 #000)}
-#mm{position:absolute;right:max(8px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));width:150px;padding:4px}
-#mmc{display:block;width:138px;height:104px;image-rendering:pixelated;background:#0a0d1c}
-#mmn{font-size:12px;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 2px 0}
-#mmxy{font-size:11px;color:var(--dim);display:flex;justify-content:space-between;padding:0 2px}
-#quest{position:absolute;right:max(8px,env(safe-area-inset-right));top:172px;width:150px;padding:6px 8px;font-size:11px;line-height:1.35}
-#quest b{color:var(--gold);font-weight:500}
-#joy{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#2a346888 0 55%,#141a33aa 56%);border:3px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,inset 0 0 12px #000}
-#joy::after{content:'';position:absolute;inset:14px;border-radius:50%;border:1px dashed #e8c46a55;pointer-events:none}
-#knob{position:absolute;left:39px;top:39px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fb2ff,#2f5cc0 60%,#1a3070);border:2px solid var(--gold);box-shadow:0 2px 6px #000a;pointer-events:none}
-#acts{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:200px;height:190px;pointer-events:none}
-.rb{pointer-events:auto;position:absolute;width:56px;height:56px;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;line-height:1;background:radial-gradient(circle at 40% 30%,#3d4a8c,#161c3a 70%);border:2px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,0 3px 6px #000a}
-.rb .ic{font-size:22px;margin-bottom:1px;filter:drop-shadow(1px 1px 0 #000)}
-.rb.big{width:80px;height:80px;right:0;bottom:0;background:radial-gradient(circle at 40% 30%,#c0533d,#5a1a14 70%);border-color:var(--gold)}
-.rb.big .ic{font-size:30px}
-.rb.on{border-color:#7dff8a;box-shadow:0 0 0 2px #0a0d1c,0 0 14px #7dff8a}
-.rb .q{position:absolute;right:-2px;bottom:-2px;background:#0a0d1c;border:1px solid var(--gold2);border-radius:6px;font-size:10px;padding:0 3px}
-#chat{position:absolute;left:50%;transform:translateX(-50%);bottom:max(6px,env(safe-area-inset-bottom));width:min(440px,calc(100vw - 380px));font-size:12px}
-#log{max-height:96px;overflow:hidden;padding:4px 8px;display:flex;flex-direction:column;justify-content:flex-end;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none}
-#log div{margin-top:1px}
-#chatin{display:flex;gap:4px;margin-top:3px}#chatin input{padding:5px 8px;font-size:13px;background:#0c1022cc}#chatin button{padding:4px 10px}
-.win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 20px));max-height:calc(100vh - 40px);overflow:auto;padding:12px;display:none;z-index:8}
-.win h3{margin:0 0 8px;color:var(--gold);display:flex;justify-content:space-between;align-items:center;font-weight:500}
-.win h3 button{padding:1px 9px}
-#dlgtext{white-space:pre-wrap;line-height:1.55;font-size:14px}
-#dlgopts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
-.slot{background:#0c1022;border:2px solid #3b4680;border-radius:4px;height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;text-align:center;position:relative;cursor:pointer;padding:2px}
-.slot canvas{width:32px;height:32px}
-.slot .q{position:absolute;right:4px;top:1px;font-size:11px}
+.pi{display:inline-block;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;flex:0 0 auto;pointer-events:none}
+#hud button{font-size:1.2rem;padding:.4rem .8rem}
+/* status panel (top-left) */
+#pstat{position:absolute;left:var(--sl);top:var(--st);width:21rem;min-height:6.4rem;padding:.5rem .7rem .6rem 6.6rem}
+#pport{position:absolute;left:.5rem;top:.5rem;width:5.6rem;height:5.6rem;padding:0;border-radius:50%;border:2px solid var(--gold2);background:radial-gradient(#3b4a8a,#151b38);box-shadow:0 0 0 2px #0a0d1c}
+#portrait{width:100%;height:100%;border-radius:50%;image-rendering:pixelated;display:block}
+#lvb{position:absolute;left:50%;bottom:-.8rem;transform:translateX(-50%);background:#0a0d1c;border:1px solid var(--gold);border-radius:.8rem;padding:0 .5rem;font-size:1rem;line-height:1.5rem;color:var(--gold);white-space:nowrap}
+#pstat .nm{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem;font-weight:500;font-size:1.25rem;white-space:nowrap;overflow:hidden}
+#hJob{color:var(--dim);font-size:1rem;font-weight:400}
+.bar{height:1.15rem;background:#0a0d1c;border:1px solid #000;margin-top:.3rem;position:relative;overflow:hidden;border-radius:2px}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--hp);box-shadow:inset 0 .3rem 0 #ffffff40,inset 0 -.2rem 0 #0004;transition:width .25s}
+.bar.sp i{background:var(--sp)}.bar.xp{height:.85rem}.bar.xp i{background:var(--xp)}
+.bar b{position:absolute;inset:0;font-size:.9rem;line-height:1.15rem;text-align:center;font-weight:400;text-shadow:1px 1px 0 #000}
+.bar.xp b{font-size:.75rem;line-height:.85rem}
+#buffs{position:absolute;left:var(--sl);top:calc(var(--st) + 7.6rem);display:flex;gap:.3rem;pointer-events:none}
+.buff{width:2.2rem;height:2.2rem;border:1px solid var(--gold2);border-radius:.3rem;background:#0a0d1ccc;display:flex;align-items:center;justify-content:center;position:relative}
+.buff .pi{width:1.6rem;height:1.6rem}.buff small{position:absolute;right:-.2rem;bottom:-.4rem;font-size:.8rem;text-shadow:1px 1px 0 #000}
+/* top menu bar */
+#topbar{position:absolute;top:var(--st);left:calc(var(--sl) + 22rem);right:calc(var(--sr) + 13.4rem);display:flex;gap:.5rem;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:.3rem .2rem}
+#topbar::-webkit-scrollbar{display:none}
+/* right-aligned via an auto margin (not justify-content:flex-end) so overflow stays scrollable and measurable */
+#topbar>:first-child{margin-left:auto}
+#hud .tb{flex:0 0 auto;width:4.6rem;height:4.8rem;padding:.3rem 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;font-size:.95rem;line-height:1.1;white-space:nowrap;background:linear-gradient(180deg,#2b3566,#171d3c)}
+.tb .pi{width:2.4rem;height:2.4rem}
+.tb.on{border-color:#7dff8a;box-shadow:0 0 0 2px #0a0d1c,0 0 1rem #7dff8a}
+.gold{flex:0 0 auto;display:flex;align-items:center;gap:.4rem;height:2.8rem;margin:1rem .2rem 0 0;padding:0 .9rem 0 .4rem;background:#0a0d1cd0;border:1px solid var(--gold2);border-radius:1.4rem;font-size:1.25rem;color:var(--gold)}
+.gold .pi{width:2rem;height:2rem}
+body.barc1 #topbar .lp1,body.barc2 #topbar .lp2{display:none}
+/* minimap (top-right) */
+#mm{position:absolute;right:var(--sr);top:var(--st);width:12.6rem;padding:.4rem;cursor:pointer}
+#mmc{display:block;width:100%;height:auto;aspect-ratio:138/104;image-rendering:pixelated;background:#0a0d1c}
+#mmn{font-size:1.15rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:.2rem .2rem 0}
+#mmxy{font-size:1.05rem;color:var(--dim);display:flex;justify-content:space-between;padding:0 .2rem}
+/* quest tracker (left side) */
+#quest{position:absolute;left:var(--sl);top:calc(var(--st) + 10.4rem);width:18rem;padding:.5rem .8rem;font-size:1.1rem;line-height:1.4;cursor:pointer;background:linear-gradient(90deg,#161c38e6,#161c3899)}
+#quest b{color:var(--gold);font-weight:500;font-size:1.1rem}
+#quest .qk{color:#ffe39a}
+/* floating joystick (bottom-left) */
+#joyzone{position:absolute;left:0;bottom:0;width:min(46vw,30rem);height:min(38vh,24rem);touch-action:none}
+#joy{position:absolute;left:calc(var(--sl) + 1.6rem);bottom:calc(var(--sb) + 1.6rem);width:12rem;height:12rem;border-radius:50%;background:radial-gradient(circle,#2a346888 0 55%,#141a33aa 56%);border:.3rem solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,inset 0 0 1.2rem #000;opacity:.7;transition:left .15s,top .15s,bottom .15s,opacity .2s;pointer-events:none}
+#joy.act{opacity:1;transition:opacity .1s}
+#joy::after{content:'';position:absolute;inset:1.3rem;border-radius:50%;border:1px dashed #e8c46a55}
+#knob{position:absolute;left:50%;top:50%;width:4.6rem;height:4.6rem;margin:-2.3rem 0 0 -2.3rem;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fb2ff,#2f5cc0 60%,#1a3070);border:2px solid var(--gold);box-shadow:0 2px 6px #000a}
+/* combat buttons (bottom-right) */
+#acts{position:absolute;right:var(--sr);bottom:var(--sb);width:20.4rem;height:18.4rem;pointer-events:none}
+#hud .rb{pointer-events:auto;position:absolute;width:5.4rem;height:5.4rem;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.95rem;line-height:1;background:radial-gradient(circle at 40% 30%,#3d4a8c,#161c3a 70%);border:2px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,0 3px 6px #000a}
+.rb .pi{width:2.6rem;height:2.6rem;margin-bottom:.1rem}
+#hud .rb.big{width:7.8rem;height:7.8rem;right:.4rem;bottom:.4rem;background:radial-gradient(circle at 40% 30%,#c0533d,#5a1a14 70%);border-color:var(--gold)}
+.rb.big .pi{width:3.6rem;height:3.6rem}
+#skill{right:9rem;bottom:.4rem}#bPot{right:7.6rem;bottom:6.8rem}#bPick{right:.8rem;bottom:9rem}#bAuto{right:14.2rem;bottom:5.6rem}
+#hud .rb.on{border-color:#7dff8a;box-shadow:0 0 0 2px #0a0d1c,0 0 1.4rem #7dff8a}
+.rb .q{position:absolute;right:-.2rem;bottom:-.2rem;background:#0a0d1c;border:1px solid var(--gold2);border-radius:.6rem;font-size:1rem;padding:0 .3rem}
+/* compact chat (bottom) */
+#chat{position:absolute;bottom:var(--sb);left:calc(var(--sl) + 15rem);right:calc(var(--sr) + 21.6rem);display:flex;align-items:flex-end;gap:.4rem;pointer-events:none}
+#log{flex:1;min-width:0;font-size:1.15rem;line-height:1.45;height:calc(1.45em * 4 + .8rem);overflow:hidden;padding:.4rem .7rem;display:flex;flex-direction:column;justify-content:flex-end;text-shadow:1px 1px 0 #000,0 0 3px #000;background:linear-gradient(90deg,#0a0d1caa,#0a0d1c33);border-radius:.4rem;pointer-events:auto;cursor:pointer}
+#log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hud #bChat{pointer-events:auto;width:3.8rem;height:3.8rem;padding:0;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+#bChat .pi{width:2.4rem;height:2.4rem}
+.ch-world{color:#ffcf6b}.ch-whisper{color:#e9a3ff}.ch-party{color:#7fe7ff}.ch-guild{color:#9dff8a}
+/* portrait phones: top bar goes under the status panel + minimap, chat sits above joystick/combat */
+body.portrait #topbar{left:var(--sl);right:var(--sr);top:calc(var(--st) + 13.6rem)}
+body.portrait #topbar>:first-child{margin-left:0}
+body.portrait #quest{top:calc(var(--st) + 19.4rem)}
+body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 19rem)}
+/* windows */
+.win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(44rem,calc(100vw - var(--sl) - var(--sr)));max-height:calc(100vh - var(--st) - var(--sb) - 1rem);max-height:calc(100dvh - var(--st) - var(--sb) - 1rem);overflow:auto;padding:1.2rem;display:none;z-index:8;font-size:1.35rem}
+.win h3{margin:0 0 .8rem;color:var(--gold);display:flex;justify-content:space-between;align-items:center;font-weight:500;font-size:1.6rem}
+#hud .win h3 button{padding:.1rem .9rem}
+.win .note{color:var(--dim);font-size:1.15rem;line-height:1.5}
+#dlgtext{white-space:pre-wrap;line-height:1.55;font-size:1.4rem}
+#dlgopts{display:flex;flex-direction:column;gap:.6rem;margin-top:1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.4rem,1fr));gap:.6rem}
+.slot{background:#0c1022;border:2px solid #3b4680;border-radius:4px;height:6.6rem;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1rem;text-align:center;position:relative;cursor:pointer;padding:2px;overflow:hidden}
+.slot canvas{width:3.2rem;height:3.2rem}
+.slot .q{position:absolute;right:.4rem;top:.1rem;font-size:1.1rem}
 .slot.eq{border-color:var(--gold2)}
-.list{display:flex;flex-direction:column;gap:6px}
-.li{display:flex;align-items:center;gap:8px;background:#0c1022;border:2px solid #3b4680;border-radius:4px;padding:6px}
-.li canvas{width:32px;height:32px}.li .grow{flex:1;font-size:13px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px}
-.stats .s{display:flex;justify-content:space-between;align-items:center;background:#0c1022;border-radius:4px;padding:4px 8px}
-.stats .s button{padding:0 8px;font-size:16px}
-#dead{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:16px 20px;text-align:center;display:none}
+.list{display:flex;flex-direction:column;gap:.6rem}
+.li{display:flex;align-items:center;gap:.8rem;background:#0c1022;border:2px solid #3b4680;border-radius:4px;padding:.6rem}
+.li canvas{width:3.2rem;height:3.2rem}.li .grow{flex:1;font-size:1.3rem}
+.li .pi{width:3.2rem;height:3.2rem}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:.6rem 1.2rem;font-size:1.3rem}
+.stats .s{display:flex;justify-content:space-between;align-items:center;background:#0c1022;border-radius:4px;padding:.4rem .8rem}
+#hud .stats .s button{padding:0 .8rem;font-size:1.6rem}
+.chead{display:flex;gap:1rem;align-items:center;margin-bottom:1rem}.chead canvas{width:6.4rem;height:6.4rem;image-rendering:pixelated;border:2px solid var(--gold2);border-radius:50%;background:radial-gradient(#3b4a8a,#151b38)}
+.chead .bar{width:16rem}
+#dead{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:1.6rem 2rem;text-align:center;display:none;font-size:1.5rem}
 #bmc{width:100%;image-rendering:pixelated;display:block}
-@media (max-width:700px){
- #pstat{width:206px;font-size:11px}
- #menu{left:auto;right:max(8px,env(safe-area-inset-right));top:calc(max(8px,env(safe-area-inset-top)) + 140px);flex-direction:column}
- #menu button{width:46px;height:46px;font-size:9px}#menu button .ic{font-size:18px}
- #mm{width:120px}#mmc{width:108px;height:82px}
- #quest{left:max(8px,env(safe-area-inset-left));right:auto;top:calc(max(8px,env(safe-area-inset-top)) + 84px);width:206px}
- #chat{left:max(8px,env(safe-area-inset-left));transform:none;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 136px);width:calc(100vw - 76px)}
- #log{max-height:66px}
- #joy{width:120px;height:120px}#knob{left:34px;top:34px}
-}
+/* chat window: anchored to the top so the on-screen keyboard doesn't cover the input */
+#wChat{top:calc(var(--st) + .4rem);transform:translateX(-50%);width:min(52rem,calc(100vw - var(--sl) - var(--sr)))}
+.tabs2{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
+#hud .tabs2 button{padding:.3rem .8rem;font-size:1.15rem;background:#1a2042}
+#hud .tabs2 button.on{background:linear-gradient(180deg,#5a4bb0,#3b2f85)}
+#chlist{height:min(36vh,30rem);overflow-y:auto;background:#0a0d1c99;border-radius:.4rem;padding:.5rem .7rem;font-size:1.25rem;line-height:1.5;user-select:text;-webkit-user-select:text}
+#chatin{display:flex;gap:.4rem;margin-top:.6rem}
+#chatin input{padding:.6rem .8rem;font-size:16px;background:#0c1022}
+#wto{flex:0 0 9rem;display:none}
+#chnote{color:var(--dim);font-size:1.1rem;min-height:1.4rem;margin-top:.3rem}
+/* settings / more */
+.opt{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid #ffffff14}
+.seg{display:flex;gap:.3rem;flex-wrap:wrap;justify-content:flex-end}
+#hud .seg button{padding:.4rem .8rem;font-size:1.15rem;background:#1a2042}
+#hud .seg button.on{background:linear-gradient(180deg,#5a4bb0,#3b2f85);border-color:var(--gold)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(7.2rem,1fr));gap:.6rem}
+#hud .mgrid button{height:7rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;font-size:1.1rem;padding:.4rem}
+.mgrid .pi{width:3rem;height:3rem}
+#fps{position:absolute;left:50%;top:var(--st);transform:translateX(-50%);font-size:1.1rem;color:#7dff8a;text-shadow:1px 1px 0 #000;pointer-events:none;display:none}
 </style>
 </head>
 <body>
@@ -116,36 +166,67 @@ input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;bord
 <div id="credit"><a href="credits.html" target="_blank">เครดิตภาพ</a></div>
 <div id="hud">
   <div id="pstat" class="frame">
-    <canvas id="portrait" width="32" height="32"></canvas><div id="lvb" class="num">Lv 1</div>
-    <div class="nm"><span id="hName">-</span><span id="hJob" style="color:var(--dim);font-size:10px"></span></div>
-    <div class="bar"><i id="hpb"></i><b id="hpt" class="num"></b></div>
-    <div class="bar"><i id="spb" style="background:var(--sp)"></i><b id="spt" class="num"></b></div>
-    <div class="bar" style="height:6px"><i id="xpb" style="background:var(--xp)"></i></div>
-    <div id="zeny">Zeny <span class="num" id="hZ">0</span> · EXP <span class="num" id="hX">0%</span></div>
+    <button id="pport" aria-label="ข้อมูลตัวละคร"><canvas id="portrait" width="32" height="32"></canvas><span id="lvb" class="num">Lv 1</span></button>
+    <div class="nm"><span id="hName">-</span><span id="hJob"></span></div>
+    <div class="bar hp"><i id="hpb"></i><b id="hpt" class="num"></b></div>
+    <div class="bar sp"><i id="spb"></i><b id="spt" class="num"></b></div>
+    <div class="bar xp"><i id="xpb"></i><b id="hX" class="num">0%</b></div>
   </div>
-  <div id="menu">
-    <button id="bBag"><span class="ic">🎒</span>กระเป๋า</button>
-    <button id="bStat"><span class="ic">📜</span>สเตตัส</button>
-    <button id="bMap"><span class="ic">🗺️</span>แผนที่</button>
+  <div id="buffs"></div>
+  <div id="topbar">
+    <div class="gold" title="Zeny"><span class="pi" data-icon="coin"></span><span id="hZ" class="num">0</span></div>
+    <button class="tb lp2" id="bSkill" data-icon="skill">สกิล</button>
+    <button class="tb" id="bEquip" data-icon="equip">อุปกรณ์</button>
+    <button class="tb" id="bBag" data-icon="bag">กระเป๋า</button>
+    <button class="tb lp2" id="bQuest" data-icon="quest">เควส</button>
+    <button class="tb" id="bMap" data-icon="map">แผนที่</button>
+    <button class="tb lp1" id="bParty" data-icon="party">ปาร์ตี้</button>
+    <button class="tb lp1" id="bGuild" data-icon="guild">กิลด์</button>
+    <button class="tb lp1" id="bAutoT" data-icon="auto">ออโต้</button>
+    <button class="tb lp1" id="bSet" data-icon="gear">ตั้งค่า</button>
+    <button class="tb" id="bMore" data-icon="more">เพิ่มเติม</button>
   </div>
-  <div id="mm" class="frame"><canvas id="mmc" width="138" height="104"></canvas><div id="mmn">-</div><div id="mmxy"><span id="mmp">👥 1</span><span id="mmxy2" class="num">0,0</span></div></div>
-  <div id="quest" class="frame"><b>📌 ภารกิจ</b><div id="qt">-</div></div>
-  <div id="joy"><div id="knob"></div></div>
+  <div id="mm" class="frame" title="แตะเพื่อเปิดแผนที่โลก"><canvas id="mmc" width="138" height="104"></canvas><div id="mmn">-</div><div id="mmxy"><span id="mmp">1</span><span id="mmxy2" class="num">0,0</span></div></div>
+  <div id="quest" class="frame"><b>📌 ภารกิจหลัก</b><div id="qt">-</div></div>
+  <div id="joyzone"><div id="joy"><div id="knob"></div></div></div>
+  <div id="chat"><div id="log" title="แตะเพื่อเปิดแชท"></div><button id="bChat" data-icon="chat" aria-label="แชท"></button></div>
   <div id="acts">
-    <button class="rb big" id="bAtk"><span class="ic">⚔️</span>โจมตี</button>
-    <button class="rb" id="skill" style="right:86px;bottom:4px"><span class="ic">💥</span>Bash</button>
-    <button class="rb" id="bPot" style="right:72px;bottom:70px"><span class="ic">🧪</span>ยา<span class="q num" id="potq">0</span></button>
-    <button class="rb" id="bPick" style="right:6px;bottom:90px"><span class="ic">✋</span>เก็บ</button>
-    <button class="rb" id="bAuto" style="right:140px;bottom:62px"><span class="ic">🤖</span>AUTO</button>
+    <button class="rb big" id="bAtk" data-icon="attack">โจมตี</button>
+    <button class="rb" id="skill" data-icon="skill">Bash</button>
+    <button class="rb" id="bPot" data-icon="potion">ยา<span class="q num" id="potq">0</span></button>
+    <button class="rb" id="bPick" data-icon="loot">เก็บ</button>
+    <button class="rb" id="bAuto" data-icon="auto">AUTO</button>
   </div>
-  <div id="chat"><div id="log"></div><div id="chatin"><input id="ci" maxlength="120" placeholder="พิมพ์แชท..."><button id="cs">ส่ง</button></div></div>
+  <div id="fps" class="num"></div>
   <div id="dead" class="frame">คุณหมดสติ<br><button id="bRes" style="margin-top:10px">ฟื้นที่โซลคารา</button></div>
   <div id="wDlg" class="win frame"><h3><span id="dlgname">NPC</span><button class="x">✕</button></h3><div id="dlgtext"></div><div id="dlgopts"></div></div>
-  <div id="wBag" class="win frame"><h3><span>กระเป๋า</span><button class="x">✕</button></h3><div style="font-size:12px;color:var(--dim);margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด)</div><div class="grid" id="eqgrid"></div><div style="font-size:12px;color:var(--dim);margin:8px 0 6px">ของในกระเป๋า (แตะเพื่อใช้/สวม)</div><div class="grid" id="invgrid"></div></div>
-  <div id="wStat" class="win frame"><h3><span>สเตตัส</span><button class="x">✕</button></h3><div id="statbody"></div></div>
+  <div id="wBag" class="win frame"><h3><span>กระเป๋า</span><button class="x">✕</button></h3><div class="note" style="margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด)</div><div class="grid" id="eqgrid"></div><div class="note" style="margin:8px 0 6px">ของในกระเป๋า (แตะเพื่อใช้/สวม)</div><div class="grid" id="invgrid"></div></div>
+  <div id="wEquip" class="win frame"><h3><span>อุปกรณ์</span><button class="x">✕</button></h3><div id="equipbody"></div></div>
+  <div id="wStat" class="win frame"><h3><span>ข้อมูลตัวละคร</span><button class="x">✕</button></h3><div id="statbody"></div></div>
+  <div id="wSkill" class="win frame"><h3><span>สกิล</span><button class="x">✕</button></h3><div id="skillbody"></div></div>
+  <div id="wQuest" class="win frame"><h3><span>ภารกิจ</span><button class="x">✕</button></h3><div id="questbody"></div></div>
+  <div id="wParty" class="win frame"><h3><span>ปาร์ตี้</span><button class="x">✕</button></h3><div class="note">ระบบปาร์ตี้ยังไม่เปิดให้บริการ<br>เมื่อเปิดแล้วจะสามารถชวนเพื่อน แบ่ง EXP และเห็นตำแหน่งสมาชิกบนแผนที่ได้</div></div>
+  <div id="wGuild" class="win frame"><h3><span>กิลด์</span><button class="x">✕</button></h3><div class="note">ระบบกิลด์ยังไม่เปิดให้บริการ<br>เมื่อเปิดแล้วจะสามารถสร้าง/เข้าร่วมกิลด์ และคุยในช่องแชทกิลด์ได้</div></div>
   <div id="wShop" class="win frame"><h3><span id="shopt">ร้านค้า</span><button class="x">✕</button></h3><div class="list" id="shoplist"></div></div>
   <div id="wMap" class="win frame"><h3><span id="bmn">แผนที่</span><button class="x">✕</button></h3><canvas id="bmc"></canvas></div>
+  <div id="wChat" class="win frame"><h3><span>แชท</span><button class="x">✕</button></h3>
+    <div class="tabs2" id="chtabs"><button data-ch="all" class="on">ทั้งหมด</button><button data-ch="sys">ระบบ</button><button data-ch="local">ท้องถิ่น</button><button data-ch="world">โลก</button><button data-ch="party">ปาร์ตี้</button><button data-ch="guild">กิลด์</button><button data-ch="whisper">กระซิบ</button></div>
+    <div id="chlist"></div>
+    <div id="chatin"><input id="wto" maxlength="14" placeholder="ชื่อผู้รับ"><input id="ci" maxlength="120" placeholder="พิมพ์แชท..." enterkeyhint="send"><button id="cs">ส่ง</button></div>
+    <div id="chnote"></div>
+  </div>
+  <div id="wSet" class="win frame"><h3><span>ตั้งค่า</span><button class="x">✕</button></h3>
+    <div class="opt"><span>ขนาด UI</span><div class="seg" data-k="uiSize"><button data-v="0.85">เล็ก</button><button data-v="1">ปกติ</button><button data-v="1.15">ใหญ่</button></div></div>
+    <div class="opt"><span>ระยะกล้อง</span><div class="seg" data-k="zoom"><button data-v="near">ใกล้</button><button data-v="normal">ปกติ</button><button data-v="far">ไกล</button></div></div>
+    <div class="opt"><span>จอยสติ๊ก</span><div class="seg" data-k="joy"><button data-v="float">ลอยตามนิ้ว</button><button data-v="fixed">ตายตัว</button></div></div>
+    <div class="opt"><span>แสดงชื่อผู้เล่น/มอน</span><div class="seg" data-k="names"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
+    <div class="opt"><span>แสดง FPS</span><div class="seg" data-k="fps"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
+    <div class="opt"><span>เต็มจอ</span><div class="seg"><button id="bFull">สลับเต็มจอ</button></div></div>
+    <div class="note" style="margin-top:8px">คีย์บอร์ด: WASD/ลูกศร เดิน · Space โจมตี · Q สกิล · 1 ยา · I กระเป๋า · M แผนที่ · Enter แชท · Esc ปิดหน้าต่าง</div>
+  </div>
+  <div id="wMore" class="win frame"><h3><span>เมนู</span><button class="x">✕</button></h3><div class="mgrid" id="moregrid"></div></div>
 </div>
+<script src="hud.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

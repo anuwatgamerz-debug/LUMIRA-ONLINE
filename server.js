@@ -492,9 +492,24 @@ function handle(p, m) {
     }
     case 'npcAct': { const [act, arg] = String(m.a || '').split(':'); npcTalk(p, String(m.id), act, arg); break; }
     case 'chat': {
-      const msg = String(m.m || '').slice(0, 120).trim(); if (!msg || Date.now() - p.lastChat < 700) return;
-      p.lastChat = Date.now();
-      bcast(c.map, { t: 'chat', id: p.id, from: c.name, m: msg });
+      const msg = String(m.m || '').slice(0, 120).trim(); if (!msg) return;
+      if (Date.now() - p.lastChat < 700) return sys(p, 'พิมพ์เร็วเกินไป รอสักครู่แล้วส่งใหม่', '#ff8b8b');
+      const ch = m.ch === 'world' || m.ch === 'whisper' ? m.ch : 'local'; // old clients send no ch -> local
+      if (ch === 'world') {
+        if (Date.now() - (p.lastWorld || 0) < 3000) return sys(p, 'แชทโลกส่งได้ทุก 3 วินาที');
+        p.lastWorld = p.lastChat = Date.now();
+        bcastAll({ t: 'chat', ch, id: p.id, from: c.name, m: msg });
+      } else if (ch === 'whisper') {
+        const to = String(m.to || '').trim().toLowerCase();
+        const o = [...players.values()].find(o => o.c.name.toLowerCase() === to);
+        if (!o) return sys(p, `ไม่พบผู้เล่นชื่อ "${String(m.to || '').slice(0, 14)}" ที่ออนไลน์อยู่`);
+        p.lastChat = Date.now();
+        const pkt = { t: 'chat', ch, id: p.id, from: c.name, to: o.c.name, m: msg };
+        send(o, pkt); if (o !== p) send(p, pkt);
+      } else {
+        p.lastChat = Date.now();
+        bcast(c.map, { t: 'chat', id: p.id, from: c.name, m: msg });
+      }
       break;
     }
     case 'use': {
