@@ -149,7 +149,7 @@
   }).catch(() => { });
 
   // ---------------------------------------------------------- settings
-  const DEF = { uiSize: 1, zoom: 'normal', joy: 'float', names: true, fps: false, qCol: false };
+  const DEF = { uiSize: 1, zoom: 'normal', joy: 'float', names: true, fps: false, qCol: false, chrHD: true };
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('lmo_set') || '{}') || {}; } catch (e) { }
   const S = Object.assign({}, DEF, saved);
   function saveSettings() { try { localStorage.setItem('lmo_set', JSON.stringify(S)); } catch (e) { } layout(); }

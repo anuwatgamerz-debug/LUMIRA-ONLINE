@@ -460,7 +460,9 @@ function drawPortrait() {
   const n = heroOf(me.look), L = META.lpc[n], im = img(n), g = $('portrait').getContext('2d');
   if (!L || !im || !anchorsFor(me.look.sex)) { if (!portraitT) portraitT = setTimeout(() => { portraitT = 0; drawPortrait(); }, 400); return; }
   const pg = portC.getContext('2d'); pg.imageSmoothingEnabled = false; pg.clearRect(0, 0, 64, 64);
+  lastPaperSet = null;
   drawHero(me.look, 'stand', 0, 2, 32, 60, 1, me.eq.chead || me.eq.head || 0, pg, { wpn: me.eq.wpn, arm: me.eq.arm, cls: me.cls });
+  if (lastPaperSet === 'hd') { pg.clearRect(0, 0, 64, 64); drawHero(me.look, 'stand', 0, 2, 32, 68, 1, me.eq.chead || me.eq.head || 0, pg, { wpn: me.eq.wpn, arm: me.eq.arm, cls: me.cls }); } // HD: same head framing
   g.imageSmoothingEnabled = false; g.clearRect(0, 0, 32, 32); g.drawImage(portC, 16, 4, 32, 32, 0, 1, 32, 32);
 }
 // ------------------------------------------------------------ chat (compact 4-line log + full window with channels)
@@ -611,6 +613,7 @@ function renderSettings() {
 document.querySelectorAll('#wSet .seg[data-k] button').forEach(b => b.onclick = () => {
   const v = b.dataset.v; HUD.S[b.parentNode.dataset.k] = v === 'true' ? true : v === 'false' ? false : isNaN(+v) ? v : +v;
   HUD.saveSettings(); resize(); renderSettings();
+  if (b.parentNode.dataset.k === 'chrHD' && me) drawPortrait();
 });
 $('bFull').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => { }); } catch (e) { } };
 const MORE = [['char', 'ตัวละคร', 'pport'], ['skill', 'สกิล', 'bSkill'], ['equip', 'อุปกรณ์', 'bEquip'], ['bag', 'กระเป๋า', 'bBag'], ['quest', 'เควส', 'bQuest'], ['map', 'แผนที่', 'bMap'],
@@ -764,6 +767,9 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = 0; }); // don't
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = 0; walkTick(); });
 
 // ------------------------------------------------------------ render
+// players and NPCs share one soft oval shadow (never baked into the sprites): faint wide oval + darker core
+function charShadow(x, y) { shadowA(x, y, 12, 0.14); shadowA(x, y, 8, 0.2); }
+function shadowA(x, y, rw, a) { ctx.fillStyle = `rgba(16,20,10,${a})`; const rh = Math.max(2, Math.round(rw * 0.38)); for (let i = -rh; i <= rh; i++) { const w = Math.round(rw * Math.sqrt(1 - (i / (rh + 0.5)) ** 2)); ctx.fillRect(Math.round(x) - w, Math.round(y) + i, w * 2, 1); } }
 function shadow(x, y, rw) { ctx.fillStyle = 'rgba(16,20,10,0.3)'; const rh = Math.max(2, Math.round(rw * 0.4)); for (let i = -rh; i <= rh; i++) { const w = Math.round(rw * Math.sqrt(1 - (i / (rh + 0.5)) ** 2)); ctx.fillRect(Math.round(x) - w, Math.round(y) + i, w * 2, 1); } }
 function entAnim(e, name, tn) {
   if (e.dead) return ['hurt', tn - (e.dieT || tn - 9)];
@@ -802,7 +808,13 @@ function frame(t) {
   for (const p of props) if (p.x > vx0 - 140 && p.x < vx1 + 140 && p.y > vy0 && p.y < vy1 + 60) list.push({ y: p.sort ?? p.y, f: () => { if (p.sh) shadow(p.x, p.y, p.sh); if (!drawProp(p.n, p.x, p.y, p.tree ? canopyAlpha(p) : 1) && p.fb && META.px[p.fb]) { if (p.fsh) shadow(p.x, p.y - 4, p.fsh); drawProp(p.fb, p.x, p.y + (p.fy || 0) - (p.tree ? 4 : 0)); } } });
   for (const n of map.npcs) {
     const x = (n.x + 0.5) * TP, y = (n.y + 0.5) * TP + 12;
-    list.push({ y, f: () => { shadow(x, y, 9); drawNpc(n, x, y, tn); const b = Math.round(Math.sin(tn * 4) * 2); drawNpcBadge(n, x, y - 60 + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
+    list.push({ y, f: () => {
+      const person = n.look && typeof n.look === 'object';
+      if (person) { charShadow(x, y); if (n.look.aura) drawAura(ctx, x, y, n.look.aura, tn, false); } else shadow(x, y, 9);
+      lastPaperSet = null; drawNpc(n, x, y, tn);
+      if (person && n.look.aura) drawAura(ctx, x, y, n.look.aura, tn, true);
+      const top = person && lastPaperSet === 'hd' ? heroTopOf('hd', n.look.head) + 20 : 60; // the 24px badge sits fully above the head / headgear
+      const b = Math.round(Math.sin(tn * 4) * 2); drawNpcBadge(n, x, y - top + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
   }
   drawNodes(list, vx0, vy0, vx1, vy1, tn, t);
   for (const [id, e] of ents) {
@@ -825,12 +837,16 @@ function frame(t) {
       if (info && HUD.S.names) labels.push([x, y + 6, `${info.n}`, info.boss ? '#ff8b8b' : '#ffffff', info.boss ? 'boss' : 'mob', info.lv]);
     } });
     else if (e.kind === 'p') list.push({ y, f: () => {
-      const nm = heroOf(e.look); shadow(x, y, 10);
+      const nm = heroOf(e.look); charShadow(x, y);
       const [an, at] = entAnim(e, nm, tn);
+      if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, false);
+      lastPaperSet = null;
       drawHero(e.look, an, at, e.row ?? 2, x, y, 1, e.head, ctx, { wpn: e.wpn, arm: e.arm, cls: e.cls });
+      e.top = lastPaperSet === 'hd' ? heroTopOf('hd', typeof e.head === 'string' ? e.head : (e.head && ITEMS[e.head] && ITEMS[e.head].vis) || '') : 60;
+      if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, true);
       hpBar(x, y + 4, e.hp / e.maxhp, 24, '#58d65a');
       if (HUD.S.names || id === myId) labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : '#c8f7c5', 'pc']);
-      const b = bubbles.get(id); if (b && b.until > t) labels.push([x, y - 60, b.m, '#2a1f3a', 'bubble']);
+      const b = bubbles.get(id); if (b && b.until > t) labels.push([x, y - e.top, b.m, '#2a1f3a', 'bubble']);
     } });
   }
   for (let i = ghosts.length - 1; i >= 0; i--) {
@@ -858,10 +874,10 @@ function frame(t) {
       if (f.k === 'lvup') drawMagicCircle(x, y - 2, tn, 0.6, '#ffd34d');
       for (let j = 0; j < 14; j++) { const ph = (age / dur + j / 14) % 1; ctx.globalAlpha = 1 - ph; ctx.fillStyle = f.k === 'lvup' ? (j % 2 ? '#ffd34d' : '#fff6b0') : f.buff ? (j % 2 ? '#7fd4ff' : '#e6f8ff') : (j % 2 ? '#7bd67b' : '#d6ffd6'); ctx.fillRect(Math.round(x + Math.sin(j * 2.3 + age / 200) * 12), Math.round(y - ph * 56), 2, 2); }
       ctx.globalAlpha = 1;
-      if (f.k === 'lvup') labels.push([x, y - 70, f.cls ? 'CLASS CHANGE!' : 'LEVEL UP!', '#ffd34d', 'big']);
+      if (f.k === 'lvup') labels.push([x, y - (e.top || 60) - 10, f.cls ? 'CLASS CHANGE!' : 'LEVEL UP!', '#ffd34d', 'big']);
     } else if (f.k === 'sname') { // skill name over the caster
       if (age > 900) { fxFree(i); continue; }
-      const e = ents.get(f.id); if (e) labels.push([(e.x + 0.5) * TP, (e.y + 0.5) * TP - 62 - age / 60, f.v, '#ffe39a', 'sname']);
+      const e = ents.get(f.id); if (e) labels.push([(e.x + 0.5) * TP, (e.y + 0.5) * TP + 12 - (e.kind === 'p' && e.top ? e.top + 14 : 74) - age / 60, f.v, '#ffe39a', 'sname']);
     } else if (f.k === 'proj') { // small bolt flying to the target
       if (age > 260) { fxFree(i); continue; }
       const a = ents.get(f.from), b = ents.get(f.to); if (!a || !b) continue; const p = age / 260;

@@ -29,6 +29,8 @@ RAMPS = {
     'skin':   ['#5a3426', '#8c5639', '#c08560', '#e8b48c', '#f6d2b0'],   # key ramp, recoloured by the engine
     'hair':   ['#2a1a14', '#4a2c1c', '#6e4228', '#956238'],              # key ramp, recoloured by the engine
     'white':  ['#9a9aa8', '#d8dce6', '#ffffff'],
+    'rose':   ['#7a3442', '#b85866', '#e48a8e', '#f4b8b0'],                # blush, lips (HD faces)
+    'iris':   ['#22305a', '#3a5a8a', '#5f8fc4', '#9cc8ee'],                # eye colour (HD faces)
     'eye':    ['#1a1420', '#3a5a8a', '#ffffff'],
 }
 OUTLINE_FALLBACK = '#1a1420'

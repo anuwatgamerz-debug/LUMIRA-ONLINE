@@ -1,0 +1,459 @@
+{
+ "set": "hd",
+ "frame": [
+  64,
+  80
+ ],
+ "pivot": [
+  32,
+  74
+ ],
+ "dirs": [
+  "N",
+  "S",
+  "E"
+ ],
+ "mirror": {
+  "W": "E"
+ },
+ "dirs8": "reserved: diagonals use the nearest stored direction",
+ "groups": {
+  "a": {
+   "cols": 9,
+   "index": {
+    "idle": {
+     "N": 0,
+     "S": 4,
+     "E": 8
+    },
+    "walk": {
+     "N": 12,
+     "S": 18,
+     "E": 24
+    },
+    "sit": {
+     "N": 30,
+     "S": 31,
+     "E": 32
+    },
+    "interact": {
+     "N": 33,
+     "S": 35,
+     "E": 37
+    }
+   }
+  },
+  "b": {
+   "cols": 9,
+   "index": {
+    "attack": {
+     "N": 0,
+     "S": 6,
+     "E": 12
+    },
+    "cast": {
+     "N": 18,
+     "S": 24,
+     "E": 30
+    },
+    "hit": {
+     "N": 36,
+     "S": 39,
+     "E": 42
+    },
+    "death": {
+     "N": 45,
+     "S": 51,
+     "E": 57
+    }
+   }
+  },
+  "c": {
+   "cols": 9,
+   "index": {
+    "attack": {
+     "N": 0,
+     "S": 6,
+     "E": 12
+    },
+    "cast": {
+     "N": 18,
+     "S": 24,
+     "E": 30
+    },
+    "hit": {
+     "N": 36,
+     "S": 39,
+     "E": 42
+    },
+    "death": {
+     "N": 45,
+     "S": 51,
+     "E": 57
+    }
+   }
+  }
+ },
+ "anims": {
+  "idle": {
+   "n": 4,
+   "fps": 4,
+   "loop": 1,
+   "group": "a"
+  },
+  "walk": {
+   "n": 6,
+   "fps": 10,
+   "loop": 1,
+   "group": "a"
+  },
+  "attack": {
+   "n": 6,
+   "fps": 14,
+   "loop": 0,
+   "group": "b"
+  },
+  "cast": {
+   "n": 6,
+   "fps": 10,
+   "loop": 0,
+   "group": "b"
+  },
+  "hit": {
+   "n": 3,
+   "fps": 10,
+   "loop": 0,
+   "group": "b"
+  },
+  "death": {
+   "n": 6,
+   "fps": 8,
+   "loop": 0,
+   "group": "b"
+  },
+  "sit": {
+   "n": 1,
+   "fps": 1,
+   "loop": 1,
+   "group": "a"
+  },
+  "interact": {
+   "n": 2,
+   "fps": 5,
+   "loop": 1,
+   "group": "a"
+  },
+  "run": {
+   "n": 6,
+   "fps": 15,
+   "loop": 1,
+   "group": "a",
+   "alias": "walk"
+  }
+ },
+ "variants": {
+  "bow": {
+   "b": "c"
+  }
+ },
+ "height": 50,
+ "head": [
+  18,
+  16
+ ],
+ "scale_vs_v1": 1.19,
+ "layers": {
+  "chr_base_male": "chr_hd/base/chr_base_male",
+  "chr_face_male": "chr_hd/face/chr_face_male",
+  "eq_armor_tunic_blue_male": "chr_hd/armor/eq_armor_tunic_blue_male",
+  "eq_armor_tunic_brown_male": "chr_hd/armor/eq_armor_tunic_brown_male",
+  "eq_armor_tunic_green_male": "chr_hd/armor/eq_armor_tunic_green_male",
+  "eq_armor_tunic_red_male": "chr_hd/armor/eq_armor_tunic_red_male",
+  "eq_armor_tunic_violet_male": "chr_hd/armor/eq_armor_tunic_violet_male",
+  "eq_armor_leather_male": "chr_hd/armor/eq_armor_leather_male",
+  "eq_armor_chain_male": "chr_hd/armor/eq_armor_chain_male",
+  "eq_armor_plate_male": "chr_hd/armor/eq_armor_plate_male",
+  "eq_armor_robe_blue_male": "chr_hd/armor/eq_armor_robe_blue_male",
+  "eq_armor_robe_violet_male": "chr_hd/armor/eq_armor_robe_violet_male",
+  "eq_armor_robe_ivory_male": "chr_hd/armor/eq_armor_robe_ivory_male",
+  "eq_armor_robe_brown_male": "chr_hd/armor/eq_armor_robe_brown_male",
+  "chr_class_adventurer_male": "chr_hd/classes/chr_class_adventurer_male",
+  "chr_class_vanguard_male": "chr_hd/classes/chr_class_vanguard_male",
+  "chr_class_ranger_male": "chr_hd/classes/chr_class_ranger_male",
+  "chr_class_arcanist_male": "chr_hd/classes/chr_class_arcanist_male",
+  "chr_back_adventurer_male": "chr_hd/classes/chr_back_adventurer_male",
+  "chr_back_ranger_male": "chr_hd/classes/chr_back_ranger_male",
+  "chr_back_cape_blue_male": "chr_hd/classes/chr_back_cape_blue_male",
+  "chr_back_cape_red_male": "chr_hd/classes/chr_back_cape_red_male",
+  "chr_back_cape_gold_male": "chr_hd/classes/chr_back_cape_gold_male",
+  "chr_back_cape_violet_male": "chr_hd/classes/chr_back_cape_violet_male",
+  "npc_outfit_guard_male": "chr_hd/npcs/npc_outfit_guard_male",
+  "npc_outfit_merchant_male": "chr_hd/npcs/npc_outfit_merchant_male",
+  "npc_outfit_blacksmith_male": "chr_hd/npcs/npc_outfit_blacksmith_male",
+  "eq_weapon_sword_male": "chr_hd/weapons/eq_weapon_sword_male",
+  "eq_weapon_greatsword_male": "chr_hd/weapons/eq_weapon_greatsword_male",
+  "eq_weapon_dagger_male": "chr_hd/weapons/eq_weapon_dagger_male",
+  "eq_weapon_bow_male": "chr_hd/weapons/eq_weapon_bow_male",
+  "eq_weapon_staff_male": "chr_hd/weapons/eq_weapon_staff_male",
+  "eq_weapon_wand_male": "chr_hd/weapons/eq_weapon_wand_male",
+  "eq_weapon_mace_male": "chr_hd/weapons/eq_weapon_mace_male",
+  "eq_weapon_spear_male": "chr_hd/weapons/eq_weapon_spear_male",
+  "eq_weapon_axe_male": "chr_hd/weapons/eq_weapon_axe_male",
+  "eq_weapon_pickaxe_male": "chr_hd/weapons/eq_weapon_pickaxe_male",
+  "eq_weapon_device_male": "chr_hd/weapons/eq_weapon_device_male",
+  "eq_shield_round_male": "chr_hd/shields/eq_shield_round_male",
+  "eq_shield_kite_male": "chr_hd/shields/eq_shield_kite_male",
+  "chr_base_female": "chr_hd/base/chr_base_female",
+  "chr_face_female": "chr_hd/face/chr_face_female",
+  "eq_armor_tunic_blue_female": "chr_hd/armor/eq_armor_tunic_blue_female",
+  "eq_armor_tunic_brown_female": "chr_hd/armor/eq_armor_tunic_brown_female",
+  "eq_armor_tunic_green_female": "chr_hd/armor/eq_armor_tunic_green_female",
+  "eq_armor_tunic_red_female": "chr_hd/armor/eq_armor_tunic_red_female",
+  "eq_armor_tunic_violet_female": "chr_hd/armor/eq_armor_tunic_violet_female",
+  "eq_armor_leather_female": "chr_hd/armor/eq_armor_leather_female",
+  "eq_armor_chain_female": "chr_hd/armor/eq_armor_chain_female",
+  "eq_armor_plate_female": "chr_hd/armor/eq_armor_plate_female",
+  "eq_armor_robe_blue_female": "chr_hd/armor/eq_armor_robe_blue_female",
+  "eq_armor_robe_violet_female": "chr_hd/armor/eq_armor_robe_violet_female",
+  "eq_armor_robe_ivory_female": "chr_hd/armor/eq_armor_robe_ivory_female",
+  "eq_armor_robe_brown_female": "chr_hd/armor/eq_armor_robe_brown_female",
+  "chr_class_adventurer_female": "chr_hd/classes/chr_class_adventurer_female",
+  "chr_class_vanguard_female": "chr_hd/classes/chr_class_vanguard_female",
+  "chr_class_ranger_female": "chr_hd/classes/chr_class_ranger_female",
+  "chr_class_arcanist_female": "chr_hd/classes/chr_class_arcanist_female",
+  "chr_back_adventurer_female": "chr_hd/classes/chr_back_adventurer_female",
+  "chr_back_ranger_female": "chr_hd/classes/chr_back_ranger_female",
+  "chr_back_cape_blue_female": "chr_hd/classes/chr_back_cape_blue_female",
+  "chr_back_cape_red_female": "chr_hd/classes/chr_back_cape_red_female",
+  "chr_back_cape_gold_female": "chr_hd/classes/chr_back_cape_gold_female",
+  "chr_back_cape_violet_female": "chr_hd/classes/chr_back_cape_violet_female",
+  "npc_outfit_guard_female": "chr_hd/npcs/npc_outfit_guard_female",
+  "npc_outfit_merchant_female": "chr_hd/npcs/npc_outfit_merchant_female",
+  "npc_outfit_blacksmith_female": "chr_hd/npcs/npc_outfit_blacksmith_female",
+  "eq_weapon_sword_female": "chr_hd/weapons/eq_weapon_sword_female",
+  "eq_weapon_greatsword_female": "chr_hd/weapons/eq_weapon_greatsword_female",
+  "eq_weapon_dagger_female": "chr_hd/weapons/eq_weapon_dagger_female",
+  "eq_weapon_bow_female": "chr_hd/weapons/eq_weapon_bow_female",
+  "eq_weapon_staff_female": "chr_hd/weapons/eq_weapon_staff_female",
+  "eq_weapon_wand_female": "chr_hd/weapons/eq_weapon_wand_female",
+  "eq_weapon_mace_female": "chr_hd/weapons/eq_weapon_mace_female",
+  "eq_weapon_spear_female": "chr_hd/weapons/eq_weapon_spear_female",
+  "eq_weapon_axe_female": "chr_hd/weapons/eq_weapon_axe_female",
+  "eq_weapon_pickaxe_female": "chr_hd/weapons/eq_weapon_pickaxe_female",
+  "eq_weapon_device_female": "chr_hd/weapons/eq_weapon_device_female",
+  "eq_shield_round_female": "chr_hd/shields/eq_shield_round_female",
+  "eq_shield_kite_female": "chr_hd/shields/eq_shield_kite_female",
+  "chr_hair_short": "chr_hd/hair/chr_hair_short",
+  "chr_hair_spiky": "chr_hd/hair/chr_hair_spiky",
+  "chr_hair_ponytail": "chr_hd/hair/chr_hair_ponytail",
+  "chr_hair_long": "chr_hd/hair/chr_hair_long",
+  "chr_hair_twin": "chr_hd/hair/chr_hair_twin",
+  "chr_hair_bun": "chr_hd/hair/chr_hair_bun",
+  "eq_head_cap": "chr_hd/headgear/eq_head_cap",
+  "eq_head_traveler": "chr_hd/headgear/eq_head_traveler",
+  "eq_head_iron": "chr_hd/headgear/eq_head_iron",
+  "eq_head_knight": "chr_hd/headgear/eq_head_knight",
+  "eq_head_hood_green": "chr_hd/headgear/eq_head_hood_green",
+  "eq_head_hood": "chr_hd/headgear/eq_head_hood",
+  "eq_head_ironcrown": "chr_hd/headgear/eq_head_ironcrown",
+  "eq_head_jelcrown": "chr_hd/headgear/eq_head_jelcrown",
+  "eq_head_band_red": "chr_hd/headgear/eq_head_band_red",
+  "eq_head_band_moon": "chr_hd/headgear/eq_head_band_moon",
+  "eq_head_mask_shadow": "chr_hd/headgear/eq_head_mask_shadow",
+  "eq_head_wizard": "chr_hd/headgear/eq_head_wizard"
+ },
+ "bowGroups": [
+  "chr_back_adventurer_female",
+  "chr_back_adventurer_male",
+  "chr_back_cape_blue_female",
+  "chr_back_cape_blue_male",
+  "chr_back_cape_gold_female",
+  "chr_back_cape_gold_male",
+  "chr_back_cape_red_female",
+  "chr_back_cape_red_male",
+  "chr_back_cape_violet_female",
+  "chr_back_cape_violet_male",
+  "chr_back_ranger_female",
+  "chr_back_ranger_male",
+  "chr_base_female",
+  "chr_base_male",
+  "chr_class_adventurer_female",
+  "chr_class_adventurer_male",
+  "chr_class_arcanist_female",
+  "chr_class_arcanist_male",
+  "chr_class_ranger_female",
+  "chr_class_ranger_male",
+  "chr_class_vanguard_female",
+  "chr_class_vanguard_male",
+  "eq_armor_chain_female",
+  "eq_armor_chain_male",
+  "eq_armor_leather_female",
+  "eq_armor_leather_male",
+  "eq_armor_plate_female",
+  "eq_armor_plate_male",
+  "eq_armor_robe_blue_female",
+  "eq_armor_robe_blue_male",
+  "eq_armor_robe_brown_female",
+  "eq_armor_robe_brown_male",
+  "eq_armor_robe_ivory_female",
+  "eq_armor_robe_ivory_male",
+  "eq_armor_robe_violet_female",
+  "eq_armor_robe_violet_male",
+  "eq_armor_tunic_blue_female",
+  "eq_armor_tunic_blue_male",
+  "eq_armor_tunic_brown_female",
+  "eq_armor_tunic_brown_male",
+  "eq_armor_tunic_green_female",
+  "eq_armor_tunic_green_male",
+  "eq_armor_tunic_red_female",
+  "eq_armor_tunic_red_male",
+  "eq_armor_tunic_violet_female",
+  "eq_armor_tunic_violet_male",
+  "npc_outfit_blacksmith_female",
+  "npc_outfit_blacksmith_male",
+  "npc_outfit_guard_female",
+  "npc_outfit_guard_male",
+  "npc_outfit_merchant_female",
+  "npc_outfit_merchant_male"
+ ],
+ "keys": {
+  "hair": [
+   "#2a1a14",
+   "#4a2c1c",
+   "#6e4228",
+   "#956238"
+  ],
+  "skin": [
+   "#5a3426",
+   "#8c5639",
+   "#c08560",
+   "#e8b48c",
+   "#f6d2b0"
+  ]
+ },
+ "tint": [
+  "hair",
+  "face"
+ ],
+ "tunic": [
+  "blue",
+  "brown",
+  "green",
+  "red",
+  "violet"
+ ],
+ "hair": [
+  "short",
+  "spiky",
+  "ponytail",
+  "long",
+  "twin",
+  "bun"
+ ],
+ "headgear": [
+  "cap",
+  "traveler",
+  "iron",
+  "knight",
+  "hood_green",
+  "hood",
+  "ironcrown",
+  "jelcrown",
+  "band_red",
+  "band_moon",
+  "mask_shadow",
+  "wizard"
+ ],
+ "headgearKind": {
+  "cap": "Cap",
+  "traveler": "Hat",
+  "iron": "Helmet",
+  "knight": "Helmet",
+  "hood_green": "Ranger Hood",
+  "hood": "Hood",
+  "ironcrown": "Crown",
+  "jelcrown": "Crown",
+  "band_red": "Headband",
+  "band_moon": "Headband",
+  "mask_shadow": "Mask",
+  "wizard": "Wizard Hat"
+ },
+ "weapons": [
+  "sword",
+  "greatsword",
+  "dagger",
+  "bow",
+  "staff",
+  "wand",
+  "mace",
+  "spear",
+  "axe",
+  "pickaxe",
+  "device"
+ ],
+ "outfits": [
+  "guard",
+  "merchant",
+  "blacksmith"
+ ],
+ "classes": [
+  "adventurer",
+  "vanguard",
+  "ranger",
+  "arcanist"
+ ],
+ "order": {
+  "S": [
+   "back",
+   "base",
+   "face",
+   "armor",
+   "class",
+   "costume",
+   "hair",
+   "weapon",
+   "shield",
+   "head"
+  ],
+  "N": [
+   "base",
+   "face",
+   "armor",
+   "class",
+   "costume",
+   "back",
+   "hair",
+   "weapon",
+   "shield",
+   "head"
+  ],
+  "E": [
+   "shield",
+   "back",
+   "base",
+   "face",
+   "armor",
+   "class",
+   "costume",
+   "hair",
+   "weapon",
+   "head"
+  ]
+ },
+ "slots": [
+  "base",
+  "hair",
+  "face",
+  "armor",
+  "weapon",
+  "shield",
+  "back",
+  "head",
+  "costume",
+  "aura"
+ ],
+ "sexed": [
+  "weapon",
+  "shield"
+ ]
+}

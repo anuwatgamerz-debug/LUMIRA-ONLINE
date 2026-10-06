@@ -228,9 +228,88 @@ function staticTests(R) {
 
   // ---- docs
   const lic = fs.readFileSync(path.join(ROOT, 'docs', 'ASSET_LICENSES.md'), 'utf8'), bible = fs.readFileSync(path.join(ROOT, 'docs', 'LUMIRA_ART_BIBLE.md'), 'utf8');
-  const dirs = ['characters/base', 'characters/hair', 'characters/classes', 'npcs', 'equipment/armor', 'equipment/weapons', 'equipment/shields', 'equipment/headgear', 'world/buildings', 'world/trees', 'world/vegetation', 'world/rocks', 'world/props'];
+  const dirs = ['characters/base', 'characters/hair', 'characters/classes', 'npcs', 'equipment/armor', 'equipment/weapons', 'equipment/shields', 'equipment/headgear', 'world/buildings', 'world/trees', 'world/vegetation', 'world/rocks', 'world/props', ...['base', 'face', 'hair', 'armor', 'classes', 'npcs', 'weapons', 'shields', 'headgear'].map(d => 'chr_hd/' + d)];
   R.ok(dirs.every(d => fs.existsSync(A(d)) && lic.includes('public/assets/' + d + '/')), 'licenses: every art folder is listed in docs/ASSET_LICENSES.md', dirs.filter(d => !lic.includes('public/assets/' + d + '/')).join(','));
   R.ok((bible.match(/^## /gm) || []).length >= 16, 'bible: docs/LUMIRA_ART_BIBLE.md has all 16 sections', (bible.match(/^## /gm) || []).length + ' sections');
+}
+
+// ---------------------------------------------------------------- HD character standard (prototype set, assets/chr_hd)
+function hdStaticTests(R) {
+  const HD = JSON.parse(fs.readFileSync(A('chr_hd/chars.json'), 'utf8')), V1 = JSON.parse(fs.readFileSync(A('characters/chars.json'), 'utf8'));
+  const PAL = palette(), [FW, FH] = HD.frame, n = a => HD.anims[a].n;
+  R.ok(FW === 64 && FH === 80 && HD.pivot[0] === 32 && HD.pivot[1] === 74, 'hd: 64x80 frames, pivot (32,74)', JSON.stringify([HD.frame, HD.pivot]));
+  R.ok(n('idle') === 4 && n('walk') === 6 && n('attack') >= 6 && n('attack') <= 8 && n('cast') === 6 && n('hit') === 3 && n('death') === 6,
+    'hd: animation standard (idle 4, walk 6, attack 6-8, cast 6, hit 3, death 6)', ['idle', 'walk', 'attack', 'cast', 'hit', 'death'].map(a => a + n(a)).join(' '));
+  R.ok(HD.slots.length === 10 && ['base', 'hair', 'face', 'armor', 'weapon', 'shield', 'back', 'head', 'costume', 'aura'].every(k => HD.slots.includes(k)) &&
+    ['S', 'N', 'E'].every(v => HD.slots.filter(k => k !== 'aura').every(k => HD.order[v].includes(k))), 'hd: 10 layer slots, every sheet slot placed in the draw order of all views (aura = engine)');
+  // files, grid, naming, palette, no baked shadow
+  const files = walk(A('chr_hd')).filter(f => f.endsWith('.png')), ims = {};
+  const NAME = /^(chr_base_(male|female)|chr_face_(male|female)|chr_hair_[a-z]+|chr_class_[a-z]+_(male|female)|chr_back_[a-z_]+_(male|female)|eq_armor_[a-z_]+_(male|female)|eq_weapon_[a-z]+_(male|female)|eq_shield_[a-z]+_(male|female)|eq_head_[a-z_]+|npc_outfit_[a-z]+_(male|female))_[abc]\.png$/;
+  R.ok(files.length >= 200 && files.every(f => NAME.test(path.basename(f))), 'hd: file naming convention', files.filter(f => !NAME.test(path.basename(f))).slice(0, 3).join(','));
+  const need = Object.entries(HD.layers).flatMap(([k, p]) => ['a', 'b', ...(HD.bowGroups.includes(k) ? ['c'] : [])].map(g => A(p + '_' + g + '.png')));
+  R.ok(need.every(f => fs.existsSync(f)), 'hd: every layer has groups a/b (+ bow-posed group c for body layers)', need.filter(f => !fs.existsSync(f)).slice(0, 3).join(','));
+  const off = [], semi = [], grid = [];
+  for (const f of files) {
+    const im = ims[f] = readPNG(f), g = path.basename(f).slice(-5, -4), G = HD.groups[g];
+    if (im.w !== G.cols * FW || im.h % FH) grid.push(path.basename(f));
+    const seen = new Set();
+    for (let i = 0; i < im.px.length; i += 4) {
+      const a = im.px[i + 3]; if (!a) continue; if (a < 255) { semi.push(path.basename(f)); break; }
+      const k = (im.px[i] << 16) | (im.px[i + 1] << 8) | im.px[i + 2]; if (seen.has(k)) continue; seen.add(k);
+      if (!k || !PAL.has(hexOf(im.px[i], im.px[i + 1], im.px[i + 2]))) { off.push(path.basename(f) + ' ' + hexOf(im.px[i], im.px[i + 1], im.px[i + 2])); break; }
+    }
+  }
+  R.ok(!grid.length, 'hd: every sheet is 9 frames wide on the 64x80 grid', grid.slice(0, 3).join(','));
+  R.ok(!off.length, 'hd: every pixel is a master palette colour (no pure black)', off.slice(0, 4).join(', '));
+  R.ok(!semi.length, 'hd: no baked shadow or soft pixels in character sheets (shadow is drawn by the engine)', semi.slice(0, 3).join(','));
+  const sheet = (k, g) => ims[A(HD.layers[k] + '_' + g + '.png')];
+  const box = (im, g, k) => bbox(im, (k % 9) * FW, Math.floor(k / 9) * FH, FW, FH);
+  // pivot, height, head ratio, scale vs v1
+  const feet = [], hs = [], jit = [];
+  for (const sx of ['male', 'female']) {
+    const im = sheet('chr_base_' + sx, 'a');
+    for (const an of ['idle', 'walk']) for (const v of HD.dirs) {
+      let prev = null;
+      for (let f = 0; f < n(an); f++) {
+        const b = box(im, 'a', HD.groups.a.index[an][v] + f);
+        if (!b || b.b < 72 || b.b > 74 || Math.abs((b.l + b.r) / 2 - 32) > (an === 'walk' && v === 'E' ? 7 : 3)) feet.push(`${sx} ${an} ${v}${f}: ${b && [b.b, (b.l + b.r) / 2]}`);
+        if (prev && (Math.abs(b.t - prev.t) > 1 || (v !== 'E' && Math.abs(b.l + b.r - prev.l - prev.r) / 2 > 1.5))) jit.push(`${sx} ${an} ${v}${f}`);
+        prev = b;
+      }
+    }
+    hs.push(box(im, 'a', HD.groups.a.index.idle.S).h);
+  }
+  R.ok(!feet.length, 'hd: feet on the ground line (y≈73) and centred in every idle/walk frame', feet.slice(0, 4).join('; '));
+  R.ok(!jit.length, 'hd: idle/walk frames never jump (top moves ≤1px, centre ≤1.5px between frames)', jit.slice(0, 4).join('; '));
+  const heads = hs.map(h => h / HD.head[1]), v1h = V1.height;
+  R.ok(hs.every(h => h >= 48 && h <= 54) && heads.every(r => r >= 3 && r <= 3.5), 'hd: character ≈50px tall, 3-3.5 heads', hs.join(',') + ' / ' + heads.map(r => r.toFixed(2)).join(','));
+  R.ok(hs.every(h => h / v1h >= 1.15 && h / v1h <= 1.25), 'hd: in-game size +15..25% over the v1 characters (same collider / tile)', hs.map(h => (h / v1h).toFixed(2)).join(','));
+  // headgear follows the head: offset between the body's top and the headgear's top is constant through every animation of a view
+  const hg = [];
+  for (const vis of HD.headgear) for (const g of ['a', 'b']) for (const v of HD.dirs) {
+    const body = sheet('chr_hair_short', g), hat = sheet('eq_head_' + vis, g); const offs = new Set();   // the hair layer marks where the head is
+    for (const an of Object.keys(HD.groups[g].index)) { if (an === 'death' || an === 'sit') continue;
+      for (let f = 0; f < n(an); f++) { const k = HD.groups[g].index[an][v] + f, a = box(body, g, k), h = box(hat, g, k); if (!h) { hg.push(`${vis} ${an} ${v}${f} empty`); continue; } offs.add(h.t - a.t); } }
+    if (Math.max(...offs) - Math.min(...offs) > 2) hg.push(`${vis} ${v} ${g}: ${[...offs]}`);
+  }
+  const kinds = new Set(Object.values(HD.headgearKind));
+  R.ok(!hg.length, 'hd: every headgear is drawn in N/S/E (W mirrored) and follows the head in every frame', hg.slice(0, 4).join('; '));
+  R.ok(['Hat', 'Helmet', 'Hood', 'Crown', 'Cap', 'Headband', 'Mask', 'Wizard Hat', 'Ranger Hood'].every(k => kinds.has(k)), 'hd: headgear types Hat/Helmet/Hood/Crown/Cap/Headband/Mask/Wizard Hat/Ranger Hood', [...kinds].join(','));
+  // weapons are visible and move with the swing
+  const wbad = [];
+  for (const wt of ['sword', 'greatsword', 'dagger', 'bow', 'staff', 'wand', 'mace', 'spear']) for (const sx of ['male', 'female']) {
+    const w = sheet('eq_weapon_' + wt + '_' + sx, 'b'); if (!w) { wbad.push(wt + ' missing'); continue; }
+    for (const v of HD.dirs) { const bs = []; for (let f = 0; f < n('attack'); f++) { const b = box(w, 'b', HD.groups.b.index.attack[v] + f); if (!b) wbad.push(`${wt} ${v}${f} empty`); else bs.push(b.l + ',' + b.t + ',' + b.w + ',' + b.h); } if (new Set(bs).size < 3) wbad.push(`${wt} ${sx} ${v} static`); }
+  }
+  R.ok(!wbad.length && ['round', 'kite'].every(k => HD.layers['eq_shield_' + k + '_male']), 'hd: sword, great sword, dagger, bow, staff, wand, mace, spear + shields drawn on the body and animated', wbad.slice(0, 4).join('; '));
+  // prototype coverage
+  const L = k => !!HD.layers[k];
+  const proto = { 'Adventurer M': ['chr_base_male', 'chr_class_adventurer_male', 'eq_armor_tunic_blue_male', 'chr_back_adventurer_male'], 'Adventurer F': ['chr_base_female', 'chr_class_adventurer_female', 'eq_armor_tunic_blue_female'],
+    Guard: ['npc_outfit_guard_male', 'eq_head_iron', 'eq_weapon_spear_male'], Merchant: ['npc_outfit_merchant_male', 'eq_head_cap'], Blacksmith: ['npc_outfit_blacksmith_male', 'eq_weapon_mace_male'],
+    Vanguard: ['chr_class_vanguard_male', 'eq_armor_plate_male', 'eq_shield_kite_male', 'eq_weapon_sword_male'], Ranger: ['chr_class_ranger_female', 'eq_armor_leather_female', 'eq_weapon_bow_female', 'chr_back_ranger_female', 'eq_head_hood_green'],
+    Arcanist: ['chr_class_arcanist_male', 'eq_armor_robe_violet_male', 'eq_weapon_staff_male', 'eq_head_wizard'] };
+  const pm = Object.entries(proto).filter(([, ks]) => !ks.every(L)).map(([k]) => k);
+  R.ok(!pm.length && HD.hair.every(h => L('chr_hair_' + h)), 'hd: prototype looks complete (Adventurer M/F, Guard, Merchant, Blacksmith, Vanguard, Ranger, Arcanist) + all 6 hair styles', pm.join(','));
 }
 
 // ---------------------------------------------------------------- browser: the client really draws the art set
@@ -280,6 +359,32 @@ async function browserTests(srv, R) {
       R.ok(!r.npcs, `art[${mapId}]: every NPC is drawn from paperdoll layers`, r.npcs + ' failed');
       if (mapId === 'solkara') R.ok(r.layers.class === 'chr_class_vanguard_male' && r.layers.armor === 'eq_armor_plate_male' && r.layers.shield === 'eq_shield_kite', 'art: class + equipped armor/weapon change the visible layers (vanguard, plate, kite shield)', JSON.stringify(r.layers));
       else R.ok(r.tree && r.fadeNear < 1 && r.fadeFar === 1 && r.fadeFront === 1, 'art: tree canopy turns see-through only when the player is behind it', `${r.fadeNear}/${r.fadeFar}/${r.fadeFront}`);
+      if (mapId === 'lumira') {
+        await pg.evaluate(() => { const g = document.createElement('canvas').getContext('2d'); for (const n of map.npcs) if (n.look && typeof n.look === 'object') drawPaper(n.look, {}, 'attack', 0.2, 3, 32, 70, 1, g); });
+        await pg.waitForTimeout(1500);
+        const measure = () => pg.evaluate(() => {
+          const e = ents.get(myId), gear = { wpn: e.wpn, arm: e.arm, cls: e.cls }, o = {};
+          const meas = (look, gr, set) => { const c = document.createElement('canvas'); c.width = 96; c.height = 120; const g = c.getContext('2d'); HUD.S.chrHD = set === 'hd'; lastPaperSet = null; const ok = drawPaper(look, gr, 'idle', 0, 2, 48, 100, 1, g); const d = g.getImageData(0, 0, 96, 120).data; let t = 999, b = -1, sum = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) { const y = Math.floor((i >> 2) / 96); t = Math.min(t, y); b = Math.max(b, y); sum = (sum * 31 + d[i - 3] + d[i - 2] * 7 + i) % 1000003; } HUD.S.chrHD = true; return { ok, set: lastPaperSet, h: b - t + 1, top: 100 - t, sum }; };
+          o.hd = meas(e.look, gear, 'hd'); o.v1 = meas(e.look, gear, 'v1');
+          o.plate = meas(e.look, { ...gear, arm: 304 }, 'hd'); o.sword = meas(e.look, { ...gear, wpn: 1 && Object.values(ITEMS).find(i => i.wt === 'greatsword').id }, 'hd');
+          o.hat = meas(e.look, { ...gear, head: 'wizard' }, 'hd'); o.hatTop = heroTopOf('hd', 'wizard'); o.bareTop = heroTopOf('hd', '');
+          const want = { shop: 'merchant', smith: 'blacksmith', m_vanguard: 'vanguard', m_ranger: 'ranger' };
+          o.npc = Object.entries(want).map(([id, k]) => { const n = map.npcs.find(q => q.id === id); return n && meas(n.look, {}, 'hd').set === 'hd' ? null : id; }).filter(Boolean);
+          const kid = map.npcs.find(q => q.id === 'kid'); o.kid = kid ? meas(kid.look, {}, 'hd').set : 'none';
+          HUD.S.chrHD = false; lastPaperSet = null; drawPaper(e.look, gear, 'idle', 0, 2, 48, 100, 1, document.createElement('canvas').getContext('2d')); o.off = lastPaperSet; HUD.S.chrHD = true;
+          const c = document.createElement('canvas').getContext('2d'); o.aura = (() => { try { drawAura(c, 30, 30, '#8fd0ff', 1, false); drawAura(c, 30, 30, '#8fd0ff', 1, true); return true; } catch (er) { return false; } })();
+          return o;
+        });
+        await measure(); await pg.waitForTimeout(1500);   // first pass loads the sheets these looks need
+        const h = await measure();
+        R.ok(h.hd.ok && h.hd.set === 'hd' && h.v1.set === 'v1', 'hd[game]: the player is drawn from the HD set; the v1 set is used when HD is switched off', JSON.stringify([h.hd.set, h.v1.set]));
+        R.ok(h.hd.h / h.v1.h >= 1.12 && h.hd.h / h.v1.h <= 1.3, 'hd[game]: HD character is drawn ~+15..25% larger than v1 at the same position', (h.hd.h / h.v1.h).toFixed(2) + ` (${h.hd.h}px vs ${h.v1.h}px)`);
+        R.ok(h.plate.sum !== h.hd.sum && h.sword.sum !== h.hd.sum && h.hat.sum !== h.hd.sum && h.plate.set === 'hd' && h.sword.set === 'hd' && h.hat.set === 'hd', 'hd[game]: equipped armor, weapon and headgear change the drawn HD character');
+        R.ok(h.bareTop >= h.hd.top && h.hatTop >= h.hat.top, 'hd[game]: badges / bubbles sit above the head and the headgear', `bare ${h.bareTop}>=${h.hd.top}, hat ${h.hatTop}>=${h.hat.top}`);
+        R.ok(!h.npc.length, 'hd[game]: prototype NPCs (merchant, blacksmith, vanguard master, ranger master) render in HD', h.npc.join(','));
+        R.ok(h.kid === 'v1' && h.off === 'v1', 'hd[game]: looks outside the prototype stay whole in v1 (never half HD); the setting turns HD off', h.kid + '/' + h.off);
+        R.ok(h.aura, 'hd[game]: aura layer is drawn by the engine (not baked into sprites)');
+      }
       R.ok(!errs.length, `art[${mapId}]: no page errors`, errs.slice(0, 3).join(' | '));
       await ctx.close();
     }
@@ -288,6 +393,7 @@ async function browserTests(srv, R) {
 
 async function run(srv, R) {
   try { staticTests(R); } catch (e) { R.ok(false, 'art static suite crashed', e.stack); }
+  try { hdStaticTests(R); } catch (e) { R.ok(false, 'hd static suite crashed', e.stack); }
   if (srv) await browserTests(srv, R);
 }
 module.exports = { SEEDS, run, readPNG };

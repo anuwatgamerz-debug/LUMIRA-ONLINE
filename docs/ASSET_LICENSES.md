@@ -28,12 +28,23 @@
 | `public/assets/world/rocks/` | หิน แร่ ผลึก (`rock_*`) | `tools/art/world_assets.py` | LUMIRA original |
 | `public/assets/world/props/` | พร็อพเมือง/ป่า 29 แบบ (`prop_*`) | `tools/art/world_assets.py` | LUMIRA original |
 | `public/assets/world/world.json` | ขนาด จุดยึด กล่องโปร่งใสของต้นไม้ | `tools/art/world_assets.py` | LUMIRA original |
+| `public/assets/chr_hd/base/` | HD ร่างกายพื้นฐานชาย/หญิง (ต้นแบบ) | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/face/` | HD หน้า (ตา คิ้ว ปาก แก้ม) | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/hair/` | HD ทรงผม 6 แบบ | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/armor/` | HD เกราะ/เสื้อผ้า | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/classes/` | HD Adventurer / Vanguard / Ranger / Arcanist + ของติดหลัง | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/npcs/` | HD ชุด Guard / Merchant / Blacksmith | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/weapons/` | HD อาวุธ 11 แบบ (แยกเพศ) | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/shields/` | HD โล่ round / kite | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `public/assets/chr_hd/headgear/` | HD หมวก 12 แบบ 4 ทิศ | `tools/art/build_characters_hd.py` | LUMIRA original |
+| `docs/prototype/` | ภาพตรวจงาน HD prototype | `tools/art/hd_lineup.py` | LUMIRA original |
 
 สร้างใหม่:
 
 ```
 python3 tools/art/build_characters.py   # ตัวละคร NPC อุปกรณ์ (~2.5 วินาที)
 python3 tools/art/world_assets.py       # อาคาร ธรรมชาติ พร็อพ
+python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้นแบบ)
 ```
 
 พื้น (หญ้า ดิน ทางหิน สะพานไม้ น้ำ/แม่น้ำ) วาดตอนรันใน `public/game.js` (`genGround`) ด้วยสีจาก palette เดียวกัน ไม่มีไฟล์ภาพ

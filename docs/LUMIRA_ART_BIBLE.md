@@ -216,3 +216,36 @@ public/assets/characters/chars.json · public/assets/world/world.json   (frame /
 
 ### Visual consistency checklist (ก่อนนำ asset เข้าเกม)
 Perspective · Scale · Outline · Lighting · Pixel density · Palette · Shadow · Material · Character proportions
+
+## 17. HD Character Standard (ต้นแบบ — รอตรวจ)
+
+มาตรฐานตัวละครชุดใหม่ (HD Pixel Fantasy, มุม 3/4 top-down, anime-inspired, น่ารักแต่ไม่เด็ก) ใช้กับ Player, NPC,
+Class Master, Merchant, Guard, Blacksmith, Healer, Citizen ทุกตัวด้วย base เดียวกัน · สร้างโดย `tools/art/characters_hd.py`
+(`python3 tools/art/build_characters_hd.py`) · ภาพตรวจงานอยู่ใน `docs/prototype/` (`python3 tools/art/hd_lineup.py`)
+
+| ค่า | HD | v1 (เดิม) |
+|---|---|---|
+| Frame | 64×80 | 64×64 |
+| Pivot (เท้า) | (32, 74) | (32, 58) |
+| ความสูงตัวละคร | ≈ 50 px (+19%) | 42 px |
+| หัว | 18×16 px → ≈ 3.1-3.2 หัว | 12×14 px |
+| ทิศ | N / S / E เก็บจริง, W = E กลับด้าน, 8 ทิศจองไว้ | เหมือนกัน |
+| Collider / ตำแหน่งเดิน | ไม่เปลี่ยน (1 tile) | — |
+
+Animation (ทุก layer ใช้ frame / pivot / timing เดียวกัน): Idle 4 · Walk 6 · Attack 6 · Cast 6 · Hit 3 · Death 6
+(+ Sit 1, Interact 2; Run = Walk ที่ fps สูงขึ้น) · ท่าโจมตีด้วยธนูมีชุดท่าแขนแยก (group `c`) ให้ทุก layer ของลำตัว
+
+Layer 10 ช่อง: 1 Base Body · 2 Hair · 3 Face · 4 Armor/Clothes (+ class gear) · 5 Weapon · 6 Shield/Off-hand ·
+7 Back Item · 8 Headgear · 9 Costume · 10 Aura/Effect (engine วาด ไม่ bake ลง sprite)
+
+กติกา:
+- หัว, หน้า, ผม, หมวก = pixel stamp วาดมือ วางบนจุดหัวของ pose (ตำแหน่งเต็ม pixel) → ตามหัวทุกเฟรม ไม่สั่น
+- ลำตัว/เสื้อผ้า = รูปทรงจาก pose model + แสง gradient จากซ้ายบน, outline สีเข้มสุดของชิ้นนั้น (ไม่ใช้ดำล้วน)
+- ผมและคิ้วใช้ key ramp → เกมเปลี่ยนสีตามสีผมที่เลือก
+- เงา: oval นุ่ม 2 ชั้นใต้เท้า engine วาดให้ทุก Player/NPC แบบเดียวกัน (ไม่มีเงาใน sprite)
+- Glow ใช้เฉพาะเวท/สกิล/aura/อุปกรณ์พิเศษ — เสื้อผ้าและตัวละครปกติไม่มี glow
+- ตัวละครจะวาดแบบ HD ก็ต่อเมื่อทุก layer ที่ต้องใช้มีในชุด HD — ไม่มีตัวละครครึ่ง HD ครึ่ง v1
+- ป้ายชื่อ / HP อยู่ใต้เท้า · ไอคอน NPC / bubble / LEVEL UP วางเหนือหัว+หมวก (`heroTopOf`)
+
+ไฟล์: `public/assets/chr_hd/<base|face|hair|armor|classes|npcs|weapons|shields|headgear>/<name>_<a|b|c>.png` + `chars.json`
+(อาวุธ/โล่แยกเพศ: `eq_weapon_<type>_<sex>`, `eq_shield_<kind>_<sex>` เพราะมือของสองร่างห่างกันต่างกัน)
