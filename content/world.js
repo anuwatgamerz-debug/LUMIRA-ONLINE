@@ -22,6 +22,10 @@ const M = [
   ['old_mine', 'เหมืองเก่า', 'heartland', 'dungeon', 20, 30, 56, 56, 'cave', 'deep_mine', [33, 83], 'open'],
   ['plains', 'ทุ่งทรายสีทอง (Lv 1-10)', 'heartland', 'field', 1, 10, 64, 46, 'desert', 'golden_fields', [28, 52], 'open'],
   ['woods', 'ป่าโอเอซิส (Lv 5-15)', 'heartland', 'field', 5, 15, 52, 52, 'forest', 'oasis_woods', [13, 46], 'open'],
+  ['slime_burrow', 'โพรงสไลม์', 'heartland', 'dungeon', 4, 10, 48, 40, 'cave', 'deep_mine', [22, 82], 'open'],
+  ['spider_nest', 'รังแมงมุมกรีนวูด', 'heartland', 'dungeon', 13, 20, 56, 48, 'cave', 'deep_mine', [27, 61], 'open'],
+  ['moon_crypt', 'สุสานจันทร์', 'heartland', 'dungeon', 19, 26, 56, 52, 'cave', 'deep_mine', [41, 70], 'open'],
+  ['iron_labyrinth', 'เขาวงกตเหล็ก', 'heartland', 'dungeon', 27, 33, 60, 56, 'cave', 'deep_mine', [38, 89], 'open'],
   ['ancient_farm', 'ไร่โบราณ', 'heartland', 'field', 10, 20, 60, 48, 'meadow', 'meadow_breeze', [8, 80], 'planned'],
   ['bandit_road', 'ถนนโจร', 'heartland', 'field', 18, 25, 72, 40, 'forest', 'tense_road', [9, 58], 'planned'],
   ['verdant_haven', 'เวอร์แดนต์ เฮเวน', 'verdant', 'forest_city', 20, 45, 60, 50, 'forest', 'haven', [22, 30], 'planned'],
@@ -78,7 +82,7 @@ for (const [id, name, region, kind, l0, l1, w, h, env, music, pos, status] of M)
 // maps show up as locked portals and on the world map.
 const LINKS = [
   ['lumira', 'beginner_meadow'], ['lumira', 'solkara'], ['beginner_meadow', 'greenwood'], ['beginner_meadow', 'ancient_farm'],
-  ['greenwood', 'moonlit_creek'], ['moonlit_creek', 'old_mine'], ['solkara', 'plains'], ['solkara', 'woods'], ['solkara', 'bandit_road'],
+  ['greenwood', 'moonlit_creek'], ['moonlit_creek', 'old_mine'], ['beginner_meadow', 'slime_burrow'], ['greenwood', 'spider_nest'], ['moonlit_creek', 'moon_crypt'], ['old_mine', 'iron_labyrinth'], ['solkara', 'plains'], ['solkara', 'woods'], ['solkara', 'bandit_road'],
   ['greenwood', 'deep_forest'], ['deep_forest', 'verdant_haven'], ['verdant_haven', 'mushroom_hollow'], ['verdant_haven', 'spirit_grove'], ['spirit_grove', 'ancient_tree'], ['deep_forest', 'beast_valley'],
   ['beast_valley', 'ash_plains'], ['ash_plains', 'emberhold'], ['emberhold', 'volcanic_road'], ['emberhold', 'fire_cavern'], ['volcanic_road', 'ruined_fortress'],
   ['bandit_road', 'coastal_road'], ['coastal_road', 'azure_port'], ['azure_port', 'coral_beach'], ['coral_beach', 'sunken_temple'], ['azure_port', 'pirate_cove'],

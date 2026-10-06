@@ -14,6 +14,7 @@ module.exports = G => {
   for (let i = 0; i < 40; i++) { const x = 2 + Math.floor(r() * 52), y = 2 + Math.floor(r() * 52); if (m.t[y * m.w + x] === 0 && r() < 0.5) set(m, x, y, 6); }
   for (let x = 0; x < m.w; x++) { set(m, x, 0, 6); set(m, x, m.h - 1, 6); } for (let y = 0; y < m.h; y++) { set(m, 0, y, 6); set(m, m.w - 1, y, 6); }
   rect(m, 2, 1, 4, 3, 0);
+  rect(m, 43, 50, 45, 54, 0); portal(m, 44, 55, 'iron_labyrinth', 30, 3, { lv: 27 }, 'เขาวงกตเหล็ก (Lv 27+)');
   portal(m, 3, 0, 'moonlit_creek', 61, 46);
   m.deco = [['prop_lumber_01', 7.5, 4.2], ['prop_wheelbarrow_01', 9.6, 8.4], ['prop_crate_01', 25.4, 6.3], ['prop_barrel_01', 21.4, 10.2], ['prop_sack_01', 33.5, 28.3], ['prop_crate_01', 13.4, 28.4], ['prop_barrel_01', 41.4, 43.3], ['prop_wheelbarrow_01', 47.3, 49.6]];
   m.spawns = [

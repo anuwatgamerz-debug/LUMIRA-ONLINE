@@ -254,8 +254,8 @@ const iconCache = {};
 function icon16(id) { if (!iconCache[id]) { const c = mkCanvas(16, 16); drawIcon(c.getContext('2d'), id); iconCache[id] = c; } return iconCache[id]; }
 // item icon for windows: art from the item atlas (real item id -> artwork) or the 16px pixel icon as fallback
 function iconCanvas(id) {
-  const art = HUD.atlasCell('items', String(id));
-  if (art) { const c = mkCanvas(64, 64), g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(art.im, art.sx, art.sy, art.s, art.s, 0, 0, 64, 64); c.className = 'art'; return c; }
+  const art = HUD.atlasCell('items', String(id)) || HUD.atlasCell('items_lpc', String(id));
+  if (art) { const n = art.s <= 40 ? art.s * 2 : 64, c = mkCanvas(n, n), g = c.getContext('2d'); g.imageSmoothingEnabled = art.s > 40; if (art.s <= 40) c.style.imageRendering = 'pixelated'; g.drawImage(art.im, art.sx, art.sy, art.s, art.s, 0, 0, n, n); c.className = 'art'; return c; }
   const c = mkCanvas(32, 32); const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(icon16(id), 0, 0, 32, 32); c.style.imageRendering = 'pixelated'; return c;
 }
 // faded silhouette for an empty equipment slot (art only; plain label otherwise)
@@ -264,7 +264,7 @@ function slotHint(d, k, lab) {
   if (art) { const c = mkCanvas(64, 64), g = c.getContext('2d'); g.drawImage(art.im, art.sx, art.sy, art.s, art.s, 0, 0, 64, 64); c.className = 'art hint'; d.appendChild(c); d.append(lab); }
   else d.textContent = lab;
 }
-addEventListener('uiskin', () => { HUD.atlasCell('items', '1'); }); // start loading the item atlas once the art manifest is in
+addEventListener('uiskin', () => { HUD.atlasCell('items', '1'); HUD.atlasCell('items_lpc', '1'); }); // start loading the item atlas once the art manifest is in
 
 // ------------------------------------------------------------ state
 let ws, myId = 0, map = null, ITEMS = {}, MOBN = {}, me = null;
@@ -279,7 +279,7 @@ function connect(msg) {
   sock.onclose = () => {
     if (ws !== sock) return; // an older socket replaced by a new login attempt
     if (me) { log('การเชื่อมต่อหลุด... กำลังรีเฟรช', '#ff8b8b'); setTimeout(() => location.reload(), 2500); }
-    else if (!$('err').textContent || $('err').textContent === 'กำลังเชื่อมต่อ...') $('err').textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง';
+    else if (loginBusy || !$('err').textContent) { setBusy(false); if (!$('err').textContent) $('err').textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง'; }
   };
 }
 const send = o => ws && ws.readyState === 1 && ws.send(JSON.stringify(o));
@@ -289,9 +289,9 @@ const now = () => performance.now() / 1000;
 function onMsg(m) {
   snd('msg', m);
   switch (m.t) {
-    case 'err': $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
-    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6;
-      QDEF = m.quests || {}; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
+    case 'err': if (typeof setBusy === 'function' && loginBusy) { setBusy(false); $('err').textContent = m.m; break; } $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
+    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked) localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6;
+      QDEF = m.quests || {}; GUIDE = m.guide || null; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
     case 'map': { const first = !map; map = m.map; snd('map', map, first); } ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
     case 'me': { const prev = me; me = m.c; updHud(); snd('me', prev, me); break; }
     case 's': snap(m); break;
@@ -390,7 +390,8 @@ function updQuestTrack() {
   const t = questTrack(), q = $('quest');
   q.classList.toggle('col', !!HUD.S.qCol);
   $('qtitle').textContent = t.title; $('qprog').textContent = t.prog; q.dataset.type = t.type || ''; $('qtog').textContent = HUD.S.qCol ? '▸' : '▾';
-  $('qt').innerHTML = `<div class="qobj">${t.obj} <span class="num qk">${t.prog}</span></div>${t.hint ? `<div class="qdone">${t.hint}</div>` : ''}`;
+  const aqOn = typeof AQ !== 'undefined' && AQ.on; q.classList.toggle('aq', aqOn); if ($('qauto')) { $('qauto').classList.toggle('on', aqOn); $('qauto').textContent = aqOn ? '■' : '▶'; $('qauto').style.display = t.done ? 'none' : ''; }
+  $('qt').innerHTML = `<div class="qobj">${t.obj} <span class="num qk">${t.prog}</span></div>${t.hint ? `<div class="qdone">${t.hint}</div>` : ''}${aqOn ? `<div class="aqs">▶ AUTO QUEST · ${AQ.phase || 'เริ่มต้น...'}</div>` : ''}`;
 }
 const QN = [10, 8, 10, 1];
 const QT = ['ปราบ เจลลอป\n(ทุ่งทรายสีทอง)', 'ปราบ ปูทราย\n(ทุ่งทรายสีทอง)', 'ปราบ ลีฟลิง\n(ป่าโอเอซิส)', 'ปราบ ราชาเจลลอป\n(บอส ทุ่งทราย)'];
@@ -701,6 +702,7 @@ cv.addEventListener('pointerdown', e => {
   }
   const tx = Math.floor(wx / TP), ty = Math.floor(wy / TP);
   clickMark = { x: tx, y: ty, t: performance.now() };
+  if (typeof aqPause === 'function') aqPause();
   send({ t: 'move', x: tx, y: ty });
 });
 // ------------------------------------------------------------ joystick (floating, 8 directions) + keyboard
@@ -750,6 +752,7 @@ function walkTick() {
     if (walkDir >= 0) { const [dx, dy] = DIR8[walkDir], e = ents.get(myId); walkDir = -1; if (e) send({ t: 'move', x: Math.round(e.tx + dx * 0.45), y: Math.round(e.ty + dy * 0.45) }); }
     return;
   }
+  if (typeof aqPause === 'function') aqPause();
   if (t - walkAt < (d === walkDir ? 180 : 70)) return;
   walkDir = d; walkAt = t;
   const tg = walkTarget(...DIR8[d]); if (tg) send({ t: 'move', x: tg[0], y: tg[1] });
@@ -828,8 +831,8 @@ function frame(t) {
   for (const [id, e] of ents) {
     const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 12;
     if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
-    if (e.kind === 'd') list.push({ y: y - 6, f: () => { const bob = Math.round(Math.sin(tn * 3 + id)); shadow(x, y - 6, 5); const art = HUD.atlasCell('items', String(e.item));
-        if (art) { ctx.imageSmoothingEnabled = true; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 10), Math.round(y - 25 + bob), 20, 20); ctx.imageSmoothingEnabled = false; }
+    if (e.kind === 'd') list.push({ y: y - 6, f: () => { const bob = Math.round(Math.sin(tn * 3 + id)); shadow(x, y - 6, 5); const art = HUD.atlasCell('items', String(e.item)) || HUD.atlasCell('items_lpc', String(e.item));
+        if (art) { ctx.imageSmoothingEnabled = art.s > 40; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 10), Math.round(y - 25 + bob), 20, 20); ctx.imageSmoothingEnabled = false; }
         else ctx.drawImage(icon16(e.item), Math.round(x - 8), Math.round(y - 22 + bob)); if (Math.floor(tn * 2 + id) % 4 === 0) { ctx.fillStyle = '#fff'; ctx.fillRect(Math.round(x + 4), Math.round(y - 22 + bob), 1, 1); } } });
     else if (e.kind === 'm') list.push({ y, f: () => {
       const nm = mobSprite(e.type) || 'm_' + e.type, sc = mobScale(e.type), big = e.type === 'kingjel' || mobBig(e.type);
@@ -921,7 +924,16 @@ function frame(t) {
     ctx.font = `${kind === 'npc' ? 500 : 400} ${11 * S}px Mitr,sans-serif`;
     const tx = kind === 'mob' || kind === 'boss' ? `${txt}` : txt;
     const w = ctx.measureText(tx).width;
-    if (kind === 'npc') { ctx.fillStyle = 'rgba(14,18,38,0.82)'; ctx.fillRect(X - w / 2 - 5 * S, Y + 2 * S, w + 10 * S, 15 * S); ctx.fillStyle = '#e8c46a'; ctx.fillRect(X - w / 2 - 5 * S, Y + 2 * S, w + 10 * S, 1 * S); }
+    if (kind === 'npc') { // nameplate under the feet: name, then the role on its own line (anchored to the NPC every frame)
+      const mm = /^\[(.+?)\]\s*(.+)$/.exec(txt || ''), nm = mm ? mm[2] : txt, role = mm ? mm[1] : '';
+      ctx.font = `500 ${11 * S}px Mitr,sans-serif`; const w1 = Math.min(130 * S, ctx.measureText(nm).width);
+      ctx.font = `400 ${9 * S}px Mitr,sans-serif`; const w2 = role ? Math.min(130 * S, ctx.measureText('[' + role + ']').width) : 0;
+      const bw = Math.max(w1, w2) + 10 * S, bh = (role ? 26 : 15) * S;
+      ctx.fillStyle = 'rgba(14,18,38,0.82)'; ctx.fillRect(X - bw / 2, Y + 2 * S, bw, bh); ctx.fillStyle = '#e8c46a'; ctx.fillRect(X - bw / 2, Y + 2 * S, bw, 1 * S);
+      ctx.font = `500 ${11 * S}px Mitr,sans-serif`; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 3 * S; ctx.strokeText(nm, X, Y + 10 * S, 130 * S); ctx.fillStyle = col; ctx.fillText(nm, X, Y + 10 * S, 130 * S);
+      if (role) { ctx.font = `400 ${9 * S}px Mitr,sans-serif`; ctx.strokeText('[' + role + ']', X, Y + 21 * S, 130 * S); ctx.fillStyle = '#9fd8ff'; ctx.fillText('[' + role + ']', X, Y + 21 * S, 130 * S); }
+      continue;
+    }
     ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 3 * S; ctx.strokeText(tx, X, Y + 10 * S); ctx.fillStyle = col; ctx.fillText(tx, X, Y + 10 * S);
     if (lv != null) { ctx.font = `${9 * S}px 'Pixelify Sans',monospace`; ctx.strokeText('Lv' + lv, X, Y + 22 * S); ctx.fillStyle = '#c9c2b0'; ctx.fillText('Lv' + lv, X, Y + 22 * S); }
   }
@@ -933,6 +945,7 @@ function frame(t) {
     ctx.font = `700 ${Math.round(sz)}px 'Pixelify Sans',Mitr,monospace`; ctx.globalAlpha = Math.min(1, (1 - p) * 3);
     ctx.strokeStyle = '#1a0f22'; ctx.lineWidth = 4 * S; ctx.strokeText(f.v, X, Y); ctx.fillStyle = f.col; ctx.fillText(f.v, X, Y); ctx.globalAlpha = 1;
   }
+  if (typeof drawQuestArrow === 'function') drawQuestArrow(A2D, S);
   ctx.textBaseline = 'alphabetic';
   drawMinimap();
   combatFrame();
@@ -982,6 +995,11 @@ function drawMinimap() {
   for (const p of map.portals) P(p.x, p.y, '#9fe7ff', 5);
   for (const n of map.npcs) P(n.x, n.y, me.npcq && me.npcq[n.id] === 'turnin' ? '#7dff8a' : '#ffd34d', 3);
   for (const nd of map.nodes || []) if (nodeWanted(nd)) P(nd.x, nd.y, '#b07bff', 3);
+  if (typeof questMarkTargets === 'function') { // active quest: gold markers (target, its area, or the portal to take)
+    const qt = questMarkTargets(), here = qt.filter(q => q.map === map.id);
+    for (const q of here) { if (q.zone) { g.strokeStyle = '#ffd34d'; g.lineWidth = 1; g.strokeRect(Math.round(W / 2 + (q.zone[0] - e.x) * s), Math.round(H / 2 + (q.zone[1] - e.y) * s), (q.zone[2] - q.zone[0]) * s, (q.zone[3] - q.zone[1]) * s); } else P(q.x, q.y, '#ffd34d', 6); }
+    if (qt.length && !here.length) { const r = aqRoute(new Set(qt.map(q => q.map))); if (r && r.length) P(r[0].x, r[0].y, '#ffd34d', 7); }
+  }
   for (const en of ents.values()) if (en.kind === 'm') P(en.x, en.y, MOBN[en.type] && MOBN[en.type].boss ? '#ff3b3b' : '#ff8b8b', 2); else if (en.kind === 'p' && en !== e) P(en.x, en.y, '#7dff8a', 3);
   P(e.x, e.y, '#ffffff', 5); P(e.x, e.y, '#3d8bf0', 3);
   $('mmxy2').textContent = `${Math.round(e.x)},${Math.round(e.y)}`;
@@ -1006,9 +1024,9 @@ requestAnimationFrame(frame);
 HUD.applyIcons();
 
 // ------------------------------------------------------------ login / create
-let mode = 'login';
+let mode = 'login', loginBusy = false;
 const look = { sex: 0, hair: 0, hc: 0, cc: 0 };
-function setMode(m) { mode = m; $('tLogin').classList.toggle('on', m === 'login'); $('tReg').classList.toggle('on', m === 'reg'); $('regbox').style.display = m === 'reg' ? 'block' : 'none'; $('go').textContent = m === 'reg' ? 'สร้างตัวละครและเข้าเกม' : 'เข้าเกม'; $('err').textContent = ''; }
+function setMode(m) { mode = m; $('tLogin').classList.toggle('on', m === 'login'); $('tReg').classList.toggle('on', m === 'reg'); $('regbox').style.display = m === 'reg' ? 'block' : 'none'; $('remrow').style.display = m === 'reg' ? 'none' : 'flex'; $('login').classList.toggle('reg', m === 'reg'); setBusy(false); $('err').textContent = ''; loginLayout(); }
 $('tLogin').onclick = () => setMode('login'); $('tReg').onclick = () => setMode('reg');
 const OUTFIT_TH = ['ชุดเดินทางสีฟ้า', 'ชุดเดินทางสีน้ำตาล', 'ชุดเดินทางสีเขียว', 'ชุดเดินทางสีแดง', 'ชุดเดินทางสีม่วง']; // everyone starts as an Adventurer: the choice is the tunic colour
 document.querySelectorAll('.sel button').forEach(b => b.onclick = () => {
@@ -1024,12 +1042,46 @@ document.querySelectorAll('.sel button').forEach(b => b.onclick = () => {
   drawHero(look, atk ? 'atk' : 'walk', atk ? (tn % 2) * 0.45 : tn, row, 48, 92, 1, 0, g, { wpn: 200, cls: 'adventurer' });
 })();
 setMode('login');
-try { $('u').value = localStorage.getItem('lmo_u') || ''; } catch (e) { }
+try { if (localStorage.getItem('lmo_rem') === '0') $('rem').checked = false; else $('u').value = localStorage.getItem('lmo_u') || ''; } catch (e) { }
+// login busy state: button disabled with a spinner until the server answers (welcome / err / connection lost)
+function setBusy(b) {
+  loginBusy = b; $('go').disabled = b;
+  $('go').innerHTML = b ? `<span class="spin"></span>${mode === 'reg' ? 'กำลังสร้างตัวละคร...' : 'กำลังเข้าสู่ระบบ...'}` : (mode === 'reg' ? 'สร้างตัวละครและเข้าเกม' : 'เข้าเกม');
+}
 $('go').onclick = () => {
+  if (loginBusy) return;
   const u = $('u').value.trim(), p = $('p').value;
   if (!u || !p) { $('err').textContent = 'กรอกไอดีและรหัสผ่าน'; return; }
-  $('err').textContent = 'กำลังเชื่อมต่อ...';
+  if (mode === 'reg' && !$('cn').value.trim()) { $('err').textContent = 'ตั้งชื่อตัวละครก่อน'; return; }
+  $('err').textContent = ''; setBusy(true);
+  try { localStorage.setItem('lmo_rem', $('rem').checked ? '1' : '0'); if (!$('rem').checked) localStorage.removeItem('lmo_u'); } catch (e) { }
   if (ws) try { ws.close(); } catch (e) { }
   connect(mode === 'reg' ? { t: 'register', u, p, name: $('cn').value.trim(), ...look } : { t: 'login', u, p });
 };
+$('peye').onclick = () => { const p = $('p'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; $('peye').textContent = show ? '🙈' : '👁'; $('peye').setAttribute('aria-label', show ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'); };
+$('uclr').onclick = () => { $('u').value = ''; $('u').focus(); };
+$('forgot').onclick = () => loginInfo('ลืมรหัสผ่าน?', 'ติดต่อผู้ดูแลเกมพร้อมชื่อไอดีและชื่อตัวละคร เพื่อขอรีเซ็ตรหัสผ่าน');
+const LINFO = {
+  news: ['ข่าวสาร', 'อัปเดตล่าสุด: ภาพชุดใหม่ (LPC), ดันเจี้ยนใหม่ 4 แห่ง (โพรงสไลม์ · รังแมงมุม · สุสานจันทร์ · เขาวงกตเหล็ก), แผนที่โลกแบบใหม่ และระบบ Auto Quest'],
+  guide: ['คู่มือเกม', 'เดินด้วยจอยสติ๊ก/WASD · แตะมอนสเตอร์เพื่อเลือกเป้า · ปุ่ม AUTO ตีอัตโนมัติ · แตะ ▶ ที่เควสเพื่อให้ตัวละครเดินไปทำภารกิจเอง · M เปิดแผนที่'],
+  contact: ['ติดต่อเรา', 'แจ้งปัญหาหรือข้อเสนอแนะได้ที่ผู้ดูแลเกม LUMIRA ONLINE'],
+  settings: ['ตั้งค่า', 'ปรับเสียง ขนาด UI และกราฟิกได้จากเมนู ⚙ ตั้งค่า หลังเข้าเกม'],
+};
+function loginInfo(t, b) { $('linfoT').textContent = t; $('linfoB').textContent = b; $('linfo').style.display = 'block'; }
+document.querySelectorAll('#lbtns button').forEach(b => b.onclick = () => loginInfo(...LINFO[b.dataset.i]));
+$('linfoX').onclick = () => { $('linfo').style.display = 'none'; };
+// the stage is laid out in the key art's own pixels and scaled like background-size:cover, so the panel and the
+// buttons sit exactly on the painted spots; the create-character panel is taller, so it is fitted to the screen instead
+function loginLayout() {
+  const L = $('login'); if (!L || L.style.display === 'none') return;
+  const vw = innerWidth, vh = innerHeight, land = vw / vh >= 1.05, W0 = land ? 1672 : 941, H0 = land ? 941 : 1672, st = $('lstage');
+  L.classList.toggle('land', land); L.classList.toggle('port', !land); st.className = land ? 'land' : 'port';
+  let s = Math.max(vw / W0, vh / H0), ox = (vw - W0 * s) / 2, oy = (vh - H0 * s) / 2;
+  if (mode === 'reg') {
+    const bx = $('lstage').querySelector('.box'), bw = bx.offsetWidth, bh = bx.offsetHeight, x0 = bx.offsetLeft, y0 = bx.offsetTop;
+    s = Math.min(s, vw * 0.96 / bw, vh * 0.96 / bh); ox = vw / 2 - (x0 + bw / 2) * s; oy = vh / 2 - (y0 + bh / 2) * s;
+  }
+  st.style.transform = `translate(${ox}px,${oy}px) scale(${s})`;
+}
+addEventListener('resize', loginLayout); addEventListener('orientationchange', () => setTimeout(loginLayout, 200));
 for (const f of ['u', 'p', 'cn']) $(f).onkeydown = e => { if (e.key === 'Enter') $('go').click(); };

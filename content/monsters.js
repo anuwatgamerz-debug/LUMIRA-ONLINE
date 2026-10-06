@@ -53,13 +53,13 @@ function m(id, n, lv, family, behavior, o = {}) {
 }
 // the original seven keep their exact numbers (saves, quests and tests depend on them)
 const legacy = (id, o) => { MOBS[id] = Object.assign({ id, family: 'slime', behavior: o.aggro ? 'aggressive' : 'passive', element: 'neutral', size: 's', sp: 0, matk: 0, mdef: 0, aspd: o.boss ? 1300 : 1600, range: 1.5, assist: 0, fleeAt: 0, magic: 0, heals: 0, respawn: 0, skills: [], scale: 1, jexp: Math.round(o.exp * 0.6), legacy: 1 }, o); if (o.aggro) MOBS[id].aggro = 5; };
-legacy('jellop',   { n: 'เจลลอป', lv: 1, hp: 40, atk: [3, 5], def: 0, flee: 2, exp: 6, spd: 2.2, aggro: 0, drops: [[10, .6], [1, .08]], z: 2, family: 'slime', element: 'water', beginner: true });
-legacy('crab',     { n: 'ปูทราย', lv: 4, hp: 95, atk: [6, 9], def: 2, flee: 6, exp: 16, spd: 2.4, aggro: 0, drops: [[11, .5], [1, .1]], z: 4, family: 'aquatic' });
-legacy('leafling', { n: 'ลีฟลิง', lv: 6, hp: 130, atk: [8, 12], def: 2, flee: 10, exp: 25, spd: 2.8, aggro: 0, drops: [[14, .55], [2, .05]], z: 5, family: 'plant', element: 'earth' });
-legacy('cactimp',  { n: 'อิมป์กระบองเพชร', lv: 8, hp: 170, atk: [11, 15], def: 3, flee: 10, exp: 36, spd: 2.6, aggro: 1, drops: [[12, .5], [40, .03]], z: 6, family: 'desert', element: 'earth' });
-legacy('dunewolf', { n: 'อัศวินกระดูก', lv: 11, hp: 280, atk: [15, 21], def: 4, flee: 14, exp: 66, spd: 3.6, aggro: 1, drops: [[13, .45], [21, .04]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
-legacy('mosshog',  { n: 'จอมเวทกระดูก', lv: 13, hp: 360, atk: [18, 24], def: 6, flee: 12, exp: 85, spd: 3.0, aggro: 1, drops: [[15, .45], [31, .03]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
-legacy('kingjel',  { n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk: [26, 36], def: 8, flee: 15, exp: 700, spd: 2.0, aggro: 1, boss: 1, behavior: 'boss', drops: [[41, .35], [23, .15], [2, 1]], z: 14, family: 'slime', size: 'l', respawn: 600, bgm: 'bgm_boss_common', spawnSound: 'boss_spawn', deathSound: 'boss_death' });
+legacy('jellop',   { spr: 'm_lpc_slime', tint: [-150, 1.1, 10], n: 'เจลลอป', lv: 1, hp: 40, atk: [3, 5], def: 0, flee: 2, exp: 6, spd: 2.2, aggro: 0, drops: [[10, .6], [1, .08]], z: 2, family: 'slime', element: 'water', beginner: true });
+legacy('crab',     { spr: 'm_lpc_beetle', tint: [-40, 1.3, 0], n: 'ปูทราย', lv: 4, hp: 95, atk: [6, 9], def: 2, flee: 6, exp: 16, spd: 2.4, aggro: 0, drops: [[11, .5], [1, .1]], z: 4, family: 'aquatic' });
+legacy('leafling', { spr: 'm_lpc_flower', tint: [80, 1, 4], scale: 0.6, n: 'ลีฟลิง', lv: 6, hp: 130, atk: [8, 12], def: 2, flee: 10, exp: 25, spd: 2.8, aggro: 0, drops: [[14, .55], [2, .05]], z: 5, family: 'plant', element: 'earth' });
+legacy('cactimp',  { spr: 'm_lpc_imp', tint: [100, 0.9, 0], scale: 0.85, n: 'อิมป์กระบองเพชร', lv: 8, hp: 170, atk: [11, 15], def: 3, flee: 10, exp: 36, spd: 2.6, aggro: 1, drops: [[12, .5], [40, .03]], z: 6, family: 'desert', element: 'earth' });
+legacy('dunewolf', { spr: 'm_lpc_skeleton', n: 'อัศวินกระดูก', lv: 11, hp: 280, atk: [15, 21], def: 4, flee: 14, exp: 66, spd: 3.6, aggro: 1, drops: [[13, .45], [21, .04]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
+legacy('mosshog',  { spr: 'm_lpc_skeleton', tint: [250, 0.6, -6], n: 'จอมเวทกระดูก', lv: 13, hp: 360, atk: [18, 24], def: 6, flee: 12, exp: 85, spd: 3.0, aggro: 1, drops: [[15, .45], [31, .03]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
+legacy('kingjel',  { spr: 'm_lpc_slime', tint: [-150, 1.2, 14], scale: 2.2, n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk: [26, 36], def: 8, flee: 15, exp: 700, spd: 2.0, aggro: 1, boss: 1, behavior: 'boss', drops: [[41, .35], [23, .15], [2, 1]], z: 14, family: 'slime', size: 'l', respawn: 600, bgm: 'bgm_boss_common', spawnSound: 'boss_spawn', deathSound: 'boss_death' });
 
 // ---- Region 1: Elyndra Heartland (Lv1-30)
 // Beginner Meadow (Lv1-8): passive only, beginner protection
@@ -84,13 +84,13 @@ m('nightmoth', 'มอธราตรี', 17, 'insect', 'coward', { spr: 'm_lpc
 m('pondlurker', 'ตัวซุ่มบ่อ', 19, 'aquatic', 'aggressive', { spr: 'm_lpc_snake', tint: [60, 0.9, -4], scale: 1.3, aggro: 4, d: 'ซุ่มอยู่ใต้ใบบัวรอเหยื่อ' });
 m('lanternspirit', 'วิญญาณตะเกียง', 20, 'spirit', 'healer', { spr: 'proc:wisp', tint: [-150, 1, 10], d: 'รักษามอนสเตอร์รอบตัว' });
 m('willowwraith', 'ภูตต้นหลิว', 22, 'undead', 'caster', { spr: 'm_lpc_ghost', tint: [60, 1.3, -10], d: 'วิญญาณผูกพันกับต้นหลิวเก่า' });
-m('froglord', 'กบหมอผี', 23, 'aquatic', 'caster', { spr: 'm_lpc_imp', tint: [150, 0.9, -6], d: 'กบที่ร่ายเวทน้ำได้' });
+m('froglord', 'กบหมอผี', 23, 'aquatic', 'caster', { spr: 'm_lpc_frogman', tint: [0, 1, 0], d: 'กบที่ร่ายเวทน้ำได้' });
 // Old Mine (Lv20-30)
 m('cavebat', 'ค้างคาวถ้ำ', 20, 'beast', 'pack', { spr: 'm_lpc_bat', spd: 3.8, d: 'บินเป็นฝูงในความมืด' });
 m('minegoblin', 'ก็อบลินขุดแร่', 21, 'goblin', 'coward', { spr: 'm_lpc_goblin', tint: [-40, 0.8, -6], scale: 1, d: 'ขโมยแร่แล้ววิ่งหนี' });
 m('crystalcrawler', 'ตัวคลานผลึก', 23, 'insect', 'aggressive', { spr: 'm_lpc_beetle', tint: [200, 1.3, 10], scale: 1.1, aggro: 4, d: 'แมลงที่มีผลึกงอกบนหลัง' });
 m('rustbot', 'หุ่นสนิมเหมือง', 24, 'machine', 'aggressive', { spr: 'm_lpc_golem', tint: [30, 0.6, -6], scale: 0.8, aspd: 1900, d: 'หุ่นขุดแร่เก่าที่ยังทำงานผิดพลาด' });
-m('skeletonminer', 'โครงกระดูกคนงาน', 25, 'undead', 'aggressive', { spr: 'm_dunewolf', tint: [30, 0.6, 8], d: 'คนงานเหมืองที่ไม่เคยได้กลับบ้าน' });
+m('skeletonminer', 'โครงกระดูกคนงาน', 25, 'undead', 'aggressive', { spr: 'm_lpc_skeleton', tint: [30, 0.6, 8], d: 'คนงานเหมืองที่ไม่เคยได้กลับบ้าน' });
 m('golemite', 'โกเลมไมต์', 27, 'elemental', 'passive', { spr: 'm_lpc_golem', tint: [0, 0.2, 0], scale: 0.9, hpMul: 1.3, d: 'ก้อนหินมีชีวิต อึดมาก' });
 m('oreelemental', 'ธาตุแร่เงินจันทร์', 28, 'elemental', 'caster', { spr: 'm_lpc_golem', tint: [60, 1.2, 10], scale: 0.85, d: 'แร่ที่ดูดพลังรูนจนมีชีวิต' });
 m('tarslime',  'สไลม์น้ำมันดิน', 26, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [0, 0.1, -35], d: 'เหนียวหนึบ ช้า แต่ตีแรง' });
@@ -105,10 +105,36 @@ m('thornwood', 'เอลเดอร์ ธอร์นวูด', 18, 'plant',
   d: 'ต้นไม้โบราณที่ถูกพลังเสื่อมจากเศษรูนกลืนกิน',
 });
 m('ironjaw', 'ไอรอนจอว์ ทรราชเหมือง', 30, 'machine', 'boss', {
-  spr: 'm_dunewolf', tint: [200, 0.35, -8], scale: 1.9, respawn: 1200, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', skills: ['quake', 'summon', 'charge'], minions: 'rustbot', hpMul: 1.15,
+  spr: 'm_lpc_minotaur', tint: [0, 0.15, -6], scale: 1.8, respawn: 1200, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', skills: ['quake', 'summon', 'charge'], minions: 'rustbot', hpMul: 1.15,
   phases: [{ at: 0.65, atk: 1.2, msg: 'ไอรอนจอว์ส่งเสียงคำราม! เฟืองหมุนเร็วขึ้น' }, { at: 0.3, atk: 1.55, spd: 1.35, msg: 'ไอรอนจอว์เข้าสู่โหมดคลั่ง!' }],
   d: 'หัวหน้าคนงานที่หลอมรวมกับเครื่องจักรขุดแร่และผลึกวอยด์',
 });
+
+// ---- Heartland dungeons (Lv4-33): slime burrow, spider nest, moonlit crypt, iron labyrinth
+m('caverat', 'หนูถ้ำ', 5, 'beast', 'passive', { spr: 'm_lpc_rat', scale: 0.7, d: 'หนูตัวใหญ่ที่อาศัยในโพรงชื้น' });
+m('shroomlet', 'เห็ดเดิน', 6, 'plant', 'passive', { spr: 'm_lpc_mushroom', scale: 1.5, d: 'เห็ดที่งอกขาเดินได้' });
+m('pinkjel', 'เจลลี่ชมพู', 7, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [-160, 1.1, 12], d: 'บริวารของราชินีเจลลี่' });
+m('burrowbat', 'ค้างคาวโพรง', 8, 'beast', 'pack', { spr: 'm_lpc_bat', tint: [-30, 0.8, 4], scale: 0.85, aggro: 3, d: 'ค้างคาวตัวเล็กที่บินเป็นฝูง' });
+m('spiderling', 'ลูกแมงมุม', 13, 'insect', 'aggressive', { spr: 'm_lpc_spider', scale: 0.7, aggro: 4, d: 'ลูกแมงมุมที่ฟักจากรังกรีนวูด' });
+m('webspinner', 'แมงมุมชักใย', 15, 'insect', 'ranged', { spr: 'm_lpc_spider', tint: [80, 0.9, 6], range: 4, d: 'พ่นใยใส่เหยื่อจากระยะไกล' });
+m('nestcentipede', 'ตะขาบรัง', 16, 'insect', 'aggressive', { spr: 'm_lpc_centipede', scale: 0.55, aggro: 4, d: 'ตะขาบยักษ์ที่เฝ้าทางเดินในรัง' });
+m('venomshroom', 'เห็ดพิษ', 17, 'plant', 'caster', { spr: 'm_lpc_mushroom', tint: [140, 1.3, -6], scale: 1.7, d: 'ปล่อยสปอร์พิษเป็นวงกว้าง' });
+m('cryptskeleton', 'โครงกระดูกสุสาน', 20, 'undead', 'aggressive', { spr: 'm_lpc_skeleton', d: 'ผู้เฝ้าสุสานที่ไม่ยอมพักผ่อน' });
+m('ghoul', 'กูล', 21, 'undead', 'aggressive', { spr: 'm_lpc_zombie', d: 'ศพเดินได้ที่หิวโหย' });
+m('cryptwraith', 'ภูตสุสาน', 22, 'undead', 'caster', { spr: 'm_lpc_ghost', tint: [200, 1.2, -8], hpMul: 0.92, matkMul: 1.15, d: 'วิญญาณแค้นที่ร่ายเวทเงา' });
+m('gravepumpkin', 'ฟักทองหลุมศพ', 23, 'plant', 'aggressive', { spr: 'm_lpc_pumpkin', aggro: 4, d: 'ฟักทองที่งอกจากหลุมศพเก่า' });
+m('labyrinthguard', 'ยามเขาวงกต', 28, 'beast', 'aggressive', { spr: 'm_lpc_minotaur', tint: [10, 0.8, -4], d: 'มนุษย์กระทิงที่เฝ้าเขาวงกต' });
+m('cavebear', 'หมีถ้ำ', 28, 'beast', 'aggressive', { spr: 'm_lpc_bear', hpMul: 1.2, d: 'หมีที่อาศัยในอุโมงค์ลึก' });
+m('giantcentipede', 'ตะขาบยักษ์', 29, 'insect', 'aggressive', { spr: 'm_lpc_centipede', tint: [40, 0.8, -10], scale: 0.75, d: 'ตะขาบยาวกว่าคนสองคน' });
+m('boneknight', 'อัศวินกระดูก', 30, 'undead', 'aggressive', { spr: 'm_lpc_skeleton', tint: [200, 0.4, -10], hpMul: 1.15, d: 'อัศวินที่หลงทางในเขาวงกตตลอดกาล' });
+m('jellyqueen', 'ราชินีเจลลี่', 10, 'slime', 'boss', { spr: 'm_lpc_slime', tint: [-160, 1.2, 16], scale: 2.4, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', respawn: 600, skills: ['summon'], minions: 'pinkjel',
+  phases: [{ at: 0.5, atk: 1.3, msg: 'ราชินีเจลลี่แบ่งร่าง!' }], d: 'ราชินีแห่งโพรงสไลม์' });
+m('broodmother', 'แม่แมงมุมกรีนวูด', 20, 'insect', 'boss', { spr: 'm_lpc_spider', tint: [-40, 1.3, -4], scale: 2.2, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', respawn: 900, skills: ['summon', 'charge'], minions: 'spiderling',
+  phases: [{ at: 0.6, atk: 1.25, msg: 'แม่แมงมุมเรียกลูก ๆ!' }, { at: 0.3, atk: 1.5, spd: 1.3, msg: 'แม่แมงมุมคลุ้มคลั่ง!' }], d: 'แม่แห่งรังแมงมุมใต้ป่ากรีนวูด' });
+m('moonfang', 'มูนแฟง หมาป่าจันทร์', 26, 'beast', 'boss', { spr: 'm_lpc_werewolf', tint: [200, 0.5, 4], scale: 1.7, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', respawn: 1000, skills: ['charge', 'summon'], minions: 'ghoul',
+  phases: [{ at: 0.6, atk: 1.25, msg: 'มูนแฟงหอนใต้แสงจันทร์!' }, { at: 0.3, atk: 1.55, spd: 1.35, msg: 'มูนแฟงคลั่งเลือด!' }], d: 'มนุษย์หมาป่าที่ครองสุสานจันทร์' });
+m('labyrinthking', 'ราชาเขาวงกต', 33, 'beast', 'boss', { spr: 'm_lpc_minotaur', tint: [200, 0.6, 0], scale: 1.9, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', respawn: 1200, hpMul: 1.1, skills: ['quake', 'charge', 'summon'], minions: 'labyrinthguard',
+  phases: [{ at: 0.65, atk: 1.2, msg: 'ราชาเขาวงกตกระทืบพื้น!' }, { at: 0.3, atk: 1.6, spd: 1.3, msg: 'ราชาเขาวงกตเข้าสู่ความบ้าคลั่ง!' }], d: 'มินอทอร์ผู้ครองเขาวงกตเหล็กใต้เหมืองเก่า' });
 
 // ---- tiered drop tables (server rolls): common / uncommon / rare / veryRare. [item, chance]
 const DROPS = {
@@ -144,6 +170,26 @@ const DROPS = {
   banditlook: { common: [[107, .3], [108, .2]], uncommon: [[2, .08]], rare: [[358, .02]] },
   thornwood: { common: [[123, 1], [125, 1]], uncommon: [[2, 1], [216, .25], [215, .25]], rare: [[408, .15], [360, .2]], veryRare: [[310, .05]] },
   ironjaw: { common: [[124, 1], [121, 1]], uncommon: [[5, 1], [219, .25], [221, .2]], rare: [[222, .1], [311, .08]], veryRare: [[362, .03]] },
+  caverat: { common: [[128, .5]], uncommon: [[1, .12]], rare: [[402, .01]] },
+  shroomlet: { common: [[129, .5]], uncommon: [[104, .2]], rare: [[403, .01]] },
+  pinkjel: { common: [[10, .5]], uncommon: [[1, .15]], rare: [[401, .015]] },
+  burrowbat: { common: [[117, .4]], uncommon: [[2, .06]], rare: [[356, .01]] },
+  spiderling: { common: [[130, .45]], uncommon: [[2, .06]], rare: [[411, .01]] },
+  webspinner: { common: [[130, .5]], uncommon: [[108, .2]], rare: [[228, .012], [411, .01]] },
+  nestcentipede: { common: [[131, .45]], uncommon: [[2, .08]], rare: [[306, .01]] },
+  venomshroom: { common: [[129, .5]], uncommon: [[3, .06]], rare: [[404, .012]] },
+  cryptskeleton: { common: [[134, .45], [13, .3]], uncommon: [[5, .04]], rare: [[365, .006]] },
+  ghoul: { common: [[133, .45]], uncommon: [[5, .05]], rare: [[313, .008]] },
+  cryptwraith: { common: [[133, .3], [116, .3]], uncommon: [[6, .05]], rare: [[226, .008], [409, .006]] },
+  gravepumpkin: { common: [[129, .3], [4, .3]], uncommon: [[5, .05]], rare: [[407, .01]] },
+  labyrinthguard: { common: [[136, .45]], uncommon: [[5, .06]], rare: [[219, .01]] },
+  cavebear: { common: [[137, .5]], uncommon: [[5, .06]], rare: [[312, .01]] },
+  giantcentipede: { common: [[131, .5]], uncommon: [[6, .05]], rare: [[407, .012]] },
+  boneknight: { common: [[134, .45], [120, .2]], uncommon: [[5, .06]], rare: [[365, .012], [311, .004]] },
+  jellyqueen: { common: [[127, 1], [10, 1]], uncommon: [[2, 1], [41, .2]], rare: [[364, .2]], veryRare: [[404, .05]] },
+  broodmother: { common: [[132, 1], [130, 1]], uncommon: [[2, 1], [228, .25]], rare: [[225, .15], [411, .2]], veryRare: [[306, .05]] },
+  moonfang: { common: [[135, 1], [134, 1]], uncommon: [[5, 1], [226, .25], [313, .2]], rare: [[410, .12]], veryRare: [[365, .05]] },
+  labyrinthking: { common: [[138, 1], [136, 1]], uncommon: [[5, 1], [312, .25], [365, .2]], rare: [[227, .1]], veryRare: [[410, .04]] },
 };
 for (const id in DROPS) if (MOBS[id]) MOBS[id].drops = DROPS[id];
 // legacy flat lists -> tiers by chance

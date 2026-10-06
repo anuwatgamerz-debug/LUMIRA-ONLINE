@@ -698,10 +698,10 @@
 "src": "lpc"
 },
 "veg_cactus_01": {
-"w": 28,
-"h": 86,
-"ax": 14,
-"ay": 80,
+"w": 60,
+"h": 87,
+"ax": 30,
+"ay": 87,
 "path": "world/vegetation/veg_cactus_01",
 "src": "lpc"
 },

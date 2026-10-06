@@ -77,7 +77,7 @@ def veg(name, sheet, rect, unit=32):
     im = biggest(sheet.crop(tuple(v * unit for v in rect)), dil=2); save(name, im, folder='vegetation')
 veg('veg_bush_01', TERR, (24, 12, 28, 16))
 save('veg_bush_small_01', biggest(px(PLANT, 30, 150, 68, 195), 1), folder='vegetation')
-veg('veg_cactus_01', PLANT, (12, 6, 14, 9))
+veg('veg_cactus_01', PLANT, (11, 6, 13, 9))
 veg('veg_fern_01', PLANT, (12, 4, 14, 6))
 veg('veg_mushroom_01', TERR, (27, 28, 28, 29))
 veg('veg_reed_01', TERR, (26, 29, 27, 31))

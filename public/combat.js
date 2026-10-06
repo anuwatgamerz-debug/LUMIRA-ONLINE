@@ -69,12 +69,20 @@ function cycleTarget(dir = 1) {
 }
 let tgPic = 0;
 function drawMobPic(type) {
-  const g = $('tgpic').getContext('2d'), nm = 'm_' + type, L = META.lpc[nm], P = META.px[nm], im = img(nm);
+  const g = $('tgpic').getContext('2d'), nm = (typeof mobSprite === 'function' && mobSprite(type)) || 'm_' + type, L = META.lpc[nm], P = META.px[nm], im = IMG[nm] && IMG[nm].getContext ? IMG[nm] : img(nm);
   if (!im || (!L && !P)) return false;
   g.imageSmoothingEnabled = false; g.clearRect(0, 0, 64, 64);
-  if (P) { const s = Math.min(1, 64 / P.fw); g.drawImage(im, 0, 2 * P.fh, P.fw, P.fh, (64 - P.fw * s) / 2, (64 - P.fh * s) / 2 + 6 * s, P.fw * s, P.fh * s); }
+  if (P) { const s = Math.min(1, 64 / P.fw, 64 / P.fh) * (P.fw > 64 ? 1.4 : 1); g.drawImage(im, 0, 2 * P.fh, P.fw, P.fh, (64 - P.fw * s) / 2, 64 - P.ay * s - 4 + (P.fh * s - P.fh * s), P.fw * s, P.fh * s); }
   else { const c = L.cell, o = (c - 64) / 2; g.drawImage(im, o, (L.anims.walk[0] + 2) * c + o, 64, 64, 0, 0, 64, 64); }
   return true;
+}
+// compact target HUD: right column, just under the minimap / top menu (never over the middle of the screen)
+let tgPlaceT = 0;
+function placeTarget() {
+  const t = performance.now(); if (t - tgPlaceT < 400) return; tgPlaceT = t;
+  const P = $('tgt'), vw = innerWidth, w = P.offsetWidth || 240; let bottom = 0, right = vw;
+  for (const el of [$('mm'), $('bMap') && $('bMap').parentElement]) { if (!el || !el.offsetParent) continue; const r = el.getBoundingClientRect(); if (r.right > vw - w - 8 && r.width > 0) { bottom = Math.max(bottom, r.bottom); } if (el.id === 'mm') right = r.right; }
+  P.style.left = 'auto'; P.style.transform = 'none'; P.style.right = Math.max(4, vw - right) + 'px'; P.style.top = Math.round(bottom + 6) + 'px';
 }
 function updTarget() {
   const e = selected && ents.get(selected), P = $('tgt');
@@ -82,7 +90,7 @@ function updTarget() {
   P.classList.add('on');
   const info = MOBN[e.type] || {}, pc = Math.max(0, Math.min(100, e.hp / e.maxhp * 100));
   $('tgName').textContent = info.n || e.type; $('tgLv').textContent = 'Lv ' + (info.lv ?? '?');
-  $('tgHp').style.width = pc + '%'; $('tgHpT').textContent = `${Math.max(0, e.hp)} / ${e.maxhp} (${Math.ceil(pc)}%)`;
+  $('tgHp').style.width = pc + '%'; $('tgHpT').textContent = `${Math.ceil(pc)}%`; placeTarget();
   const m = myEnt(), d = m ? cheb(m, e) : 0;
   const st = [info.boss ? 'บอส' : info.aggro ? 'ดุร้าย' : 'ไม่ก้าวร้าว'];
   if (e.tg === myId) st.unshift('<span class="hot">กำลังโจมตีคุณ</span>');
@@ -277,8 +285,8 @@ function skinTarget() {
   put(P.querySelector('.bar'), t.boxes.hp); put($('tgSt'), t.boxes.status); put($('tgX'), t.boxes.close);
 }
 // art skin arrived after login: repaint the hotbar, joystick knob and target panel
-addEventListener('uiskin', () => { renderHotbar(); HUD.sprite($('knob'), 'joy_knob'); skinTarget(); });
-if (HUD.UI.man) { HUD.sprite($('knob'), 'joy_knob'); skinTarget(); }
+addEventListener('uiskin', () => { renderHotbar(); HUD.sprite($('knob'), 'joy_knob'); });
+if (HUD.UI.man) { HUD.sprite($('knob'), 'joy_knob'); } // the compact target HUD keeps its plain frame (skinTarget is kept for reference)
 
 // ------------------------------------------------------------ AUTO (simple; full auto-combat is Phase 3)
 $('bAuto').onclick = null; onPress($('bAuto'), toggleAuto);
@@ -287,7 +295,7 @@ setInterval(() => {
   if (!auto || !me || me.hp <= 0) return;
   if (me.hp < me.maxhp * 0.35) { const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i, id: 1 }); }
   const d = nearest('d', 3); if (d) { send({ t: 'pick', id: d }); return; }
-  if (!selected || !ents.has(selected)) { const l = targetList(14); if (!l.length) return; setTarget(l[0]); }
+  if (!selected || !ents.has(selected)) { const l = targetList(14); const id = typeof aqPickTarget === 'function' ? aqPickTarget(l) : l[0]; if (!id) return; setTarget(id); }
   const t = performance.now();
   // (re)start the server-side chase when the target changed or nothing has landed for a while
   if (autoAtk !== selected || (t - lastMyHitT > 3000 && t - autoSent > 3000)) { autoAtk = selected; autoSent = t; send({ t: 'attack', id: selected }); }

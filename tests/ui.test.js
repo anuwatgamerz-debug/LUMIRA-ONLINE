@@ -104,7 +104,7 @@ async function responsive(b, srv, R) {
     // big gold number (widest top bar) + target panel shown, measured in the same tick so the combat UI can't hide it first
     await pg.evaluate(() => { me.zeny = 9999999; updHud(); });
     const r = await pg.evaluate(() => {
-      document.getElementById('tgt').classList.add('on');
+      document.getElementById('tgt').classList.add('on'); if (typeof placeTarget === 'function') { tgPlaceT = 0; placeTarget(); }
       const box = el => { const e = el.getBoundingClientRect(); return { id: el.id, l: e.left, t: e.top, r: e.right, b: e.bottom, round: el.classList.contains('rb') }; };
       const els = ['pstat', 'topbar', 'mm', 'quest', 'joy', 'chat', 'tgt'].map(id => box(document.getElementById(id)));
       const btns = [...document.querySelectorAll('#acts .rb')].map(box);
@@ -121,11 +121,11 @@ async function responsive(b, srv, R) {
       const clipped = [...document.getElementById('topbar').children].filter(c => c.offsetParent && (c.getBoundingClientRect().left < bar.left - 1 || c.getBoundingClientRect().right > bar.right + 1)).map(c => c.id || c.className);
       const atk = document.getElementById('bAtk').getBoundingClientRect().width, sk = document.getElementById('sk1').getBoundingClientRect().width, sm = document.getElementById('bPot').getBoundingClientRect().width;
       const tgtShown = document.getElementById('tgt').getBoundingClientRect().width > 0;
-      const skin = document.body.classList.contains('skin') && document.getElementById('pstat').classList.contains('art') && document.getElementById('tgt').classList.contains('art') && document.getElementById('bAtk').classList.contains('skinned');
+      const skin = document.body.classList.contains('skin') && document.getElementById('pstat').classList.contains('art') && !document.getElementById('tgt').classList.contains('art') && document.getElementById('bAtk').classList.contains('skinned'); // target uses the compact HUD (not the big art frame)
       return { ov, off, clipped, atk, sk, sm, tgtShown, skin, wheel: document.getElementById('acts').getBoundingClientRect().width, W: innerWidth };
     });
     const ratio = r.atk / r.sk;
-    R.ok(r.skin, `responsive ${n}: art skin active (status/target frames, wheel art)`);
+    R.ok(r.skin, `responsive ${n}: art skin active (status frame, wheel art; compact target HUD)`);
     R.ok(r.tgtShown && !r.ov.length && !r.off.length && !r.clipped.length && !pg.errs.length, `responsive ${n}: no overlap (incl. target panel) / off-screen / clipped bar / errors`, JSON.stringify({ tgt: r.tgtShown, ov: r.ov, off: r.off, clipped: r.clipped, errs: pg.errs }));
     R.ok(ratio >= 1.25 && ratio <= 1.5 && r.sm < r.sk && r.sk >= 36, `responsive ${n}: attack ${r.atk.toFixed(0)}px = ${ratio.toFixed(2)}× skill ${r.sk.toFixed(0)}px, small ${r.sm.toFixed(0)}px, wheel ${(r.wheel / r.W * 100).toFixed(0)}% of width`);
     await pg.screenshot({ path: require('path').join(require('os').tmpdir(), `lumira-${w}x${h}.png`) });
@@ -204,7 +204,7 @@ async function phase2Mobile(b, srv, R) {
   if (pt) {
     R.ok(await pg.evaluate(() => selected) === pt.id, 'T1 tap a monster selects it (touch)', JSON.stringify(diag));
     const panel = await pg.evaluate(() => !ents.get(selected) ? {} : ({ on: document.getElementById('tgt').classList.contains('on'), name: document.getElementById('tgName').textContent, lv: document.getElementById('tgLv').textContent, hp: document.getElementById('tgHpT').textContent, st: document.getElementById('tgSt').textContent, want: MOBN[ents.get(selected).type].n }));
-    R.ok(panel.on && panel.name === panel.want && /^Lv \d+/.test(panel.lv) && /\(\d+%\)/.test(panel.hp) && panel.st.length > 0, 'T2 target panel: name, level, HP and %, status', JSON.stringify(panel));
+    R.ok(panel.on && panel.name === panel.want && /^Lv \d+/.test(panel.lv) && /^\d+%$/.test(panel.hp) && panel.st.length > 0, 'T2 target panel: name, level, HP and %, status', JSON.stringify(panel));
     R.ok(!(await sent(pg, "m.t === 'attack'")).length, 'T3 first tap only targets (no attack sent)');
     // out of range: attack button refuses with feedback, no packet
     const [k] = await mark(pg); await pg.tap('#bAtk'); await pg.waitForTimeout(150);

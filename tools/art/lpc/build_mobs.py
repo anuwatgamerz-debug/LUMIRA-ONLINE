@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # LPC monster sheets -> LUMIRA px sheets (rows N,W,S,E; cols idle4 walk6 atk5 hit2 die5)
 import sys, json, os
-from PIL import Image
+from PIL import Image, ImageOps
 B = '/home/claude/lpcw'
 M = B + '/x/lpc-monsters/lpc-monsters/'
 DST = sys.argv[1] if len(sys.argv) > 1 else '/tmp/mout'
@@ -107,3 +107,59 @@ for r, k in enumerate('SNEW'):
 add(build('m_lpc_beetle', 64, 64, d, die_fade=True))
 json.dump(out, open(DST + '/meta_px.json', 'w'), indent=1)
 print(json.dumps(out)[:600])
+
+# ---------------- pass 2: more LPC creatures (dungeons) ----------------
+D2 = '/home/claude/dl2/'
+AN = D2 + 'x/lpc_animals_2022_v1.1/lpc animals 2022 v1.1/individual creature spritesheets/'
+def mirror(lst): return [ImageOps.mirror(i) for i in lst]
+from PIL import ImageOps
+def ulpc(name, path, tint_fn=None):  # Universal LPC body sheet 832x1344: spellcast 0-3, thrust 4-7, walk 8-11, slash 12-15, shoot 16-19, hurt 20
+    g = grid(path, 64, 64); d = {}
+    for r, k in enumerate('NWSE'):
+        d[k] = {'idle': [g(0, 8 + r)] * 2 + [g(0, 12 + r)] * 2, 'walk': [g(c, 8 + r) for c in range(1, 9)], 'atk': [g(c, 12 + r) for c in range(6)],
+                'hit': [g(0, 20), g(1, 20)], 'die': [g(c, 20) for c in range(6)]}
+    return build(name, 64, 64, d)
+add(ulpc('m_lpc_skeleton', D2 + 'skeleton_3.png'))
+add(ulpc('m_lpc_zombie', D2 + 'Zombie_0.png'))
+# spider: 10x5 of 64, rows N W S E + death row; cols 0-3 attack, 4-9 walk
+g = grid(D2 + 'x/LPC_Spiders/LPC_Spiders/spider01.png', 64, 64); d = {}
+for r, k in enumerate('NWSE'):
+    d[k] = {'idle': [g(4, r), g(5, r)], 'walk': [g(c, r) for c in range(4, 10)], 'atk': [g(c, r) for c in range(4)], 'hit': [g(0, r)] * 2, 'die': [g(c, 4) for c in range(4)]}
+add(build('m_lpc_spider', 64, 64, d))
+# centipede: 128 cells, frames row-major 5 cols: S 0-5, N 6-11, W 12-17 (E mirrors W)
+cp = D2 + 'x/lpc_centipede/[LPC] Centipede/png/lpc_centipede.png'
+CF = lambda i: C(cp, (i % 5) * 128, (i // 5) * 128, 128, 128)
+dirs = {'S': [CF(i) for i in range(0, 6)], 'N': [CF(i) for i in range(6, 12)], 'W': [CF(i) for i in range(12, 18)]}; dirs['E'] = mirror(dirs['W'])
+d = {k: {'idle': v[:2], 'walk': v, 'atk': [v[1], v[3], v[5], v[3], v[1]], 'hit': [v[0]] * 2, 'die': [v[0]] * 5} for k, v in dirs.items()}
+add(build('m_lpc_centipede', 128, 128, d, die_fade=True))
+# giant rat 80x64: rows S W E N, cols 0-7 walk, 8-10 bite
+g = grid(AN + 'giant rat (Sevarihk).png', 80, 64); d = {}
+for r, k in enumerate('SWEN'):
+    d[k] = {'idle': [g(0, r), g(1, r)], 'walk': [g(c, r) for c in range(8)], 'atk': [g(c, r) for c in (8, 9, 10, 9, 8)], 'hit': [g(0, r)] * 2, 'die': [g(0, r)] * 5}
+add(build('m_lpc_rat', 80, 64, d, die_fade=True))
+# mushroom walker 32px 4x4: rows S W E N
+g = grid(AN + 'mushroom walker (Sevarihk).png', 32, 32); d = {}
+for r, k in enumerate('SWEN'):
+    d[k] = {'idle': [g(0, r), g(1, r)], 'walk': [g(c, r) for c in range(4)], 'atk': [g(c, r) for c in (1, 2, 3, 2, 1)], 'hit': [g(0, r)] * 2, 'die': [g(0, r)] * 5}
+add(build('m_lpc_mushroom', 32, 32, d, die_fade=True))
+# frogman 80x96: walk rows N W S E (4), attack rows 4-7 (6), death row 8 (6)
+g = grid(D2 + 'frogman_1.png', 80, 96); d = {}
+for r, k in enumerate('NWSE'):
+    d[k] = {'idle': [g(0, r), g(0, r), g(3, r), g(3, r)], 'walk': [g(c, r) for c in range(4)], 'atk': [g(c, 4 + r) for c in range(1, 6)], 'hit': [g(0, r)] * 2, 'die': [g(c, 8) for c in range(6)]}
+add(build('m_lpc_frogman', 80, 96, d))
+# bear 64px 5x12: walk N0 E1 W2 S3, attack N4 E5 W6 S7, die N8 E9 W10 S11
+g = grid(AN + 'bear, grizzly.png', 64, 64); d = {}
+for k, (wr, ar, dr, nw, na) in {'N': (0, 4, 8, 4, 4), 'E': (1, 5, 9, 5, 3), 'W': (2, 6, 10, 5, 3), 'S': (3, 7, 11, 4, 4)}.items():
+    d[k] = {'idle': [g(0, wr)] * 2 + [g(1, wr)] * 2, 'walk': [g(c, wr) for c in range(nw)], 'atk': [g(c, ar) for c in range(na)], 'hit': [g(0, wr)] * 2, 'die': [g(c, dr) for c in range(4)]}
+add(build('m_lpc_bear', 64, 64, d, die_fade=True))
+# 48x64 three-frame walkers (rows given), attack = lunge on the stride frames
+def walker3(name, path, rows, fw=48, fh=64):
+    g = grid(path, fw, fh); d = {}
+    for r, k in enumerate(rows):
+        d[k] = {'idle': [g(0, r)] * 4, 'walk': [g(1, r), g(0, r), g(2, r), g(0, r)], 'atk': [g(0, r), g(1, r), g(2, r), g(1, r), g(0, r)], 'hit': [g(0, r)] * 2, 'die': [g(0, r)] * 5}
+    return build(name, 64, 64, d, die_fade=True)
+add(walker3('m_lpc_minotaur', D2 + 'x/minotaur-1.3/PNG/48x64/minotaur-red-NESW.png', 'NESW'))
+add(walker3('m_lpc_werewolf', D2 + 'werewolf-NESW_2.png', 'NESW'))
+add(walker3('m_lpc_pumpkin', D2 + 'pumpkin_monster_0.png', 'SWEN', 32, 64))
+json.dump(out, open(DST + '/meta_px.json', 'w'), indent=1)
+print('pass2', len(out))

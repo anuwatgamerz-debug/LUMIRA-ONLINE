@@ -381,36 +381,130 @@ function renderBigMap() {
   document.querySelectorAll('#maptabs button').forEach(b => b.classList.toggle('on', b.dataset.t === mapTab));
   $('maplocal').style.display = mapTab === 'local' ? 'block' : 'none'; $('mapworld').style.display = mapTab === 'world' ? 'block' : 'none';
   if (mapTab === 'world') return renderWorldMap();
-  if (!miniC) return; const c = $('bmc'); c.width = map.w * 4; c.height = map.h * 4; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(miniC, 0, 0, c.width, c.height);
-  for (const n of map.npcs) { g.fillStyle = '#ffd34d'; g.fillRect(n.x * 4, n.y * 4, 4, 4); }
-  for (const nd of map.nodes || []) if (nodeWanted(nd)) { g.fillStyle = '#b07bff'; g.fillRect(nd.x * 4, nd.y * 4, 4, 4); }
-  for (const p of map.portals) { g.fillStyle = p.req && p.req.locked ? '#8a8a98' : '#9fe7ff'; g.fillRect(p.x * 4 - 2, p.y * 4 - 2, 8, 8); }
-  const e = ents.get(myId); if (e) { g.fillStyle = '#fff'; g.fillRect(e.x * 4 - 2, e.y * 4 - 2, 8, 8); g.fillStyle = '#e5484d'; g.fillRect(e.x * 4, e.y * 4, 4, 4); }
+  if (!ground || !map) return;
+  // local map: the baked ground + every tree/building/prop drawn small, framed like a field chart
+  const c = $('bmc'), D = Math.min(2, devicePixelRatio || 1), bw = Math.max(200, ($('maplocal').clientWidth || 600)) * D;
+  const W = map.w * TP, H = map.h * TP, s = bw / W; c.width = Math.round(bw); c.height = Math.round(H * s);
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.drawImage(ground, 0, 0, c.width, c.height);
+  const list = props.filter(p => WSPR[p.n]).sort((a, b) => (a.sort ?? a.y) - (b.sort ?? b.y));
+  for (const p of list) { const w = WSPR[p.n], im = img(w.path); if (im) g.drawImage(im, (p.x - w.ax) * s, (p.y - w.ay) * s, w.w * s, w.h * s); }
+  // soft vignette so markers read well
+  const vg = g.createRadialGradient(c.width / 2, c.height / 2, Math.min(c.width, c.height) * 0.35, c.width / 2, c.height / 2, Math.max(c.width, c.height) * 0.75);
+  vg.addColorStop(0, 'rgba(10,14,30,0)'); vg.addColorStop(1, 'rgba(10,14,30,0.45)'); g.fillStyle = vg; g.fillRect(0, 0, c.width, c.height);
+  const T = (x, y) => [(x + 0.5) * TP * s, (y + 0.5) * TP * s], R = Math.max(5, 6 * D);
+  const label = (t, x, y, col) => { g.font = `600 ${Math.round(10 * D)}px Mitr,sans-serif`; const tw = g.measureText(t).width; x = Math.max(tw / 2 + 4 * D, Math.min(c.width - tw / 2 - 4 * D, x)); y = Math.min(c.height - 14 * D, y); g.textAlign = 'center'; g.textBaseline = 'top'; g.lineWidth = 3 * D; g.strokeStyle = '#0b1024'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y); };
+  const qt = typeof questMarkTargets === 'function' ? questMarkTargets() : [];
+  for (const p of map.portals) { const [x, y] = T(p.x, p.y), lk = p.req && p.req.locked; g.fillStyle = lk ? '#5a5f78' : '#38b6ff'; g.strokeStyle = '#e8f6ff'; g.lineWidth = 2 * D; g.beginPath(); g.ellipse(x, y, R * 1.2, R * 0.8, 0, 0, 7); g.fill(); g.stroke(); label((lk ? '🔒 ' : '➜ ') + (p.label || (WORLD && WORLD.maps[p.to] || {}).name || p.to).split(' (')[0], x, y + R, lk ? '#9aa0b8' : '#bfeeff'); }
+  for (const n of map.npcs) {
+    const [x, y] = T(n.x, n.y), mk = me && me.npcq && me.npcq[n.id];
+    g.fillStyle = mk === 'turnin' ? '#7dff8a' : mk === 'avail' ? '#ffd34d' : '#e8c46a'; g.strokeStyle = '#0b1024'; g.lineWidth = 2 * D;
+    g.beginPath(); g.arc(x, y, R * 0.8, 0, 7); g.fill(); g.stroke();
+    if (mk) { g.font = `700 ${Math.round(11 * D)}px Mitr,sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#0b1024'; g.fillText(mk === 'turnin' ? '?' : '!', x, y + 0.5); }
+    label(n.name || n.n || '', x, y + R, '#ffe9b0');
+  }
+  for (const nd of map.nodes || []) if (nodeWanted(nd)) { const [x, y] = T(nd.x, nd.y); g.fillStyle = '#b07bff'; g.strokeStyle = '#fff'; g.lineWidth = 1.5 * D; g.beginPath(); g.moveTo(x, y - R); g.lineTo(x + R * 0.7, y); g.lineTo(x, y + R); g.lineTo(x - R * 0.7, y); g.closePath(); g.fill(); g.stroke(); }
+  for (const q of qt) if (q.map === map.id) { const [x, y] = T(q.x, q.y); g.strokeStyle = '#ffd34d'; g.lineWidth = 2.5 * D; g.setLineDash([4 * D, 3 * D]); g.beginPath(); g.arc(x, y, (q.r ? q.r * TP * s : R * 2), 0, 7); g.stroke(); g.setLineDash([]); }
+  const e = ents.get(myId); if (e) { const [x, y] = T(e.x, e.y), a = [0, -Math.PI / 2, Math.PI / 2, Math.PI][e.dir | 0] ?? 0; g.save(); g.translate(x, y); g.rotate(({ 0: Math.PI, 1: -Math.PI / 2, 2: 0, 3: Math.PI / 2 })[e.dir | 0] ?? 0); g.fillStyle = '#ff4d5a'; g.strokeStyle = '#fff'; g.lineWidth = 2 * D; g.beginPath(); g.moveTo(0, R * 1.3); g.lineTo(R, -R * 0.8); g.lineTo(0, -R * 0.3); g.lineTo(-R, -R * 0.8); g.closePath(); g.fill(); g.stroke(); g.restore(); }
+  g.strokeStyle = '#c8913a'; g.lineWidth = 3 * D; g.strokeRect(1.5 * D, 1.5 * D, c.width - 3 * D, c.height - 3 * D);
   const meta = WORLD && WORLD.maps[map.id];
-  $('mapinfo').innerHTML = meta ? `แนะนำ Lv ${meta.lv[0]}-${meta.lv[1]} · ${(WORLD.regions.find(r => r.id === meta.region) || {}).th || ''} · ทางออก: ${map.portals.map(p => esc(p.label || (WORLD.maps[p.to] || {}).name || p.to)).join(', ')}` : '';
+  $('mapinfo').innerHTML = (meta ? `แนะนำ Lv ${meta.lv[0]}-${meta.lv[1]} · ${(WORLD.regions.find(r => r.id === meta.region) || {}).th || ''} · ทางออก: ${map.portals.map(p => esc(p.label || (WORLD.maps[p.to] || {}).name || p.to)).join(', ')}` : '')
+    + `<div class="mlegend"><span><i style="background:#ff4d5a"></i>คุณ</span><span><i style="background:#e8c46a;border-radius:50%"></i>NPC</span><span><i style="background:#ffd34d;border-radius:50%"></i>! ภารกิจ</span><span><i style="background:#38b6ff;border-radius:50%"></i>ทางไปแผนที่อื่น</span><span><i style="background:#b07bff"></i>จุดเก็บของเควส</span></div>`;
 }
-// world map: regions as soft areas, maps as dots joined by their roads; tap for name / level / status / links
+// ------------------------------------------------------------ world map: painted continent (pixel art), cached per size
+const BIOME = { heartland: ['#6fae58', '#5e9e4b', '#86c068'], verdant: ['#3e8a4a', '#2f7440', '#4f9d58'], ashen: ['#7a4a3a', '#5e3a30', '#9a5a40'], azure: ['#8cc87a', '#d8c890', '#70b86a'],
+  sandsea: ['#e0c27a', '#d4b066', '#ecd498'], frostland: ['#e8f2fa', '#c8dcec', '#ffffff'], arcane: ['#8a7ad0', '#6f60b8', '#a596e0'], void: ['#4a3a6a', '#3a2c58', '#5e4a80'] };
+let wmCache = null;
+function paintContinent(w, h) {
+  const c = mkCanvas(w, h), g = c.getContext('2d'), id = g.createImageData(w, h), d = id.data;
+  const regs = WORLD.regions.map(r => ({ r, x: r.pos[0] / 100 * w * 0.9 + w * 0.05, y: r.pos[1] / 100 * h * 0.9 + h * 0.05 }));
+  const mapsP = Object.values(WORLD.maps).map(m => [m.pos[0] / 100 * w * 0.9 + w * 0.05, m.pos[1] / 100 * h * 0.9 + h * 0.05]);
+  const land = new Float32Array(w * h), reg = new Uint8Array(w * h), S = Math.min(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let v = 0; for (const [mx, my] of mapsP) { const dd = ((x - mx) ** 2 + (y - my) ** 2) / (S * 0.11) ** 2; v += Math.exp(-dd); }
+    for (const q of regs) { const dd = ((x - q.x) ** 2 + (y - q.y) ** 2) / (S * 0.2) ** 2; v += 0.6 * Math.exp(-dd); }
+    v += (vnoise(x / 9, y / 9) - 0.5) * 0.9 + (vnoise(x / 3.5 + 40, y / 3.5) - 0.5) * 0.35;
+    const edge = Math.min(x, y, w - 1 - x, h - 1 - y) / (S * 0.08); if (edge < 1) v -= (1 - edge) * 1.2;
+    land[y * w + x] = v; let best = 0, bd = 1e9; regs.forEach((q, i) => { const dd = (x - q.x) ** 2 + (y - q.y) ** 2 + (vnoise(x / 11 + i * 13, y / 11) - 0.5) * S * S * 0.09 + (vnoise(x / 4 + i * 7, y / 4 + 50) - 0.5) * S * S * 0.025; if (dd < bd) { bd = dd; best = i; } }); reg[y * w + x] = best;
+  }
+  const TH = 0.62, at = (x, y) => land[Math.max(0, Math.min(h - 1, y)) * w + Math.max(0, Math.min(w - 1, x))];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, v = land[i], o = i * 4; let col;
+    if (v < TH) { // sea: deep -> shallow, foam line at the coast, sparkles
+      const near = v > TH - 0.12; col = near ? [62, 120, 186] : v > TH - 0.3 ? [44, 92, 160] : [30, 64, 124];
+      if (v > TH - 0.04) col = [168, 214, 240]; else if (hash(x * 3, y * 7) > 0.995) col = [120, 170, 220];
+    } else {
+      const pal = BIOME[regs[reg[i]].r.id] || BIOME.heartland, n = vnoise(x / 4 + reg[i] * 9, y / 4);
+      col = hex(pal[n < 0.35 ? 1 : n > 0.7 ? 2 : 0]);
+      if (v < TH + 0.07) col = [226, 206, 150]; // beach
+      const sh = at(x - 1, y - 1) - at(x + 1, y + 1); if (sh > 0.08) col = col.map(q => Math.min(255, q + 14)); else if (sh < -0.08) col = col.map(q => q - 18);
+    }
+    d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255;
+  }
+  g.putImageData(id, 0, 0);
+  // stamps: trees / mountains / dunes / crystals per biome (pixel icons)
+  const R2 = (x, y, ww, hh, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), ww, hh); };
+  const tree = (x, y, c1, c2) => { R2(x - 1, y - 4, 3, 1, c1); R2(x - 2, y - 3, 5, 2, c1); R2(x - 1, y - 3, 1, 1, c2); R2(x, y - 1, 1, 2, '#5a3a22'); };
+  const mount = (x, y, c1, cap) => { for (let k = 0; k < 6; k++) R2(x - k, y - 6 + k, k * 2 + 1, 1, k < 2 ? cap : c1); R2(x, y - 4, 1, 4, '#00000033'); };
+  const dune = (x, y) => { R2(x - 3, y, 7, 1, '#c09a50'); R2(x - 2, y - 1, 4, 1, '#f0dca8'); };
+  const crystal = (x, y) => { R2(x, y - 5, 1, 5, '#e0d8ff'); R2(x - 1, y - 3, 1, 3, '#b8a8ff'); R2(x + 1, y - 2, 1, 2, '#8070d0'); };
+  for (let k = 0; k < w * h / 18; k++) {
+    const x = Math.floor(hash(k, 7) * w), y = Math.floor(hash(7, k) * h), i = y * w + x; if (land[i] < TH + 0.12) continue;
+    if (mapsP.some(([mx, my]) => Math.abs(mx - x) < 5 && Math.abs(my - y) < 5)) continue;
+    const id2 = regs[reg[i]].r.id, r = hash(k, 99);
+    if (id2 === 'verdant' || (id2 === 'heartland' && r < 0.45)) tree(x, y, id2 === 'verdant' ? '#1f5a30' : '#2f7a3a', '#5fae58');
+    else if (id2 === 'ashen' && r < 0.5) mount(x, y, '#4a2a22', r < 0.15 ? '#ff7a3a' : '#7a5a50');
+    else if (id2 === 'frostland') r < 0.5 ? mount(x, y, '#8aa8c0', '#ffffff') : tree(x, y, '#3a6a7a', '#e8f2fa');
+    else if (id2 === 'sandsea' && r < 0.5) dune(x, y);
+    else if (id2 === 'arcane' && r < 0.4) crystal(x, y);
+    else if (id2 === 'void' && r < 0.4) crystal(x, y);
+    else if (id2 === 'azure' && r < 0.3) tree(x, y, '#2f8a5a', '#9ad87a');
+  }
+  return c;
+}
 function renderWorldMap() {
   if (!WORLD) return; const c = $('wmc'), box = $('wmw').getBoundingClientRect(), D = Math.min(2, devicePixelRatio || 1);
   c.width = Math.max(10, Math.round(box.width * D)); c.height = Math.max(10, Math.round(box.height * D));
   const g = c.getContext('2d'), W = c.width, H = c.height, P = q => [q[0] / 100 * W * 0.9 + W * 0.05, q[1] / 100 * H * 0.9 + H * 0.05];
-  g.fillStyle = '#0b1024'; g.fillRect(0, 0, W, H);
-  for (const r of WORLD.regions) { const [x, y] = P(r.pos), rad = Math.min(W, H) * 0.16; const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, r.col + '66'); gr.addColorStop(1, r.col + '00'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill(); }
-  g.lineWidth = 1.5 * D;
-  for (const [a, b] of WORLD.links) { const A = WORLD.maps[a], B = WORLD.maps[b]; if (!A || !B) continue; const [x1, y1] = P(A.pos), [x2, y2] = P(B.pos); g.strokeStyle = A.status === 'open' && B.status === 'open' ? '#e8c46aaa' : '#59607a66'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+  const pw = 220, ph = Math.round(pw * H / W), key = pw + 'x' + ph;
+  if (!wmCache || wmCache.key !== key) wmCache = { key, c: paintContinent(pw, ph) };
+  g.imageSmoothingEnabled = false; g.drawImage(wmCache.c, 0, 0, W, H);
+  // roads: dashed parchment lines with a slight curve
+  g.lineCap = 'round';
+  for (const [a, b] of WORLD.links) {
+    const A = WORLD.maps[a], B = WORLD.maps[b]; if (!A || !B) continue; const [x1, y1] = P(A.pos), [x2, y2] = P(B.pos), mx = (x1 + x2) / 2 + (y2 - y1) * 0.12, my = (y1 + y2) / 2 - (x2 - x1) * 0.12, open = A.status === 'open' && B.status === 'open';
+    g.setLineDash(open ? [] : [3 * D, 4 * D]); g.strokeStyle = '#2a1a0c99'; g.lineWidth = 4 * D; g.beginPath(); g.moveTo(x1, y1); g.quadraticCurveTo(mx, my, x2, y2); g.stroke();
+    g.strokeStyle = open ? '#f0d48a' : '#c8b89a88'; g.lineWidth = 2 * D; g.beginPath(); g.moveTo(x1, y1); g.quadraticCurveTo(mx, my, x2, y2); g.stroke();
+  }
+  g.setLineDash([]);
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  for (const r of WORLD.regions) { const [x, y] = P(r.pos); g.font = `600 ${11 * D}px Mitr,sans-serif`; g.fillStyle = r.col; g.fillText(r.th, x, y - Math.min(W, H) * 0.11); }
+  const txt = (t, x, y, sz, col, wt = 600) => { g.font = `${wt} ${Math.round(sz * D)}px Mitr,sans-serif`; g.lineWidth = 3.5 * D; g.strokeStyle = '#0b1024dd'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y); };
+  for (const r of WORLD.regions) { const [x, y] = P(r.pos); txt(r.th, x, y - Math.min(W, H) * 0.1, 12, '#fff3cf', 700); }
   wmHit = [];
+  const qmaps = new Set((typeof questMarkTargets === 'function' ? questMarkTargets() : []).map(q => q.map));
   for (const m of Object.values(WORLD.maps)) {
-    const [x, y] = P(m.pos), open = m.status === 'open', here = map && m.id === map.id, town = m.town;
-    const rr = (town ? 5 : 3.5) * D;
-    g.fillStyle = here ? '#ffffff' : open ? (town ? '#ffd34d' : '#7dff8a') : '#4a4f66'; g.strokeStyle = '#0b1024'; g.lineWidth = 2 * D;
-    g.beginPath(); if (town) g.rect(x - rr, y - rr, rr * 2, rr * 2); else g.arc(x, y, rr, 0, 7); g.fill(); g.stroke();
-    if (here) { g.strokeStyle = '#e5484d'; g.lineWidth = 2 * D; g.beginPath(); g.arc(x, y, rr + 4 * D, 0, 7); g.stroke(); }
-    if (open || town) { g.font = `${9 * D}px Mitr,sans-serif`; g.fillStyle = open ? '#e8e2cc' : '#6b7090'; g.fillText(m.name.split(' (')[0], x, y + rr + 7 * D); }
-    if (wmSel === m.id) { g.strokeStyle = '#7fd4ff'; g.lineWidth = 2 * D; g.strokeRect(x - rr - 3 * D, y - rr - 3 * D, (rr + 3 * D) * 2, (rr + 3 * D) * 2); }
+    const [x, y] = P(m.pos), open = m.status === 'open', here = map && m.id === map.id, k = m.town ? 'town' : m.kind === 'dungeon' ? 'dun' : 'field', u = Math.max(0.8, Math.min(1.6, box.width / 420)) * D;
+    const B = (dx, dy, ww, hh, col) => { g.fillStyle = col; g.fillRect(Math.round(x + dx * u), Math.round(y + dy * u), Math.ceil(ww * u), Math.ceil(hh * u)); };
+    if (k === 'town') { // little castle
+      const wall = open ? '#e8e0cc' : '#7a7f94', roof = open ? '#3d6fd8' : '#4a4f66';
+      B(-6, -2, 12, 6, '#0b1024'); B(-5, -1, 10, 4, wall); B(-6, -6, 3, 5, '#0b1024'); B(3, -6, 3, 5, '#0b1024'); B(-5.5, -5, 2, 4, wall); B(3.5, -5, 2, 4, wall);
+      B(-6, -8, 3, 2, roof); B(3, -8, 3, 2, roof); B(-2, -5, 4, 4, wall); B(-2, -8, 4, 3, roof); B(-1, 0, 2, 3, '#5a3a22');
+    } else if (k === 'dun') { B(-5, -3, 10, 7, '#0b1024'); B(-4, -2, 8, 5, open ? '#8a7a6a' : '#5a5f78'); B(-2, -1, 4, 4, '#1a1010'); }
+    else { g.fillStyle = '#0b1024'; g.beginPath(); g.arc(x, y, 4.2 * u, 0, 7); g.fill(); g.fillStyle = open ? '#7dff8a' : '#6b7090'; g.beginPath(); g.arc(x, y, 3 * u, 0, 7); g.fill(); }
+    if (!open) { B(-2, -2, 4, 3, '#c8c8d8'); B(-1.5, -4, 3, 2, '#0b1024'); B(-1, -3.5, 2, 1.5, '#c8c8d8'); }
+    if (qmaps.has(m.id)) { g.strokeStyle = '#ffd34d'; g.lineWidth = 2 * D; g.beginPath(); g.arc(x, y, 9 * u, 0, 7); g.stroke(); }
+    if (here) { // red pin
+      g.fillStyle = '#e5484d'; g.strokeStyle = '#fff'; g.lineWidth = 1.5 * D; g.beginPath(); g.arc(x, y - 14 * u, 4 * u, Math.PI, 0); g.lineTo(x, y - 6 * u); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y - 14 * u, 1.5 * u, 0, 7); g.fill();
+    }
+    if (open || (m.town && box.width > 520)) txt(m.name.split(' (')[0], x, y + 9 * u, box.width > 520 ? 9 : 8, open ? '#ffffff' : '#b8bccc', open ? 600 : 400);
+    if (wmSel === m.id) { g.strokeStyle = '#7fd4ff'; g.lineWidth = 2 * D; g.strokeRect(x - 8 * u, y - 8 * u, 16 * u, 16 * u); }
     wmHit.push([m.id, x / D, y / D]);
   }
+  // compass rose + gold frame
+  const cx = W - 26 * D, cy = H - 26 * D, rr = 14 * D; g.fillStyle = '#0b1024aa'; g.beginPath(); g.arc(cx, cy, rr + 4 * D, 0, 7); g.fill();
+  g.fillStyle = '#e8c46a'; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; g.beginPath(); g.moveTo(cx + Math.sin(a) * rr, cy - Math.cos(a) * rr); g.lineTo(cx + Math.sin(a + 0.6) * rr * 0.3, cy - Math.cos(a + 0.6) * rr * 0.3); g.lineTo(cx + Math.sin(a - 0.6) * rr * 0.3, cy - Math.cos(a - 0.6) * rr * 0.3); g.fill(); }
+  txt('N', cx, cy - rr - 6 * D, 8, '#ffe39a', 700);
+  g.strokeStyle = '#c8913a'; g.lineWidth = 3 * D; g.strokeRect(1.5 * D, 1.5 * D, W - 3 * D, H - 3 * D); g.strokeStyle = '#5a3a14'; g.lineWidth = 1 * D; g.strokeRect(5 * D, 5 * D, W - 10 * D, H - 10 * D);
 }
 let wmHit = [];
 $('wmc').addEventListener('pointerdown', e => {

@@ -641,6 +641,21 @@ function logout(p) {
   for (const mb of mobs.values()) if (mb.target === p.id) mb.target = null;
   p.c = null;
 }
+// navigation data for Auto Quest (client side): where NPCs stand, where monsters spawn, which nodes / monsters give an
+// item, and every portal of every open map (with its lock / level gate) so the client can route across maps.
+// Movement itself stays server-authoritative: the client only asks the server to walk to a tile / NPC / node.
+const GUIDE = (() => {
+  const npcs = {}, spawns = {}, nodes = {}, portals = {}, drops = {};
+  for (const m of Object.values(MAPS)) {
+    for (const n of m.npcs) npcs[m.id + ':' + n.id] = [m.id, n.x, n.y, n.id, n.label || n.n];
+    for (const s of m.spawns) (spawns[s.mob] = spawns[s.mob] || []).push([m.id, ...s.zone]);
+    for (const b of m.bosses || []) (spawns[b.mob] = spawns[b.mob] || []).push([m.id, b.x - 2, b.y - 2, b.x + 2, b.y + 2]);
+    for (const nd of m.nodes) (nodes[nd.k] = nodes[nd.k] || []).push([m.id, nd.x, nd.y, nd.id, nd.item || 0]);
+    portals[m.id] = m.portals.map(pt => ({ to: pt.to, x: pt.x, y: pt.y, tx: pt.tx, ty: pt.ty, lv: (pt.req && pt.req.lv) || 0, locked: !!(pt.req && (pt.req.locked || pt.req.quest)) }));
+  }
+  for (const mb of Object.values(MOBS)) for (const t of Object.values(mb.drops || {})) for (const [it] of t) (drops[it] = drops[it] || []).push(mb.id);
+  return { npcs, spawns, nodes, portals, drops, legacy: [['jellop', 10], ['crab', 8], ['leafling', 10], ['kingjel', 1]], legacyNpc: 'solkara:iris' };
+})();
 // static game data the client needs once (monster visuals, world map, quest texts, classes, recipes)
 function welcomeData(c) {
   return {
@@ -649,7 +664,8 @@ function welcomeData(c) {
     skills: skillDefs(c), melee: MELEE,
     classes: Object.fromEntries(Object.values(CLASSES).map(k => [k.id, { th: k.th, en: k.en, tier: k.tier, parent: k.parent, reqLv: k.reqLv, status: k.status, role: k.role, d: k.d }])),
     world: { regions: C.REGIONS, maps: C.MAPS_META, links: C.LINKS },
-    quests: Object.fromEntries(Object.values(QUESTS).map(q => [q.id, { th: q.th, type: q.type, giver: q.giver, stages: q.stages.map(s => ({ k: s.k, d: s.d, n: s.n || 1 })), lv: q.req.lv || 1 }])),
+    quests: Object.fromEntries(Object.values(QUESTS).map(q => [q.id, { th: q.th, type: q.type, giver: q.giver, stages: q.stages.map(s => ({ k: s.k, d: s.d, n: s.n || 1, npc: typeof s.npc === 'string' ? s.npc : undefined, mob: s.mob, item: s.item, node: s.node, map: s.map, x: s.x, y: s.y, r: s.r })), lv: q.req.lv || 1 }])),
+    guide: GUIDE,
     recipes: RECIPES,
   };
 }

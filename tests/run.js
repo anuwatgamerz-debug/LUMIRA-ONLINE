@@ -1,22 +1,24 @@
 'use strict';
 // npm test  -> server suite + browser suite (browser suite needs Playwright; skipped if it isn't installed)
-// node tests/run.js server|world|ui|art  -> one suite only (server also runs world)
+// node tests/run.js server|world|ui|art|aq  -> one suite only (server also runs world)
 const H = require('./harness');
 const server = require('./server.test');
 const world = require('./world.test');
 const art = require('./art.test');
 let ui = null; try { ui = require('./ui.test'); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
+const aq = require('./aq.test');
 
 (async () => {
   const only = process.argv[2];
   const accounts = {};
-  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = H.account(ch);
+  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...aq.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = H.account(ch);
   const srv = await H.startServer(accounts, 3400 + 100 + Math.floor(Math.random() * 400));
   const reps = [];
   try {
     if (!only || only === 'server') { console.log('\n=== server suite ==='); const r = H.reporter('server'); reps.push(r); await server.run(srv, r); }
     if (!only || only === 'world' || only === 'server') { console.log('\n=== world suite (Milestone 1) ==='); const r = H.reporter('world'); reps.push(r); await world.run(srv, r); }
     if (!only || only === 'art') { console.log('\n=== art suite (LUMIRA art bible) ==='); const r = H.reporter('art'); reps.push(r); await art.run(srv, r); }
+    if (!only || only === 'ui' || only === 'aq') { console.log('\n=== UX + quest navigation suite ==='); const r = H.reporter('ux-quest'); reps.push(r); await aq.run(srv, r); }
     if ((!only || only === 'ui') && ui) { console.log('\n=== browser suite ==='); const r = H.reporter('browser'); reps.push(r); await ui.run(srv, r); }
   } catch (e) { console.error('suite crashed:', e); reps.push({ title: 'crash', pass: 0, fail: 1, skip: 0 }); }
   finally { await srv.stop(); }

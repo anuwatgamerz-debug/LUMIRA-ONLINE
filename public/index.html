@@ -24,15 +24,53 @@ button:active{transform:translateY(1px);filter:brightness(1.25)}
 button:disabled{opacity:.4}
 button.ghost{background:#1a2042}
 input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;border:2px solid #4b5694;background:#0c1022;color:var(--txt);width:100%}
-#login{position:fixed;inset:0;display:flex;overflow:auto;z-index:20;padding:16px}
-#login .box{width:min(380px,100%);padding:18px;margin:auto}
-#login h1{margin:0;text-align:center;font-family:'Pixelify Sans',monospace;font-size:44px;letter-spacing:4px;color:#ffe39a;text-shadow:3px 3px 0 #7a3b1a,0 0 16px #f2c46d88}
-#login .sub{text-align:center;color:var(--dim);margin:0 0 12px;font-size:12px;letter-spacing:1px}
-#login label{font-size:13px;color:var(--dim);display:block;margin:8px 0 3px}
-#login .tabs{display:flex;gap:6px;margin-bottom:6px}#login .tabs button{flex:1;background:#1a2042}#login .tabs button.on{background:linear-gradient(180deg,#5a4bb0,#3b2f85)}
+#login{position:fixed;inset:0;z-index:20;overflow:hidden;background:#0b1024 center/cover no-repeat}
+#login.land{background-image:url(assets/ui/login_land.webp)}#login.port{background-image:url(assets/ui/login_port.webp)}
+#login::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,#0b102466,#0b102400 60%);pointer-events:none}
+#login.reg::before{background:#0b1024b8}
+#lstage{position:absolute;left:0;top:0;transform-origin:0 0}
+#lstage.land{width:1672px;height:941px}#lstage.port{width:941px;height:1672px}
+#lstage.land #lbtns button{font-size:0}
+#login .box{position:absolute;box-sizing:border-box;padding:30px 44px 26px;background:linear-gradient(180deg,#141c3cf4,#0c1230f6);border:3px solid #c8913a;border-radius:10px;
+  box-shadow:0 0 0 3px #0a0d1c,0 0 0 6px #e8c46a,0 0 0 8px #5a3a14,0 18px 40px #000c,inset 0 0 0 2px #ffffff10,inset 0 0 40px #3d6fd822;font-size:24px;color:var(--txt)}
+#lstage.land .box{left:575px;top:322px;width:530px;min-height:448px}
+#lstage.port .box{left:126px;top:760px;width:689px;font-size:30px;padding:40px 52px 34px}
+#login .box::before,#login .box::after{content:'';position:absolute;width:22px;height:22px;top:-14px;background:radial-gradient(#9fe7ff,#2f7bd8 60%,#163a7a);transform:rotate(45deg);border:3px solid #e8c46a;box-shadow:0 0 14px #6fc3ff}
+#login .box::before{left:calc(50% - 13px)}#login .box::after{left:calc(50% - 13px);top:auto;bottom:-14px}
+#login h1,#login .sub{display:none}
+#login .sel{font-size:.78em;margin-top:.35em}#login .sel button{font-size:1em;padding:.15em .8em}#login .sel small{width:4.2em;font-size:.85em}#login .sel span{font-size:1em}
+#login #preview{width:5.5em;height:5.5em;margin:.4em auto .2em}
+#login .tabs{display:flex;gap:10px;margin-bottom:14px}
+#login .tabs button{flex:1;font-size:1em;padding:.35em 0;background:#121a3a;border:2px solid #3b4680;border-radius:6px;color:#e8e2cc}
+#login .tabs button.on{background:linear-gradient(180deg,#3d6fd8,#1f3f9a);border-color:#e8c46a;color:#fff;box-shadow:inset 0 1px 0 #ffffff40}
+#login label{display:block;font-size:.8em;color:#d8d0b8;margin:.5em 0 .25em}
+#login .fld{position:relative;display:flex;align-items:center;background:#0b1230;border:2px solid #3b4680;border-radius:8px;height:2.1em}
+#login .fld:focus-within{border-color:#e8c46a;box-shadow:0 0 0 2px #e8c46a44}
+#login .fld i{width:1.9em;text-align:center;font-style:normal;opacity:.75}
+#login .fld input{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:0;color:#fff;font-size:.95em;padding:0}
+#login .fld button{background:none;border:0;color:#cfd6f5;font-size:.8em;width:2.2em;height:100%;padding:0;cursor:pointer}
+#login .row{display:flex;align-items:center;justify-content:space-between;margin-top:.55em;font-size:.75em}
+#login .row label{display:flex;align-items:center;gap:.4em;margin:0;font-size:1em;color:#e8e2cc}
+#login .row input{width:1.1em;height:1.1em;accent-color:#3d6fd8}
+#login .row a{color:#7fd4ff;text-decoration:underline;cursor:pointer}
+#login #go{display:block;width:100%;margin-top:.7em;height:2.4em;font-size:1.15em;font-weight:700;color:#3a2208;background:linear-gradient(180deg,#ffe39a,#e8b04a 45%,#b8761e);border:2px solid #fff3c4;border-radius:10px;box-shadow:0 0 0 3px #5a3a14,0 4px 0 #3a2208,inset 0 2px 0 #fff8;cursor:pointer}
+#login #go:disabled{filter:grayscale(.5) brightness(.8);cursor:wait}
+#login #go .spin{display:inline-block;width:.8em;height:.8em;border:3px solid #3a220855;border-top-color:#3a2208;border-radius:50%;margin-right:.4em;vertical-align:-2px;animation:lspin .8s linear infinite}
+@keyframes lspin{to{transform:rotate(360deg)}}
+#err{color:#ff9b9b;min-height:1.1em;font-size:.72em;text-align:center;margin-top:.45em;line-height:1.2}
+#lbtns{position:absolute;display:flex}
+#lstage.land #lbtns{left:618px;top:800px;width:440px;height:110px;justify-content:space-between}
+#lstage.port #lbtns{left:120px;top:1460px;width:700px;height:150px;justify-content:space-between}
+#lbtns button{width:96px;height:100%;background:transparent;border:0;cursor:pointer;border-radius:50%}
+#lstage.port #lbtns button{width:150px;background:radial-gradient(circle at 50% 38%,#1d2547 0 34%,#0000 35%);color:#ffe39a;font-size:26px;padding-top:96px;position:relative}
+#lstage.port #lbtns button::before{content:attr(data-g);position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:46px}
+#lstage.land #lbtns button:hover{background:#ffffff14}
+#linfo{position:absolute;display:none;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,86%);box-sizing:border-box;padding:28px;font-size:24px;color:var(--txt);background:#0f1634f8;border:3px solid #e8c46a;border-radius:10px;box-shadow:0 0 0 3px #0a0d1c,0 20px 40px #000c;z-index:3}
+#linfo h3{margin:0 0 10px;color:#ffe39a}#linfo button{margin-top:14px;font-size:22px;padding:6px 24px}
+#login.reg .box{max-height:none}
+#login.reg #lbtns{display:none}
 #preview{display:block;margin:8px auto 4px;width:144px;height:144px;image-rendering:pixelated;background:radial-gradient(ellipse at 50% 78%,#6fb04f 0 38%,#3f7a33 39% 62%,#0000 63%);border-radius:8px}
 .sel{display:flex;gap:6px;align-items:center;margin-top:6px}.sel button{padding:4px 12px}.sel span{flex:1;text-align:center;font-size:15px}.sel small{width:44px;color:var(--dim);font-size:12px}
-#err{color:#ff8b8b;min-height:20px;font-size:13px;text-align:center;margin-top:8px}
 #credit{position:fixed;right:8px;bottom:6px;font-size:10px;z-index:21}#credit a{color:#ffe39acc}
 /* ---------------- HUD: everything below is sized in rem; html font-size = 10px * --ui (set by hud.js) */
 html{font-size:calc(10px * var(--ui,1))}
@@ -266,7 +304,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 .chead{display:flex;gap:1rem;align-items:center;margin-bottom:1rem}.chead canvas{width:6.4rem;height:6.4rem;image-rendering:pixelated;border:2px solid var(--gold2);border-radius:50%;background:radial-gradient(#3b4a8a,#151b38)}
 .chead .bar{width:16rem}
 #dead{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:1.6rem 2rem;text-align:center;display:none;font-size:1.5rem}
-#bmc{width:100%;image-rendering:pixelated;display:block}
+#bmc{width:100%;display:block;border-radius:4px}.mlegend{display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-top:.5rem;font-size:1rem;color:#cfd6f5}.mlegend i{display:inline-block;width:.9rem;height:.9rem;margin-right:.3rem;vertical-align:middle;border:1px solid #0b1024}
 .opt.vol input{flex:1;max-width:16rem;accent-color:#c8913a;height:2.2rem}.opt.vol output{width:3.6rem;text-align:right;color:var(--gold);font-size:1.15rem}#sndmute.on{border-color:#ff8b8b;color:#ff8b8b}
 .tabs2{display:flex;gap:.4rem;margin-bottom:.6rem}.tabs2 button{flex:1;padding:.4rem}.tabs2 button.on{border-color:var(--gold);color:var(--gold)}
 #wmw{position:relative;width:100%;aspect-ratio:16/11;background:#0b1024;border:2px solid #3b4680;border-radius:4px;overflow:hidden}#wmc{width:100%;height:100%;display:block}
@@ -294,29 +332,47 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 #hud .mgrid button{height:7rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;font-size:1.1rem;padding:.4rem}
 .mgrid .pi{width:3rem;height:3rem}
 #fps{position:absolute;left:50%;top:var(--st);transform:translateX(-50%);font-size:1.1rem;color:#7dff8a;text-shadow:1px 1px 0 #000;pointer-events:none;display:none}
+/* compact target HUD (right column, under the minimap): small icon, name + Lv, HP bar with %, status line */
+#hud #tgt{width:16.5rem;padding:.3rem .45rem;gap:.45rem}
+#hud #tgpic{width:2.8rem;height:2.8rem;border-radius:50%}
+#hud #tgt .tgn{font-size:1.05rem}#hud #tgt #tgName{overflow:hidden;text-overflow:ellipsis}
+#hud #tgt .bar{height:1.05rem;margin-top:.15rem}#hud #tgt .bar b{line-height:1.05rem;font-size:.8rem}
+#hud #tgt #tgSt{font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem;color:#c9c2b0}
+#hud #tgt #tgX{min-width:2.2rem;min-height:2.2rem;padding:0;font-size:.9rem;align-self:flex-start}
+#hud #qauto{flex:0 0 auto;min-width:2.3rem;height:2.1rem;padding:0;font-size:1rem;line-height:1;border-radius:.5rem;background:linear-gradient(180deg,#3d6fd8,#1f3f9a);border:1px solid #e8c46a;color:#fff}
+#hud #qauto.on{background:linear-gradient(180deg,#ffe39a,#c8913a);color:#3a2208;box-shadow:0 0 .6rem #ffd34d}
+#quest.aq{border-color:#ffd34d;box-shadow:0 0 0 1px #ffd34d,0 0 .8rem #ffd34d66}
+#quest .aqs{color:#ffd34d;font-size:.9rem;margin-top:.15rem}
+#aqask{position:absolute;left:50%;top:30%;transform:translateX(-50%);display:none;padding:.8rem 1.2rem;text-align:center;font-size:1.2rem;z-index:30}
+#aqask .aqb{display:flex;gap:.6rem;justify-content:center;margin-top:.6rem}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <div id="login">
-  <div class="box frame">
+ <div id="lstage" class="land">
+  <div class="box">
     <h1>LUMIRA</h1>
     <div class="sub">ONLINE · CHRONICLES OF THE FALLEN STAR</div>
     <div class="tabs"><button id="tLogin" class="on">เข้าสู่ระบบ</button><button id="tReg">สร้างตัวละคร</button></div>
-    <label>ไอดี</label><input id="u" autocomplete="username" maxlength="16">
-    <label>รหัสผ่าน</label><input id="p" type="password" autocomplete="current-password" maxlength="64">
+    <label for="u">ไอดี</label><div class="fld"><i>👤</i><input id="u" autocomplete="username" maxlength="16" autocapitalize="off" spellcheck="false"><button id="uclr" type="button" aria-label="ล้างไอดี">✕</button></div>
+    <label for="p">รหัสผ่าน</label><div class="fld"><i>🔒</i><input id="p" type="password" autocomplete="current-password" maxlength="64"><button id="peye" type="button" aria-label="แสดงรหัสผ่าน">👁</button></div>
+    <div class="row" id="remrow"><label><input type="checkbox" id="rem" checked>จดจำไอดี</label><a id="forgot">ลืมรหัสผ่าน?</a></div>
     <div id="regbox" style="display:none">
-      <label>ชื่อตัวละคร</label><input id="cn" maxlength="14">
+      <label>ชื่อตัวละคร</label><div class="fld"><i>✦</i><input id="cn" maxlength="14"></div>
       <canvas id="preview" width="96" height="96"></canvas>
-      <div class="note" style="text-align:center;margin-top:4px">ทุกคนเริ่มเป็น นักผจญภัย Lv1 — เลือกอาชีพได้ที่ Lv 10</div>
+      <div class="note" style="text-align:center;margin-top:4px;font-size:.65em">ทุกคนเริ่มเป็น นักผจญภัย Lv1 — เลือกอาชีพได้ที่ Lv 10</div>
       <div class="sel"><small>ชุด</small><button data-k="cc" data-d="-1">◀</button><span id="v_cc">ชุดเดินทางสีฟ้า</span><button data-k="cc" data-d="1">▶</button></div>
       <div class="sel"><small>รูปร่าง</small><button data-k="sex" data-d="-1">◀</button><span id="v_sex">ชาย</span><button data-k="sex" data-d="1">▶</button></div>
       <div class="sel"><small>ทรงผม</small><button data-k="hair" data-d="-1">◀</button><span id="v_hair">ทรงเดิม</span><button data-k="hair" data-d="1">▶</button></div>
       <div class="sel"><small>สีผม</small><button data-k="hc" data-d="-1">◀</button><span id="v_hc">ธรรมชาติ</span><button data-k="hc" data-d="1">▶</button></div>
     </div>
-    <button id="go" style="width:100%;margin-top:14px;padding:10px;font-size:16px;background:linear-gradient(180deg,#c8913a,#8a5a1c);border-color:var(--gold)">เข้าเกม</button>
-    <div id="err"></div>
+    <button id="go">เข้าเกม</button>
+    <div id="err" role="alert"></div>
   </div>
+  <div id="lbtns"><button data-i="news" data-g="📣" aria-label="ข่าวสาร">ข่าวสาร</button><button data-i="guide" data-g="📖" aria-label="คู่มือเกม">คู่มือเกม</button><button data-i="contact" data-g="🎧" aria-label="ติดต่อเรา">ติดต่อเรา</button><button data-i="settings" data-g="⚙" aria-label="ตั้งค่า">ตั้งค่า</button></div>
+  <div id="linfo"><h3 id="linfoT"></h3><div id="linfoB"></div><button id="linfoX">ปิด</button></div>
+ </div>
 </div>
 <div id="credit"><a href="credits.html" target="_blank">เครดิตภาพ</a></div>
 <div id="hud">
@@ -343,7 +399,8 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
     <button class="tb" id="bMore" data-icon="more">เพิ่มเติม</button>
   </div>
   <div id="mm" class="frame" title="แตะเพื่อเปิดแผนที่โลก"><canvas id="mmc" width="138" height="104"></canvas><div id="mmn">-</div><div id="mmxy"><span id="mmp">1</span><span id="mmxy2" class="num">0,0</span></div></div>
-  <div id="quest" class="frame"><div id="qhead" role="button" aria-label="ย่อ/ขยายภารกิจ"><i class="pi qmark" data-icon="quest" data-skin="quest_mark"></i><b id="qtitle">ภารกิจหลัก</b><span id="qprog" class="num"></span><span id="qtog">▾</span></div><div id="qt">-</div></div>
+  <div id="quest" class="frame"><div id="qhead" role="button" aria-label="ย่อ/ขยายภารกิจ"><i class="pi qmark" data-icon="quest" data-skin="quest_mark"></i><b id="qtitle">ภารกิจหลัก</b><span id="qprog" class="num"></span><button id="qauto" aria-label="Auto Quest" title="Auto Quest: เดินไปทำภารกิจอัตโนมัติ">▶</button><span id="qtog">▾</span></div><div id="qt">-</div></div>
+  <div id="aqask" class="frame"><div>ดำเนินภารกิจต่อหรือไม่?</div><div class="aqb"><button id="aqYes">ดำเนินการต่อ</button><button id="aqNo" class="ghost">ยกเลิก</button></div></div>
   <div id="joyzone"><div id="joy"><div id="knob"></div></div></div>
   <div id="chat"><div id="log" title="แตะเพื่อเปิดแชท"></div><button id="bChat" data-icon="chat" aria-label="แชท"></button></div>
   <div id="tgt" class="frame"><canvas id="tgpic" width="64" height="64"></canvas><div class="tgi"><div class="tgn"><span id="tgName">-</span><span id="tgLv" class="num"></span></div><div class="bar hp"><i id="tgHp"></i><b id="tgHpT" class="num"></b></div><div id="tgSt"></div></div><button id="tgX" aria-label="ยกเลิกเป้าหมาย">✕</button></div>
@@ -411,6 +468,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 <script src="world.js"></script>
 <script src="paperdoll.js"></script>
 <script src="combat.js"></script>
+<script src="autoquest.js"></script>
 <script src="audio-events.js"></script>
 </body>
 </html>

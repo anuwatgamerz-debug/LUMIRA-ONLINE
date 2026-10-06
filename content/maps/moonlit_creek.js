@@ -15,6 +15,7 @@ module.exports = G => {
   rect(m, 26, 23, 33, 25, 12);                                                  // bridge
   for (const [x, y, rx, ry] of [[12, 12, 7, 5], [48, 22, 7, 5], [12, 44, 5, 3], [50, 42, 6, 4], [40, 6, 5, 3], [20, 30, 5, 4]]) blob(m, r, x, y, rx, ry, 1, 0.2);
   clear(m, 1, 23, 5, 29); clear(m, 58, 43, 62, 48);
+  rect(m, 18, 1, 22, 4, 1); portal(m, 20, 0, 'moon_crypt', 20, 3, { lv: 19 }, 'สุสานจันทร์ (Lv 19+)');
   portal(m, 0, 26, 'greenwood', 68, 30);
   portal(m, 63, 46, 'old_mine', 3, 2, { lv: 18 }, 'เหมืองเก่า (Lv 18+)');
   m.spawns = [

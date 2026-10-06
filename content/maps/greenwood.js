@@ -19,6 +19,7 @@ module.exports = G => {
   // hunting grounds: open glades so monsters have room
   for (const [x, y, rx, ry] of [[20, 48, 6, 4], [52, 16, 7, 5], [56, 38, 5, 4], [24, 22, 5, 4], [46, 52, 6, 3], [10, 30, 4, 4]]) blob(m, r, x, y, rx, ry, 1, 0.2);
   clear(m, 1, 47, 5, 53); clear(m, 64, 27, 68, 33);
+  rect(m, 18, 54, 22, 58, 1); portal(m, 20, 59, 'spider_nest', 20, 3, { lv: 13 }, 'รังแมงมุม (Lv 13+)');
   portal(m, 0, 50, 'beginner_meadow', 62, 8);
   portal(m, 69, 30, 'moonlit_creek', 1, 26);
   rect(m, 34, 1, 36, 3, 4);

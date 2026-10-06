@@ -69,6 +69,22 @@ python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้น�
 
 ลิงก์: https://opengameart.org/content/lpc-monsters · /lpc-goblin · /lpc-golem · /lpc-imp · /lpc-wolf-animation · /lpc-beetle · /lpc-terrain-repack · /lpc-tile-atlas · /lpc-tile-atlas2 · /lpc-forest-tiles · /lpc-city-outside · /lpc-thatched-roof-cottage · /lpc-adobe-building-set · /lpc-medieval-village-decorations · /lpc-walls · /lpc-rocks · /lpc-trees · /lpc-plant-repack
 
+### 1.6 เพิ่มเติม (ต.ค. 2026): มอนสเตอร์ดันเจี้ยน ไอคอนไอเท็ม หน้าล็อกอิน
+
+| ไฟล์ | ที่มา (OpenGameArt) | ผู้สร้าง | สัญญาอนุญาต |
+|---|---|---|---|
+| `public/assets/m_lpc_skeleton.png` | [LPC] Skeleton | rhimlock | CC-BY-SA 3.0 / GPL 3.0 |
+| `public/assets/m_lpc_zombie.png` | [LPC] Zombie | Benjamin K. Smith (BenCreating) สั่งทำโดย castelonia; ฐานจาก Stephen Challener (Redshrike), Johannes Sjölund (wulax) | CC-BY-SA 3.0 / GPL 3.0 |
+| `public/assets/m_lpc_spider.png` | [LPC] Spider | William.Thompsonj (ฐานจาก Redshrike) | CC-BY 3.0 / OGA-BY 3.0 / GPL |
+| `public/assets/m_lpc_centipede.png` | [LPC] Centipede | FiveBrosStopMosYT (ขอบคุณ bluecarrot16, bzt, Ragnar Random) | CC-BY-SA 3.0/4.0 / OGA-BY 3.0 |
+| `public/assets/m_lpc_rat.png`, `m_lpc_mushroom.png`, `m_lpc_bear.png` | [LPC] Bears, Deer, Lions and more | tapatilorenzo; giant rat / walking mushroom ดัดแปลงจากงานของ Sevarihk | CC-BY 4.0 |
+| `public/assets/m_lpc_frogman.png` | [LPC] Frogman | Stephen Challener (Redshrike) และ Evert | CC-BY 3.0 / OGA-BY 3.0 |
+| `public/assets/m_lpc_minotaur.png` | Minotaur | Jordan Irwin (AntumDeluge) | CC-BY 3.0/4.0 / OGA-BY 3.0 |
+| `public/assets/m_lpc_werewolf.png` | Werewolf (LPC) | Stephen Challener (Redshrike), William Thompson (William.Thompsonj), Jordan Irwin (AntumDeluge) | CC-BY-SA 3.0 |
+| `public/assets/m_lpc_pumpkin.png` | Pumpkin monster | Tuomo Untinen (Reemax) | CC-BY 3.0/4.0 / CC-BY-SA |
+| `public/assets/ui/items_lpc.png` | 496 pixel art icons for medieval/fantasy RPG | Henrique Lazarini (7Soul1) | CC0 |
+| `public/assets/ui/login_land.webp`, `login_port.webp` | ภาพหน้าล็อกอิน | เจ้าของเกม LUMIRA ONLINE (ผู้ใช้ส่งมาเอง) | ของโปรเจกต์ |
+
 ## 2. ภาพเดิมที่ยังใช้อยู่ (บุคคลที่สาม)
 
 | โฟลเดอร์ / ไฟล์ | ใช้ทำอะไร | ผู้สร้าง | สัญญาอนุญาต | หมายเหตุ |

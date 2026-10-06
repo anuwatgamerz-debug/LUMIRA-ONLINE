@@ -15,6 +15,7 @@ module.exports = G => {
   line(m, [[18, 31], [18, 41]], 12, 2);
   blob(m, r, 46, 9, 4, 3, 0, 0.15);                     // star crater (scorched ground)
   clear(m, 1, 21, 6, 27); clear(m, 43, 7, 49, 11, 0);
+  rect(m, 38, 43, 42, 46, 1); portal(m, 40, 47, 'slime_burrow', 24, 3, { lv: 4 }, 'โพรงสไลม์ (Lv 4+)');
   portal(m, 0, 24, 'lumira', 48, 20);
   portal(m, 63, 8, 'greenwood', 1, 50);
   portal(m, 63, 36, 'ancient_farm', 2, 24, { locked: 1 }, 'ไร่โบราณ (ยังไม่เปิด)');
