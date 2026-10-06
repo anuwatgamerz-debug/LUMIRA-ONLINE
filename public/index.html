@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#141a33">
+<title>LUMIRA ONLINE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0e1226;--nav:#1d2547;--nav2:#141a33;--gold:#e8c46a;--gold2:#9c7a2e;--txt:#f4ecd8;--dim:#a9a28f;--hp:#e5484d;--sp:#3d8bf0;--xp:#f2c46d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0b0e1c;color:var(--txt);font-family:Mitr,system-ui,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas#game{position:fixed;inset:0;display:block;image-rendering:pixelated}
+.num{font-family:'Pixelify Sans',Mitr,monospace}
+.frame{background:linear-gradient(180deg,#26305aee,#161c38f0);border:2px solid var(--gold);box-shadow:0 0 0 2px #0a0d1c,0 0 0 3px var(--gold2),0 4px 10px #000a,inset 0 0 0 1px #ffffff18;border-radius:4px;position:relative}
+.frame::before,.frame::after{content:'';position:absolute;width:6px;height:6px;background:var(--gold);transform:rotate(45deg);top:-4px;box-shadow:0 0 0 1px #0a0d1c}
+.frame::before{left:-4px}.frame::after{right:-4px}
+button{font-family:inherit;color:var(--txt);background:linear-gradient(180deg,#3a4785,#232c5a);border:2px solid var(--gold2);border-radius:4px;padding:6px 10px;font-size:14px;cursor:pointer;box-shadow:inset 0 1px 0 #ffffff30,0 2px 0 #0008}
+button:active{transform:translateY(1px);filter:brightness(1.25)}
+button:disabled{opacity:.4}
+button.ghost{background:#1a2042}
+input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;border:2px solid #4b5694;background:#0c1022;color:var(--txt);width:100%}
+#login{position:fixed;inset:0;display:flex;overflow:auto;z-index:20;padding:16px}
+#login .box{width:min(380px,100%);padding:18px;margin:auto}
+#login h1{margin:0;text-align:center;font-family:'Pixelify Sans',monospace;font-size:44px;letter-spacing:4px;color:#ffe39a;text-shadow:3px 3px 0 #7a3b1a,0 0 16px #f2c46d88}
+#login .sub{text-align:center;color:var(--dim);margin:0 0 12px;font-size:12px;letter-spacing:1px}
+#login label{font-size:13px;color:var(--dim);display:block;margin:8px 0 3px}
+#login .tabs{display:flex;gap:6px;margin-bottom:6px}#login .tabs button{flex:1;background:#1a2042}#login .tabs button.on{background:linear-gradient(180deg,#5a4bb0,#3b2f85)}
+#preview{display:block;margin:8px auto 4px;width:144px;height:144px;image-rendering:pixelated;background:radial-gradient(ellipse at 50% 78%,#6fb04f 0 38%,#3f7a33 39% 62%,#0000 63%);border-radius:8px}
+.sel{display:flex;gap:6px;align-items:center;margin-top:6px}.sel button{padding:4px 12px}.sel span{flex:1;text-align:center;font-size:15px}
+#err{color:#ff8b8b;min-height:20px;font-size:13px;text-align:center;margin-top:8px}
+#credit{position:fixed;right:8px;bottom:6px;font-size:10px;z-index:21}#credit a{color:#ffe39acc}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:5;display:none}
+#hud>*{pointer-events:auto}
+#pstat{position:absolute;left:max(8px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top));width:236px;padding:6px 8px 6px 64px;font-size:12px}
+#portrait{position:absolute;left:6px;top:6px;width:52px;height:52px;border:2px solid var(--gold2);border-radius:50%;background:radial-gradient(#3b4a8a,#151b38);image-rendering:pixelated}
+#pstat .nm{display:flex;justify-content:space-between;font-weight:500}
+#lvb{position:absolute;left:13px;top:54px;background:#0a0d1c;border:1px solid var(--gold);border-radius:8px;padding:0 6px;font-size:10px;color:var(--gold)}
+.bar{height:11px;background:#0a0d1c;border:1px solid #000;margin-top:3px;position:relative;overflow:hidden;border-radius:2px}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--hp);box-shadow:inset 0 3px 0 #ffffff40,inset 0 -2px 0 #0004}
+.bar b{position:absolute;inset:0;font-size:9px;line-height:11px;text-align:center;font-weight:400;text-shadow:1px 1px 0 #000}
+#zeny{color:var(--dim);font-size:11px;margin-top:2px}#zeny span{color:var(--gold)}
+#menu{position:absolute;top:max(8px,env(safe-area-inset-top));left:266px;display:flex;gap:6px}
+#menu button{width:52px;height:52px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;line-height:1.1;background:linear-gradient(180deg,#2b3566,#171d3c)}
+#menu button .ic{font-size:22px;filter:drop-shadow(1px 1px 0 #000)}
+#mm{position:absolute;right:max(8px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));width:150px;padding:4px}
+#mmc{display:block;width:138px;height:104px;image-rendering:pixelated;background:#0a0d1c}
+#mmn{font-size:12px;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 2px 0}
+#mmxy{font-size:11px;color:var(--dim);display:flex;justify-content:space-between;padding:0 2px}
+#quest{position:absolute;right:max(8px,env(safe-area-inset-right));top:172px;width:150px;padding:6px 8px;font-size:11px;line-height:1.35}
+#quest b{color:var(--gold);font-weight:500}
+#joy{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#2a346888 0 55%,#141a33aa 56%);border:3px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,inset 0 0 12px #000}
+#joy::after{content:'';position:absolute;inset:14px;border-radius:50%;border:1px dashed #e8c46a55;pointer-events:none}
+#knob{position:absolute;left:39px;top:39px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fb2ff,#2f5cc0 60%,#1a3070);border:2px solid var(--gold);box-shadow:0 2px 6px #000a;pointer-events:none}
+#acts{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:200px;height:190px;pointer-events:none}
+.rb{pointer-events:auto;position:absolute;width:56px;height:56px;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;line-height:1;background:radial-gradient(circle at 40% 30%,#3d4a8c,#161c3a 70%);border:2px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,0 3px 6px #000a}
+.rb .ic{font-size:22px;margin-bottom:1px;filter:drop-shadow(1px 1px 0 #000)}
+.rb.big{width:80px;height:80px;right:0;bottom:0;background:radial-gradient(circle at 40% 30%,#c0533d,#5a1a14 70%);border-color:var(--gold)}
+.rb.big .ic{font-size:30px}
+.rb.on{border-color:#7dff8a;box-shadow:0 0 0 2px #0a0d1c,0 0 14px #7dff8a}
+.rb .q{position:absolute;right:-2px;bottom:-2px;background:#0a0d1c;border:1px solid var(--gold2);border-radius:6px;font-size:10px;padding:0 3px}
+#chat{position:absolute;left:50%;transform:translateX(-50%);bottom:max(6px,env(safe-area-inset-bottom));width:min(440px,calc(100vw - 380px));font-size:12px}
+#log{max-height:96px;overflow:hidden;padding:4px 8px;display:flex;flex-direction:column;justify-content:flex-end;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none}
+#log div{margin-top:1px}
+#chatin{display:flex;gap:4px;margin-top:3px}#chatin input{padding:5px 8px;font-size:13px;background:#0c1022cc}#chatin button{padding:4px 10px}
+.win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 20px));max-height:calc(100vh - 40px);overflow:auto;padding:12px;display:none;z-index:8}
+.win h3{margin:0 0 8px;color:var(--gold);display:flex;justify-content:space-between;align-items:center;font-weight:500}
+.win h3 button{padding:1px 9px}
+#dlgtext{white-space:pre-wrap;line-height:1.55;font-size:14px}
+#dlgopts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.slot{background:#0c1022;border:2px solid #3b4680;border-radius:4px;height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;text-align:center;position:relative;cursor:pointer;padding:2px}
+.slot canvas{width:32px;height:32px}
+.slot .q{position:absolute;right:4px;top:1px;font-size:11px}
+.slot.eq{border-color:var(--gold2)}
+.list{display:flex;flex-direction:column;gap:6px}
+.li{display:flex;align-items:center;gap:8px;background:#0c1022;border:2px solid #3b4680;border-radius:4px;padding:6px}
+.li canvas{width:32px;height:32px}.li .grow{flex:1;font-size:13px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px}
+.stats .s{display:flex;justify-content:space-between;align-items:center;background:#0c1022;border-radius:4px;padding:4px 8px}
+.stats .s button{padding:0 8px;font-size:16px}
+#dead{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:16px 20px;text-align:center;display:none}
+#bmc{width:100%;image-rendering:pixelated;display:block}
+@media (max-width:700px){
+ #pstat{width:206px;font-size:11px}
+ #menu{left:auto;right:max(8px,env(safe-area-inset-right));top:calc(max(8px,env(safe-area-inset-top)) + 140px);flex-direction:column}
+ #menu button{width:46px;height:46px;font-size:9px}#menu button .ic{font-size:18px}
+ #mm{width:120px}#mmc{width:108px;height:82px}
+ #quest{left:max(8px,env(safe-area-inset-left));right:auto;top:calc(max(8px,env(safe-area-inset-top)) + 84px);width:206px}
+ #chat{left:max(8px,env(safe-area-inset-left));transform:none;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 136px);width:calc(100vw - 76px)}
+ #log{max-height:66px}
+ #joy{width:120px;height:120px}#knob{left:34px;top:34px}
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="login">
+  <div class="box frame">
+    <h1>LUMIRA</h1>
+    <div class="sub">ONLINE · CHRONICLES OF THE FALLEN STAR</div>
+    <div class="tabs"><button id="tLogin" class="on">เข้าสู่ระบบ</button><button id="tReg">สร้างตัวละคร</button></div>
+    <label>ไอดี</label><input id="u" autocomplete="username" maxlength="16">
+    <label>รหัสผ่าน</label><input id="p" type="password" autocomplete="current-password" maxlength="64">
+    <div id="regbox" style="display:none">
+      <label>ชื่อตัวละคร</label><input id="cn" maxlength="14">
+      <canvas id="preview" width="96" height="96"></canvas>
+      <div class="sel"><button data-k="cc" data-d="-1">◀</button><span id="v_cc">อัศวิน</span><button data-k="cc" data-d="1">▶</button></div>
+      <div class="sel"><button data-k="sex" data-d="-1">◀</button><span id="v_sex">ชาย</span><button data-k="sex" data-d="1">▶</button></div>
+    </div>
+    <button id="go" style="width:100%;margin-top:14px;padding:10px;font-size:16px;background:linear-gradient(180deg,#c8913a,#8a5a1c);border-color:var(--gold)">เข้าเกม</button>
+    <div id="err"></div>
+  </div>
+</div>
+<div id="credit"><a href="credits.html" target="_blank">เครดิตภาพ</a></div>
+<div id="hud">
+  <div id="pstat" class="frame">
+    <canvas id="portrait" width="32" height="32"></canvas><div id="lvb" class="num">Lv 1</div>
+    <div class="nm"><span id="hName">-</span><span id="hJob" style="color:var(--dim);font-size:10px"></span></div>
+    <div class="bar"><i id="hpb"></i><b id="hpt" class="num"></b></div>
+    <div class="bar"><i id="spb" style="background:var(--sp)"></i><b id="spt" class="num"></b></div>
+    <div class="bar" style="height:6px"><i id="xpb" style="background:var(--xp)"></i></div>
+    <div id="zeny">Zeny <span class="num" id="hZ">0</span> · EXP <span class="num" id="hX">0%</span></div>
+  </div>
+  <div id="menu">
+    <button id="bBag"><span class="ic">🎒</span>กระเป๋า</button>
+    <button id="bStat"><span class="ic">📜</span>สเตตัส</button>
+    <button id="bMap"><span class="ic">🗺️</span>แผนที่</button>
+  </div>
+  <div id="mm" class="frame"><canvas id="mmc" width="138" height="104"></canvas><div id="mmn">-</div><div id="mmxy"><span id="mmp">👥 1</span><span id="mmxy2" class="num">0,0</span></div></div>
+  <div id="quest" class="frame"><b>📌 ภารกิจ</b><div id="qt">-</div></div>
+  <div id="joy"><div id="knob"></div></div>
+  <div id="acts">
+    <button class="rb big" id="bAtk"><span class="ic">⚔️</span>โจมตี</button>
+    <button class="rb" id="skill" style="right:86px;bottom:4px"><span class="ic">💥</span>Bash</button>
+    <button class="rb" id="bPot" style="right:72px;bottom:70px"><span class="ic">🧪</span>ยา<span class="q num" id="potq">0</span></button>
+    <button class="rb" id="bPick" style="right:6px;bottom:90px"><span class="ic">✋</span>เก็บ</button>
+    <button class="rb" id="bAuto" style="right:140px;bottom:62px"><span class="ic">🤖</span>AUTO</button>
+  </div>
+  <div id="chat"><div id="log"></div><div id="chatin"><input id="ci" maxlength="120" placeholder="พิมพ์แชท..."><button id="cs">ส่ง</button></div></div>
+  <div id="dead" class="frame">คุณหมดสติ<br><button id="bRes" style="margin-top:10px">ฟื้นที่โซลคารา</button></div>
+  <div id="wDlg" class="win frame"><h3><span id="dlgname">NPC</span><button class="x">✕</button></h3><div id="dlgtext"></div><div id="dlgopts"></div></div>
+  <div id="wBag" class="win frame"><h3><span>กระเป๋า</span><button class="x">✕</button></h3><div style="font-size:12px;color:var(--dim);margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด)</div><div class="grid" id="eqgrid"></div><div style="font-size:12px;color:var(--dim);margin:8px 0 6px">ของในกระเป๋า (แตะเพื่อใช้/สวม)</div><div class="grid" id="invgrid"></div></div>
+  <div id="wStat" class="win frame"><h3><span>สเตตัส</span><button class="x">✕</button></h3><div id="statbody"></div></div>
+  <div id="wShop" class="win frame"><h3><span id="shopt">ร้านค้า</span><button class="x">✕</button></h3><div class="list" id="shoplist"></div></div>
+  <div id="wMap" class="win frame"><h3><span id="bmn">แผนที่</span><button class="x">✕</button></h3><canvas id="bmc"></canvas></div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
