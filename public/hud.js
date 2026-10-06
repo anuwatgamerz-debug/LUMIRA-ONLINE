@@ -61,6 +61,14 @@
       '................', '.....kkkkkk.....', '....kddddddk....', '...kddsssssdk...', '...kdsksskssk...', '...kssssssssk...',
       '....ksssssk.....', '.....kkkkkk.....', '...kuuuuuuuuk...', '..kuuUuuuuuuuk..', '..kuukuuuukuuk..', '..kssk....kssk..',
       '...kk.kuuk.kk...', '......kggk......', '.....kkkkkk.....', '................'],
+    sk_heal: [
+      '................', '......kkkk......', '......knnk......', '......kNnk......', '......knnk......', '..kkkkknnkkkkk..',
+      '..kNNNNnnnnnnk..', '..knnnnnnnnnnk..', '..kkkkknnkkkkk..', '......knnk......', '......knnk......', '......knnk......',
+      '......kkkk......', '................', '................', '................'],
+    sk_twin: [
+      'kk............kk', 'kWk..........kWk', '.kWk........kWk.', '..kWk......kWk..', '...kWk....kWk...', '....kWk..kWk....',
+      '.....kWkkWk.....', '......kWWk......', '......kWWk......', '.....kykkyk.....', '....kyk..kyk....', '...kyk....kyk...',
+      '..kkk......kkk..', '................', '................', '................'],
   };
   // procedural shapes, outlined automatically
   const SHAPE = {
@@ -68,6 +76,9 @@
     coin: (x, y) => { const dx = x - 7.5, dy = y - 7.5, r = Math.hypot(dx, dy); if (r > 6.4) return 0; if (r > 5.2) return 'Y'; if ((x === 6 || x === 9) && y > 4 && y < 11) return 'Y'; return dx + dy < -3 ? 'w' : 'y'; },
     target: (x, y) => { const dx = x - 7.5, dy = y - 7.5, r = Math.hypot(dx, dy); if (r > 5 && r < 6.6) return 'r'; if ((x === 7 || x === 8) && (y < 4 || y > 11)) return 'r'; if ((y === 7 || y === 8) && (x < 4 || x > 11)) return 'r'; if (r < 1.6) return 'y'; return 0; },
     more: (x, y) => { for (const cx of [3, 8, 13]) if (Math.hypot(x - cx + 0.5, y - 7.5) < 1.9) return 'w'; return 0; },
+    sk_bolt: (x, y) => { const r = Math.hypot(x - 9.5, y - 6.5); if (r < 2) return 'w'; if (r < 3.4) return 'U'; if (r < 4.6) return 'u'; const t = (x - 1) / 8; if (x < 9 && Math.abs(y - (6.5 + (9.5 - x) * 0.9)) < 1.6 - t * 0.2 && x > 1) return x % 3 ? 'u' : 'U'; return 0; },
+    sk_focus: (x, y) => { const dx = Math.abs(x - 7.5), dy = Math.abs(y - 7.5); if (dx + dy < 2.5) return 'w'; if (dx + dy < 4.5) return 'P'; if ((dx < 1 && dy < 7) || (dy < 1 && dx < 7)) return 'p'; if (Math.abs(dx - dy) < 0.9 && dx < 4.6) return 'P'; return 0; },
+    sk_cleave: (x, y) => { const dx = x - 7.5, dy = y - 7.5, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx); if (r > 4.2 && r < 6.8 && ((a + Math.PI) % (Math.PI * 2 / 3)) < 1.5) return r > 5.6 ? 'o' : 'y'; if (r < 2) return 'W'; return 0; },
     interact: (x, y) => { const dx = x - 7.5, dy = y - 6.5, r = Math.hypot(dx, dy); if (y > 12 && x > 5 && x < 10) return y === 15 ? 0 : 'y'; if (r < 6 && !(r < 2.4 && dy > 0)) return y < 4 ? 'w' : 'y'; return 0; },
   };
   const cache = {};

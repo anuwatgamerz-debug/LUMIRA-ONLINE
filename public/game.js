@@ -243,8 +243,8 @@ const now = () => performance.now() / 1000;
 function onMsg(m) {
   switch (m.t) {
     case 'err': $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
-    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) img('m_' + k); break;
-    case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; closeWins(); bakeMap(map); for (const n of map.npcs) img(NPC_SPR[n.look]); break;
+    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) img('m_' + k); SK = m.skills || {}; MELEE_R = m.melee || 1.6; break;
+    case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) img(NPC_SPR[n.look]); break;
     case 'me': me = m.c; updHud(); break;
     case 's': snap(m); break;
     case 'fx': onFx(m); break;
@@ -253,6 +253,8 @@ function onMsg(m) {
     case 'dlg': openDlg(m); break;
     case 'dlgclose': closeWins(); break;
     case 'shop': openShop(m); break;
+    case 'cd': onCd(m); break;
+    case 'castfail': onCastFail(m); break;
   }
 }
 function snap(m) {
@@ -264,10 +266,10 @@ function snap(m) {
     if (dead && !e.dead) e.dieT = now();
     Object.assign(e, { name, tx: x, ty: y, sdir: dir, hp, maxhp, lv, look, wpn, head, dead });
   }
-  for (const [id, type, x, y, dir, hp, maxhp] of m.m) {
+  for (const [id, type, x, y, dir, hp, maxhp, tg] of m.m) {
     seen.add(id); let e = ents.get(id);
     if (!e) { e = { kind: 'm', x, y, row: SRV2ROW[dir] ?? 2, ph: Math.random() * 3 }; ents.set(id, e); }
-    Object.assign(e, { type, tx: x, ty: y, sdir: dir, hp, maxhp });
+    Object.assign(e, { type, tx: x, ty: y, sdir: dir, hp, maxhp, tg: tg | 0 });
   }
   for (const [id, item, x, y] of m.d) { seen.add(id); let e = ents.get(id); if (!e) { e = { kind: 'd', x, y, born: performance.now() }; ents.set(id, e); } Object.assign(e, { item, tx: x, ty: y }); }
   for (const id of [...ents.keys()]) if (!seen.has(id)) ents.delete(id);
@@ -275,19 +277,42 @@ function snap(m) {
   const tb = performance.now(); for (const [id, b] of bubbles) if (b.until < tb) bubbles.delete(id);
 }
 function face(a, b) { a.row = row4(b.x - a.x, b.y - a.y); }
+// fx objects are pooled; floating numbers are capped so a big fight can't flood the screen or memory
+const fxPool = [];
+function fxNew(o) { const f = fxPool.pop() || {}; for (const k in f) delete f[k]; return Object.assign(f, o); }
+function fxFree(i) { fxPool.push(fx[i]); fx.splice(i, 1); }
+const MAX_NUMS = 40;
+function addNum(e, id, v, col, big) {
+  const t = performance.now(); let n = 0, stack = 0, oldest = -1;
+  for (let i = 0; i < fx.length; i++) if (fx[i].k === 'num') { n++; if (oldest < 0) oldest = i; if (fx[i].id === id && t - fx[i].t < 350) stack++; }
+  if (n >= MAX_NUMS && oldest >= 0) fxFree(oldest);
+  fx.push(fxNew({ k: 'num', id, x: e.x, y: e.y, v, col, t, big, stack: Math.min(stack, 3) })); // stack: lift numbers that land together
+}
 function onFx(m) {
   const t = performance.now();
   if (fx.length > 300) fx.splice(0, fx.length - 300);
   if (m.k === 'hit') {
     const e = ents.get(m.to); const a = ents.get(m.from);
     if (a) { a.atkT = now(); if (e) face(a, e); }
+    if (m.from === myId) { lastHit = m.to; lastMyHitT = t; }
     if (!e) return;
-    fx.push({ k: 'num', x: e.x, y: e.y, v: m.dmg ? '' + m.dmg : 'MISS', col: m.to === myId ? '#ff6b6b' : m.crit ? '#ffd34d' : m.skill ? '#ff9f43' : '#ffffff', t, big: m.crit || m.skill });
-    if (m.dmg) { e.hurtT = now(); fx.push({ k: 'slash', x: e.x, y: e.y, t, skill: m.skill, crit: m.crit, r: Math.random() }); }
+    e.hitT = now();
+    addNum(e, m.to, m.dmg ? (m.crit ? 'CRIT ' + m.dmg : '' + m.dmg) : 'MISS', m.to === myId ? '#ff6b6b' : m.crit ? '#ffd34d' : m.skill ? '#ff9f43' : m.dmg ? '#ffffff' : '#b9c3d6', m.crit || m.skill);
+    if (m.dmg) { e.hurtT = now(); fx.push(fxNew({ k: 'slash', x: e.x, y: e.y, t, skill: m.skill, crit: m.crit, r: Math.random() })); }
+  } else if (m.k === 'cast') {
+    const a = ents.get(m.id), e = ents.get(m.to), sk = SK[m.s];
+    if (a) { a.atkT = a.castT = now(); if (e) face(a, e); fx.push(fxNew({ k: 'sname', id: m.id, v: sk ? sk.th : m.s, t })); }
+    if (a && e && m.s === 'bolt') fx.push(fxNew({ k: 'proj', from: m.id, to: m.to, x: a.x, y: a.y, t }));
+    if (a && m.s === 'cleave') fx.push(fxNew({ k: 'ring', id: m.id, t }));
   } else if (m.k === 'die') { const e = ents.get(m.id); if (e) { if (ghosts.length > 60) ghosts.shift(); ghosts.push({ ...e, dieT: now() }); ents.delete(m.id); if (selected === m.id) selected = 0; } }
-  else if (m.k === 'lvup') fx.push({ k: 'lvup', id: m.id, t });
-  else if (m.k === 'heal') fx.push({ k: 'heal', id: m.id, t });
-  else if (m.k === 'pdie') { const e = ents.get(m.id); if (e) e.dieT = now(); if (m.id === myId) { $('dead').style.display = 'block'; setAuto(false); } }
+  else if (m.k === 'lvup') fx.push(fxNew({ k: 'lvup', id: m.id, t }));
+  else if (m.k === 'heal') {
+    fx.push(fxNew({ k: 'heal', id: m.id, t }));
+    const e = ents.get(m.id);
+    if (e && m.v > 0) addNum(e, m.id, '+' + m.v, '#7dff8a', false);
+    if (e && m.sp > 0) addNum(e, m.id, '+' + m.sp + ' SP', '#8fc8ff', false);
+  }
+  else if (m.k === 'pdie') { const e = ents.get(m.id); if (e) e.dieT = now(); if (m.id === myId) { $('dead').style.display = 'block'; setAuto(false); clearTarget(); } }
 }
 
 // ------------------------------------------------------------ hud
@@ -298,11 +323,11 @@ function updHud() {
   $('hpb').style.width = (me.hp / me.maxhp * 100) + '%'; $('hpt').textContent = `${me.hp} / ${me.maxhp}`;
   $('spb').style.width = (me.sp / me.maxsp * 100) + '%'; $('spt').textContent = `${me.sp} / ${me.maxsp}`;
   $('xpb').style.width = (me.exp / me.next * 100) + '%'; $('hX').textContent = (me.exp / me.next * 100).toFixed(1) + '%';
-  $('hZ').textContent = me.zeny.toLocaleString();
+  const z = me.zeny.toLocaleString(); if ($('hZ').textContent !== z) { $('hZ').textContent = z; HUD.fitBar(); } // wider gold can push buttons out of the bar
   const s = me.q.step;
   $('qt').innerHTML = QT[s] ? `${QT[s].replace('\n', '<br>')} <span class="num qk">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ กลับไปหาไอริส</span>' : ''}` : 'จบบททดสอบแล้ว!';
   if (me.hp > 0) $('dead').style.display = 'none';
-  const pot = me.inv.find(s => s.id === 1); $('potq').textContent = pot ? pot.q : 0;
+  updPotion(); renderHotbar();
   drawPortrait();
   if ($('wBag').style.display === 'block') renderBag();
   if ($('wStat').style.display === 'block') renderStat();
@@ -439,10 +464,6 @@ function renderEquip() {
   if (!l.children.length) l.innerHTML = '<div class="note">ไม่มีอุปกรณ์ในกระเป๋า</div>';
   b.appendChild(l);
 }
-function renderSkills() {
-  $('skillbody').innerHTML = `<div class="list"><div class="li"><i class="pi" data-icon="skill"></i><div class="grow"><b>Bash</b> <small class="num" style="color:#8fb8ff">SP 8</small><br><small style="color:var(--dim)">ฟันแรง ×2.2 โดนแน่นอน · ปุ่ม Bash หรือคีย์ Q</small></div></div></div><div class="note" style="margin-top:10px">สกิลของแต่ละอาชีพจะเปิดเพิ่มในอัปเดตถัดไป</div>`;
-  HUD.applyIcons($('skillbody'));
-}
 function renderQuest() {
   const s = me.q.step; let h = '';
   if (QT[s]) h += `<div class="li" style="display:block"><b style="color:var(--gold)">ภารกิจหลัก ${s + 1}/${QT.length}</b><br>${QT[s].replace('\n', '<br>')}<br>ความคืบหน้า <span class="num qk">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ สำเร็จ — กลับไปหาไอริสเพื่อรับรางวัล</span>' : ''}</div>`;
@@ -476,7 +497,6 @@ $('bBag').onclick = toggleWin('wBag', renderBag);
 $('pport').onclick = toggleWin('wStat', renderStat);
 $('bMap').onclick = $('mm').onclick = toggleWin('wMap', renderBigMap);
 $('bEquip').onclick = toggleWin('wEquip', renderEquip);
-$('bSkill').onclick = toggleWin('wSkill', renderSkills);
 $('bQuest').onclick = $('quest').onclick = toggleWin('wQuest', renderQuest);
 $('bParty').onclick = toggleWin('wParty');
 $('bGuild').onclick = toggleWin('wGuild');
@@ -485,21 +505,19 @@ $('bMore').onclick = toggleWin('wMore', renderMore);
 $('log').onclick = $('bChat').onclick = () => openChat(false);
 $('chtabs').querySelectorAll('button').forEach(b => b.onclick = () => { chTab = b.dataset.ch; $('chtabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderChatList(); });
 function nearest(kind, maxd = 12) { const m = ents.get(myId); if (!m) return 0; let best = 0, bd = maxd; for (const [id, e] of ents) { if (e.kind !== kind) continue; const d = Math.hypot(e.x - m.x, e.y - m.y); if (d < bd) { bd = d; best = id; } } return best; }
-$('bAtk').onclick = () => { let id = selected && ents.has(selected) ? selected : nearest('m'); if (id) { selected = id; send({ t: 'attack', id }); } else log('ไม่มีมอนสเตอร์ใกล้ๆ', '#b9a98e'); };
-$('skill').onclick = () => { const id = selected && ents.has(selected) ? selected : nearest('m', 6); if (id) { selected = id; send({ t: 'skill', id }); } };
-$('bPot').onclick = () => { if (!me) return; const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i, id: 1 }); else log('ไม่มียาแดง', '#ff8b8b'); };
-$('bPick').onclick = () => { const id = nearest('d', 8); if (id) send({ t: 'pick', id }); };
 function setAuto(v) { auto = v; $('bAuto').classList.toggle('on', v); $('bAutoT').classList.toggle('on', v); }
 $('bAutoT').onclick = () => $('bAuto').click();
-$('bAuto').onclick = () => { setAuto(!auto); log(auto ? 'เปิดโหมดออโต้ — ตีมอนใกล้ๆ อัตโนมัติ' : 'ปิดโหมดออโต้', '#9fe7ff'); };
-setInterval(() => {
-  if (!auto || !me || me.hp <= 0) return;
-  if (me.hp < me.maxhp * 0.35) { const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i, id: 1 }); }
-  const d = nearest('d', 3); if (d) { send({ t: 'pick', id: d }); return; }
-  if (!selected || !ents.has(selected)) { const id = nearest('m', 14); if (id) { selected = id; send({ t: 'attack', id }); } }
-}, 700);
+function toggleAuto() { setAuto(!auto); log(auto ? 'เปิดโหมดออโต้ — ตีมอนใกล้ๆ อัตโนมัติ' : 'ปิดโหมดออโต้', '#9fe7ff'); }
+$('bAuto').onclick = toggleAuto;
 $('bRes').onclick = () => { send({ t: 'respawn' }); $('dead').style.display = 'none'; };
-$('cs').onclick = sendChat; $('ci').onkeydown = $('wto').onkeydown = e => { if (e.key === 'Enter') sendChat(); if (e.key === 'Escape') { closeWins(); e.target.blur(); } e.stopPropagation(); };
+$('cs').onclick = () => { sendChat(); $('ci').focus(); }; // keep typing after pressing ส่ง
+$('ci').onkeydown = $('wto').onkeydown = e => {
+  if (e.key === 'Enter') sendChat();
+  if (e.key === 'Escape') { closeWins(); e.target.blur(); }
+  // Tab stays inside the chat (name <-> message); letting focus escape would hand the next keys to the game
+  if (e.key === 'Tab') { e.preventDefault(); if ($('wto').style.display === 'block') (e.target === $('ci') ? $('wto') : $('ci')).focus(); }
+  e.stopPropagation();
+};
 function renderBigMap() {
   if (!miniC) return; const c = $('bmc'); c.width = map.w * 4; c.height = map.h * 4; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(miniC, 0, 0, c.width, c.height);
   for (const n of map.npcs) { g.fillStyle = '#ffd34d'; g.fillRect(n.x * 4, n.y * 4, 4, 4); }
@@ -510,21 +528,29 @@ function renderBigMap() {
 // ------------------------------------------------------------ input
 const toArt = (cx, cy) => [(cx * DPR) / Z, (cy * DPR) / Z]; // css -> art screen
 function viewOrigin() { return [Math.round(VW / 2 - cam.x), Math.round(VH / 2 - cam.y)]; }
-cv.addEventListener('pointerdown', e => {
-  if (!map || !me) return;
-  $('ci').blur();
-  const [ax, ay] = toArt(e.clientX, e.clientY); const [ox, oy] = viewOrigin();
+// what is under a screen point: [id, kind] of the closest monster / loot / NPC, plus the world point
+function pickAt(clientX, clientY, npcs = true) {
+  const [ax, ay] = toArt(clientX, clientY); const [ox, oy] = viewOrigin();
   const wx = ax - ox, wy = ay - oy;
   let best = null, bs = 1e9;
   const test = (id, en, kind, hgt, wid) => {
     const sx = (en.x + 0.5) * TP, sy = (en.y + 0.5) * TP + 12;
-    if (wx > sx - wid && wx < sx + wid && wy > sy - hgt && wy < sy + 8) { const s = Math.hypot(wx - sx, wy - (sy - hgt / 2)); if (s < bs) { bs = s; best = [id, kind]; } }
+    // loot under a monster loses the tie: in a fight you want the monster (loot has the Interact button)
+    if (wx > sx - wid && wx < sx + wid && wy > sy - hgt && wy < sy + 8) { const s = Math.hypot(wx - sx, wy - (sy - hgt / 2)) + (kind === 'd' ? 16 : 0); if (s < bs) { bs = s; best = [id, kind]; } }
   };
-  for (const [id, en] of ents) { if (id === myId || en.kind === 'p') continue; if (en.kind === 'd') test(id, en, 'd', 22, 14); else test(id, en, 'm', en.type === 'kingjel' ? 70 : 44, en.type === 'kingjel' ? 40 : 22); }
-  for (const n of map.npcs) test(n.id, n, 'n', 52, 18);
+  // hit boxes a little larger than the sprites so monsters are easy to tap; the closest centre wins
+  for (const [id, en] of ents) { if (id === myId || en.kind === 'p') continue; if (en.kind === 'd') test(id, en, 'd', 22, 14); else test(id, en, 'm', en.type === 'kingjel' ? 78 : 50, en.type === 'kingjel' ? 46 : 26); }
+  if (npcs) for (const n of map.npcs) test(n.id, n, 'n', 52, 18);
+  return { best, wx, wy };
+}
+cv.addEventListener('pointerdown', e => {
+  if (!map || !me) return;
+  $('ci').blur();
+  const { best, wx, wy } = pickAt(e.clientX, e.clientY, !joy);
+  if (joy && (!best || best[1] !== 'm')) return; // second finger while walking: target monsters only
   if (best) {
     const [id, kind] = best;
-    if (kind === 'm') { selected = id; send({ t: 'attack', id }); }
+    if (kind === 'm') { if (id === selected && me.hp > 0) send({ t: 'attack', id }); else setTarget(id); }
     else if (kind === 'd') send({ t: 'pick', id });
     else send({ t: 'npc', id });
     return;
@@ -581,17 +607,24 @@ function walkTick() {
     return;
   }
   if (t - walkAt < (d === walkDir ? 180 : 70)) return;
-  walkDir = d; walkAt = t; selected = 0;
+  walkDir = d; walkAt = t;
   const tg = walkTarget(...DIR8[d]); if (tg) send({ t: 'move', x: tg[0], y: tg[1] });
 }
 setInterval(walkTick, 100);
 addEventListener('keydown', e => {
-  if (!me || document.activeElement instanceof HTMLInputElement) return; // login form / chat box
+  if (!me || document.activeElement instanceof HTMLInputElement) return; // login form / chat box: no game keys
+  if (document.activeElement && document.activeElement.closest && document.activeElement.closest('#wChat')) { if (e.key === 'Escape') closeWins(); return; } // anything focused in the chat window
   const k = e.key.toLowerCase(); keys[k] = 1;
+  if (k === 'tab' || k === ' ' || k === 'enter') e.preventDefault();
+  if (document.activeElement instanceof HTMLButtonElement) document.activeElement.blur(); // Space must not also "click" a focused HUD button
   if (e.repeat && k !== ' ') return;
-  if (k === 'enter') { e.preventDefault(); openChat(true); } if (k === 'escape') closeWins();
-  if (k === '1') $('bPot').click(); if (k === 'q') $('skill').click(); if (k === 'i') $('bBag').click(); if (k === 'c') $('pport').click();
-  if (k === ' ') { e.preventDefault(); $('bAtk').click(); } if (k === 'm') $('bMap').click();
+  if (k === 'enter') openChat(true);
+  if (k === 'escape') { if ([...document.querySelectorAll('.win')].some(w => w.style.display === 'block')) closeWins(); else clearTarget(); }
+  if (k === 'tab') cycleTarget(e.shiftKey ? -1 : 1);
+  if (k >= '1' && k <= '6') useSlot(+k - 1); if (k === 'q') useSlot(0);
+  if (k === 'r') $('bPot').click(); if (k === 'f') $('bInt').click(); if (k === 'k') $('bSkill').click();
+  if (k === 'i') $('bBag').click(); if (k === 'c') $('pport').click(); if (k === 'm') $('bMap').click();
+  if (k === ' ') doAttack();
   walkTick();
 });
 addEventListener('blur', () => { for (const k in keys) keys[k] = 0; }); // don't keep walking after alt-tab
@@ -652,7 +685,7 @@ function frame(t) {
       drawChar(nm, an, at, e.row ?? 2, x, y);
       if (fl) ctx.filter = 'none';
       const info = MOBN[e.type]; const hh = big ? 92 : (META.lpc[nm] ? 56 : 34);
-      if (e.hp < e.maxhp) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d');
+      if (id === selected || e.tg === myId || (e.hitT && tn - e.hitT < 4)) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d'); // in combat / targeted only
       if (info && HUD.S.names) labels.push([x, y + 6, `${info.n}`, info.boss ? '#ff8b8b' : '#ffffff', info.boss ? 'boss' : 'mob', info.lv]);
     } });
     else if (e.kind === 'p') list.push({ y, f: () => {
@@ -675,7 +708,7 @@ function frame(t) {
   for (let i = fx.length - 1; i >= 0; i--) {
     const f = fx[i], age = t - f.t;
     if (f.k === 'slash') {
-      if (age > 260) { fx.splice(i, 1); continue; }
+      if (age > 260) { fxFree(i); continue; }
       const x = (f.x + 0.5) * TP, y = (f.y + 0.5) * TP - 6, p = age / 260;
       ctx.fillStyle = f.skill ? '#ffb347' : f.crit ? '#ffe066' : '#ffffff';
       const n = 7, dir = f.r > 0.5 ? 1 : -1;
@@ -683,12 +716,26 @@ function frame(t) {
       ctx.globalAlpha = 1;
       if (f.skill || f.crit) for (let j = 0; j < 8; j++) { const a = j / 8 * 6.283, r = 4 + p * 16; ctx.fillStyle = j % 2 ? '#fff6b0' : '#ff9f43'; ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), 2, 2); }
     } else if (f.k === 'lvup' || f.k === 'heal') {
-      const dur = f.k === 'lvup' ? 1800 : 800; if (age > dur) { fx.splice(i, 1); continue; }
+      const dur = f.k === 'lvup' ? 1800 : 800; if (age > dur) { fxFree(i); continue; }
       const e = ents.get(f.id); if (!e) continue; const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 12;
       if (f.k === 'lvup') drawMagicCircle(x, y - 2, tn, 0.6, '#ffd34d');
       for (let j = 0; j < 14; j++) { const ph = (age / dur + j / 14) % 1; ctx.globalAlpha = 1 - ph; ctx.fillStyle = f.k === 'lvup' ? (j % 2 ? '#ffd34d' : '#fff6b0') : (j % 2 ? '#7bd67b' : '#d6ffd6'); ctx.fillRect(Math.round(x + Math.sin(j * 2.3 + age / 200) * 12), Math.round(y - ph * 56), 2, 2); }
       ctx.globalAlpha = 1;
       if (f.k === 'lvup') labels.push([x, y - 70, 'LEVEL UP!', '#ffd34d', 'big']);
+    } else if (f.k === 'sname') { // skill name over the caster
+      if (age > 900) { fxFree(i); continue; }
+      const e = ents.get(f.id); if (e) labels.push([(e.x + 0.5) * TP, (e.y + 0.5) * TP - 62 - age / 60, f.v, '#ffe39a', 'sname']);
+    } else if (f.k === 'proj') { // small bolt flying to the target
+      if (age > 260) { fxFree(i); continue; }
+      const a = ents.get(f.from), b = ents.get(f.to); if (!a || !b) continue; const p = age / 260;
+      const x = ((a.x + (b.x - a.x) * p) + 0.5) * TP, y = ((a.y + (b.y - a.y) * p) + 0.5) * TP - 10;
+      ctx.fillStyle = '#a8d0ff'; ctx.fillRect(Math.round(x) - 3, Math.round(y) - 2, 6, 4); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+    } else if (f.k === 'ring') { // cleave sweep around the caster
+      if (age > 300) { fxFree(i); continue; }
+      const e = ents.get(f.id); if (!e) continue; const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 6, r = 14 + age / 300 * 30;
+      ctx.globalAlpha = 1 - age / 300; ctx.fillStyle = '#ffd34d';
+      for (let j = 0; j < 24; j++) { const a = j / 24 * 6.283 + age / 80; ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r * 0.5), 2, 2); }
+      ctx.globalAlpha = 1;
     }
   }
   // ---- overlay text at device resolution
@@ -699,6 +746,7 @@ function frame(t) {
     const [X, Y] = A2D(x, y);
     if (kind === 'bubble') { bubble(X, Y, txt); continue; }
     if (kind === 'big') { ctx.font = `700 ${18 * S}px 'Pixelify Sans',Mitr`; ctx.strokeStyle = '#3a2410'; ctx.lineWidth = 4 * S; ctx.strokeText(txt, X, Y); ctx.fillStyle = col; ctx.fillText(txt, X, Y); continue; }
+    if (kind === 'sname') { ctx.font = `600 ${12 * S}px Mitr,sans-serif`; ctx.strokeStyle = '#1a0f22'; ctx.lineWidth = 3 * S; ctx.strokeText(txt, X, Y); ctx.fillStyle = col; ctx.fillText(txt, X, Y); continue; }
     ctx.font = `${kind === 'npc' ? 500 : 400} ${11 * S}px Mitr,sans-serif`;
     const tx = kind === 'mob' || kind === 'boss' ? `${txt}` : txt;
     const w = ctx.measureText(tx).width;
@@ -707,8 +755,8 @@ function frame(t) {
     if (lv != null) { ctx.font = `${9 * S}px 'Pixelify Sans',monospace`; ctx.strokeText('Lv' + lv, X, Y + 22 * S); ctx.fillStyle = '#c9c2b0'; ctx.fillText('Lv' + lv, X, Y + 22 * S); }
   }
   for (let i = fx.length - 1; i >= 0; i--) {
-    const f = fx[i]; if (f.k !== 'num') continue; const age = t - f.t; if (age > 1000) { fx.splice(i, 1); continue; }
-    const p = age / 1000; const [X0, Y0] = A2D((f.x + 0.5) * TP, (f.y + 0.5) * TP - 30);
+    const f = fx[i]; if (f.k !== 'num') continue; const age = t - f.t; if (age > 1000) { fxFree(i); continue; }
+    const p = age / 1000; const [X0, Y0] = A2D((f.x + 0.5) * TP, (f.y + 0.5) * TP - 30 - (f.stack || 0) * 11);
     const X = X0 + p * 18 * S, Y = Y0 - Math.sin(Math.min(1, p * 1.6) * Math.PI) * 26 * S + p * 14 * S;
     const sz = (f.big ? 22 : 16) * S * (p < 0.1 ? 1 + (0.1 - p) * 5 : 1);
     ctx.font = `700 ${Math.round(sz)}px 'Pixelify Sans',Mitr,monospace`; ctx.globalAlpha = Math.min(1, (1 - p) * 3);
@@ -716,6 +764,7 @@ function frame(t) {
   }
   ctx.textBaseline = 'alphabetic';
   drawMinimap();
+  combatFrame();
 }
 function drawExcl(x, y) { x = Math.round(x); y = Math.round(y); ctx.fillStyle = '#3a2410'; ctx.fillRect(x - 3, y - 1, 6, 12); ctx.fillRect(x - 3, y + 12, 6, 5); ctx.fillStyle = '#ffd34d'; ctx.fillRect(x - 2, y, 4, 10); ctx.fillRect(x - 2, y + 13, 4, 3); ctx.fillStyle = '#fff6b0'; ctx.fillRect(x - 2, y, 1, 8); }
 function hpBar(x, y, r, w, col) { x = Math.round(x - w / 2); y = Math.round(y); ctx.fillStyle = '#10131f'; ctx.fillRect(x - 1, y - 1, w + 2, 5); ctx.fillStyle = '#3a1620'; ctx.fillRect(x, y, w, 3); ctx.fillStyle = col; ctx.fillRect(x, y, Math.max(0, Math.round(w * r)), 3); ctx.fillStyle = '#ffffff55'; ctx.fillRect(x, y, Math.max(0, Math.round(w * r)), 1); }

@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/run.js",
+    "test:server": "node tests/run.js server",
+    "test:ui": "node tests/run.js ui"
   },
   "keywords": [],
   "author": "",

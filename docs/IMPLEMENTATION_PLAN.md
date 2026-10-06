@@ -65,11 +65,26 @@
 - [x] หน้าต่างใหม่: Skills, Equipment, Quest, Party, Guild, Settings, More (placeholder ที่บอกชัดว่ายังไม่เปิด)
 - [x] Settings: ขนาด UI, ระยะกล้อง, แบบจอยสติ๊ก, แสดงชื่อ, แสดง FPS, เต็มจอ (บันทึกใน localStorage)
 
-### Phase 2 — Combat + Target + Skill UI
-- Combat wheel ขวาล่าง: Attack (ใหญ่สุด), Skill 1-6, Potion, Interact, Target, AUTO
-- ระบบสกิลฝั่ง server (หลายสกิล, cooldown ต่อสกิล, SP cost, ระยะ) — คงสกิล Bash เดิม
-- Cooldown animation (radial), สถานะ SP ไม่พอ/ใช้ไม่ได้, จำนวนไอเทมบนปุ่ม consumable
-- Target frame (ชื่อ / Lv / HP) + target indicator, ปุ่ม Target วนเป้าใกล้สุด, ล้างเป้าเมื่อมอนตาย
+### Phase 2 — Combat + Target + Skill UI ✅
+- [x] Combat wheel ขวาล่าง: Attack (1.44× ขนาดสกิล), Skill 1-6 สองวงโค้ง, Potion, Interact/Pick up, Target, AUTO — ปุ่มทำงานตอนแตะลง (รองรับ 2 นิ้วพร้อม joystick)
+- [x] ระบบสกิลฝั่ง server (`SKILLS` ใน server.js): Bash, First Aid, Spark Bolt, Focus, Cleave, Twin Strike — melee / ranged / self / area, ปลดล็อกตาม Lv
+- [x] Server ตรวจทุกอย่าง: มีชีวิต, เป็นเจ้าของสกิล, cooldown ต่อสกิล + global cooldown, SP, เป้าหมาย/แผนที่, ระยะ, line of sight, attack speed
+- [x] Cooldown overlay (conic) + ตัวเลขนับถอยหลัง จากค่าที่ server ส่งมา, สถานะ SP ไม่พอ / นอกระยะ / ยังไม่ปลดล็อก / ช่องว่าง
+- [x] Target system: แตะ/คลิกเลือก, ปุ่ม Target และ Tab/Shift+Tab วน (ลำดับ: ตีเราอยู่ > ตีล่าสุด > ใกล้สุด), Esc/✕ ล้าง, ล้างเมื่อมอนตาย/หาย/ไกล/เปลี่ยนแผนที่/ผู้เล่นตาย
+- [x] Target panel (รูป / ชื่อ / Lv / HP + % / สถานะ), marker ที่เท้า + ลูกศรเหนือหัว, HP bar มอนแสดงเฉพาะตอนต่อสู้หรือเป็นเป้า
+- [x] Hotbar 6 ช่อง บันทึกในตัวละคร (`char.hot`), ตั้งค่าในหน้าต่างสกิล: แตะ → "ตั้งเป็นช่อง 1-6" หรือลากวาง (desktop)
+- [x] Floating text: ดาเมจ / CRIT / MISS / +HP / +SP แบบ pool จำกัด 40 ตัวเลข ซ้อนขึ้นไม่ทับกัน, ชื่อสกิลเหนือหัวผู้ใช้
+- [x] Keyboard: WASD/ลูกศร, Tab, Space, 1-6, R ยา, F เก็บ/คุย, K สกิล, Esc — ไม่ทำงานขณะพิมพ์แชท
+- [x] Automated tests: `npm test` (server 66 + browser 83)
+
+หมายเหตุพฤติกรรม: แตะมอนครั้งแรก = เลือกเป้า, แตะเป้าเดิมซ้ำ = เดินเข้าไปตี (พฤติกรรมเดิม), ปุ่มโจมตีไม่เดินเข้าหาเอง (แจ้ง Out of range)
+
+## Tests
+
+`npm test` รัน server.js กับฐานข้อมูลชั่วคราว (`LUMIRA_DATA`) — ไม่แตะ `data/db.json`
+- `tests/server.test.js` — 23 เทสต์ความเสถียรเดิม + 43 เทสต์ combat authority ของ Phase 2
+- `tests/ui.test.js` — Responsive 7 ขนาดจอ, Phase 1 HUD/joystick/chat, Phase 2 touch/desktop (ต้องมี Playwright; ถ้าไม่มีจะข้าม)
+- `npm run test:server` / `npm run test:ui`, `UI_ONLY=phase2Mobile npm run test:ui` เพื่อรันส่วนเดียว
 
 ### Phase 3 — Monster + AUTO combat
 - เพิ่มค่า attack range / aggro range / move speed ต่อมอน, spawn radius, respawn timer ต่อจุด, กันยืนซ้อน

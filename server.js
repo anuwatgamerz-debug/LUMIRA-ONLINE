@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 
 const PORT = +process.env.PORT || 3400;
-const DATA = path.join(__dirname, 'data', 'db.json');
+const DATA = process.env.LUMIRA_DATA ? path.resolve(process.env.LUMIRA_DATA) : path.join(__dirname, 'data', 'db.json');
 const PUB = path.join(__dirname, 'public');
 const TICK = 100;
 
@@ -35,6 +35,23 @@ const ITEMS = {
 for (const k in ITEMS) { const it = ITEMS[k]; it.id = +k; if (!it.sell) it.sell = Math.floor((it.buy || 10) / 4); }
 const SHOP = [1, 2, 3, 20, 21, 22, 30, 31, 40];
 const EQ_SLOTS = ['wpn', 'arm', 'head'], STATS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+
+// skills: type target (needs a mob in range + line of sight), self, area (mobs around the caster).
+// Ownership comes from character level, so no new save data is needed beyond the hotbar.
+const SKILLS = {
+  bash:   { n: 'Bash', th: 'ฟันกระแทก', type: 'target', range: 1.6, sp: 8, cd: 1200, lv: 1, mult: 2.2, d: 'ฟันแรง ×2.2 โดนแน่นอน (ระยะประชิด)' },
+  heal:   { n: 'First Aid', th: 'ปฐมพยาบาล', type: 'self', sp: 12, cd: 8000, lv: 1, d: 'ฟื้น HP 20% + INT×3' },
+  bolt:   { n: 'Spark Bolt', th: 'ลูกไฟประกาย', type: 'target', range: 6, sp: 10, cd: 2500, lv: 3, magic: 1, d: 'ยิงเวทระยะไกล 6 ช่อง แรงตาม INT' },
+  focus:  { n: 'Focus', th: 'รวมสมาธิ', type: 'self', sp: 0, cd: 20000, lv: 4, d: 'ฟื้น SP 25%' },
+  cleave: { n: 'Cleave', th: 'ฟันกวาด', type: 'area', range: 1.8, sp: 16, cd: 6000, lv: 5, mult: 1.4, d: 'ฟันมอนรอบตัวทุกตัว ×1.4' },
+  twin:   { n: 'Twin Strike', th: 'ฟันคู่', type: 'target', range: 1.6, sp: 14, cd: 4000, lv: 8, mult: 1.2, hits: 2, d: 'ฟัน 2 ครั้ง ×1.2 (ระยะประชิด)' },
+};
+const SKILL_IDS = Object.keys(SKILLS);
+const GCD = 400; // global cooldown between any two skills
+const MELEE = 1.6; // basic attack reach (tiles, Chebyshev)
+const HOT_DEFAULT = ['bash', 'heal', null, null, null, null];
+const skLv = (c, sk) => Math.min(10, 1 + Math.floor((c.lv - sk.lv) / 4));
+const ownsSkill = (c, id) => Object.hasOwn(SKILLS, id) && c.lv >= SKILLS[id].lv;
 
 const MOBS = {
   jellop:   { n: 'เจลลอป', lv: 1, hp: 40, atk: [3, 5], def: 0, flee: 2, exp: 6, spd: 2.2, aggro: 0, drops: [[10, .6], [1, .08]], z: 2 },
@@ -164,7 +181,7 @@ function derive(c) {
 function newChar(name, look) {
   const c = {
     name, look, lv: 1, exp: 0, zeny: 300, pts: 10, st: { str: 5, agi: 5, vit: 5, int: 5, dex: 5, luk: 5 },
-    map: 'solkara', x: 21, y: 20, inv: [{ id: 1, q: 10 }], eq: { wpn: 20, arm: 30 }, q: { step: 0, k: 0 }, hp: 1, sp: 1,
+    map: 'solkara', x: 21, y: 20, inv: [{ id: 1, q: 10 }], eq: { wpn: 20, arm: 30 }, q: { step: 0, k: 0 }, hp: 1, sp: 1, hot: HOT_DEFAULT.slice(),
   };
   derive(c); c.hp = c.maxhp; c.sp = c.maxsp;
   return c;
@@ -180,6 +197,7 @@ function fixChar(c) {
   c.eq = c.eq && typeof c.eq === 'object' ? c.eq : {};
   for (const sl in c.eq) if (!ITEMS[c.eq[sl]] || ITEMS[c.eq[sl]].slot !== sl) delete c.eq[sl];
   c.q = c.q && typeof c.q === 'object' ? c.q : { step: 0, k: 0 }; c.q.step |= 0; c.q.k |= 0;
+  c.hot = Array.from({ length: 6 }, (_, i) => (Array.isArray(c.hot) ? c.hot : HOT_DEFAULT)[i] || null).map(id => (id && Object.hasOwn(SKILLS, id) ? id : null));
   if (typeof c.hp !== 'number' || isNaN(c.hp)) c.hp = 1;
   if (typeof c.sp !== 'number' || isNaN(c.sp)) c.sp = 0;
   const m = MAPS[c.map];
@@ -237,12 +255,12 @@ function bcast(mapId, o) { const s = JSON.stringify(o); for (const p of players.
 function bcastAll(o) { const s = JSON.stringify(o); for (const p of players.values()) if (p.ws.readyState === 1) p.ws.send(s); }
 function me(p) {
   const c = p.c; derive(c);
-  send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit, inv: c.inv, eq: c.eq, q: c.q, look: c.look } });
+  send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(SKILL_IDS.filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])) } });
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
 function mapInfo(m) { return { id: m.id, name: m.name, w: m.w, h: m.h, t: m.t, portals: m.portals, npcs: m.npcs, props: m.props, town: !!m.town }; }
 function warp(p, mapId, x, y) {
-  p.c.map = mapId; p.c.x = x; p.c.y = y; p.path = null; p.target = null; p.pick = null;
+  p.c.map = mapId; p.c.x = x; p.c.y = y; p.path = null; p.target = null; p.pick = null; p.pendingSkill = false; p.noChase = false;
   send(p, { t: 'map', map: mapInfo(MAPS[mapId]), x, y });
   me(p);
 }
@@ -270,7 +288,14 @@ function gainExp(p, e) {
   const c = p.c; c.exp += e;
   let up = false;
   while (c.exp >= expNext(c.lv) && c.lv < 99) { c.exp -= expNext(c.lv); c.lv++; c.pts += 5; up = true; }
-  if (up) { derive(c); c.hp = c.maxhp; c.sp = c.maxsp; bcast(c.map, { t: 'fx', k: 'lvup', id: p.id }); sys(p, `เลเวลอัพ! ตอนนี้ Lv ${c.lv} (+5 แต้มสเตตัส)`, '#ffd34d'); }
+  if (up) {
+    derive(c); c.hp = c.maxhp; c.sp = c.maxsp; bcast(c.map, { t: 'fx', k: 'lvup', id: p.id }); sys(p, `เลเวลอัพ! ตอนนี้ Lv ${c.lv} (+5 แต้มสเตตัส)`, '#ffd34d');
+    for (const id of SKILL_IDS) if (ownsSkill(c, id) && !c.hot.includes(id) && !p.knows?.has(id)) {
+      const free = c.hot.indexOf(null); if (free >= 0) c.hot[free] = id;
+      sys(p, `เรียนรู้สกิลใหม่: ${SKILLS[id].th} (${SKILLS[id].n})${free >= 0 ? ` → ช่อง ${free + 1}` : ' — ใส่ในช่องได้จากหน้าต่างสกิล'}`, '#9fe7ff');
+    }
+    p.knows = new Set(SKILL_IDS.filter(id => ownsSkill(c, id)));
+  }
 }
 function mobDie(mob, killer) {
   const d = MOBS[mob.type];
@@ -301,11 +326,15 @@ function mobDie(mob, killer) {
     setTimeout(() => spawnMob(mob.map, mob.type), 8000 + Math.random() * 8000);
   }
 }
-function playerAttack(p, mob, mult = 1, skill = false) {
-  const c = p.c, d = MOBS[mob.type];
+// skill=true marks the hit as a skill for the client; opts.sure (default = skill) skips the hit roll, opts.magic uses INT
+function playerAttack(p, mob, mult = 1, skill = false, opts = {}) {
+  const c = p.c, d = MOBS[mob.type], sure = opts.sure ?? skill;
   const hitc = Math.min(97, Math.max(10, 82 + c.hit - d.flee - d.lv));
   let dmg = 0, crit = false;
-  if (skill || Math.random() * 100 < hitc) {
+  if (opts.magic) {
+    const matk = c.st.int * 3 + c.lv * 2 + 12;
+    dmg = Math.max(1, Math.round(matk * (0.9 + Math.random() * 0.2) * mult - d.def * 0.5));
+  } else if (sure || Math.random() * 100 < hitc) {
     crit = !skill && Math.random() * 100 < c.crit;
     dmg = Math.max(1, Math.round(c.atk * (0.85 + Math.random() * 0.3) * mult * (crit ? 1.5 : 1) - (crit ? 0 : d.def)));
   }
@@ -314,6 +343,73 @@ function playerAttack(p, mob, mult = 1, skill = false) {
   if (!mob.target) mob.target = p.id;
   bcast(c.map, { t: 'fx', k: 'hit', from: p.id, to: mob.id, dmg, crit, skill });
   if (mob.hp <= 0) { mobDie(mob, p); p.target = null; }
+}
+// tiles that block attacks/projectiles (walls, roofs, trees, rocks); water and cactus don't
+const BLOCK_LOS = new Set([3, 5, 6, 9]);
+function los(m, x0, y0, x1, y1) {
+  const ax = Math.round(x0), ay = Math.round(y0), bx = Math.round(x1), by = Math.round(y1);
+  // diagonal neighbour: blocked when both corner tiles are blocked (no hitting through a wall corner)
+  if (Math.abs(bx - ax) === 1 && Math.abs(by - ay) === 1 && BLOCK_LOS.has(get(m, bx, ay)) && BLOCK_LOS.has(get(m, ax, by))) return false;
+  const dx = x1 - x0, dy = y1 - y0, n = Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) * 4);
+  for (let i = 1; i < n; i++) {
+    const x = Math.round(x0 + dx * i / n), y = Math.round(y0 + dy * i / n);
+    if ((x === ax && y === ay) || (x === bx && y === by)) continue;
+    if (BLOCK_LOS.has(get(m, x, y))) return false;
+  }
+  return true;
+}
+const reach = (c, mob) => Math.max(Math.abs(mob.x - c.x), Math.abs(mob.y - c.y));
+// why a player can't hit this mob right now ('' = can)
+function hitBlock(c, mob, range) {
+  if (!mob || mob.map !== c.map || mob.hp <= 0) return 'target';
+  if (reach(c, mob) > range) return 'range';
+  if (!los(MAPS[c.map], c.x, c.y, mob.x, mob.y)) return 'los';
+  return '';
+}
+function failMsg(p, s, r, extra) { // throttled so packet spam can't turn into reply spam
+  const now = Date.now(); if (now - (p.failAt || 0) < 150) return false;
+  p.failAt = now; send(p, { t: 'castfail', s, r, ...extra }); return false;
+}
+// all skill rules live here: alive, owned, cooldown, SP, target, range, line of sight
+function castSkill(p, sid, tid, legacy) {
+  const c = p.c, now = Date.now();
+  sid = String(sid);
+  if (!Object.hasOwn(SKILLS, sid)) return failMsg(p, sid.slice(0, 16), 'bad');
+  const sk = SKILLS[sid];
+  if (p.dead || c.hp <= 0) return failMsg(p, sid, 'dead');
+  if (!ownsSkill(c, sid)) return failMsg(p, sid, 'own', { lv: sk.lv });
+  const ready = Math.max(p.cd[sid] || 0, p.gcd || 0);
+  if (now < ready) return failMsg(p, sid, 'cd', { ms: ready - now });
+  if (c.sp < sk.sp) return failMsg(p, sid, 'sp');
+  const lvm = 1 + 0.05 * (skLv(c, sk) - 1);
+  let mob = null, area = null;
+  if (sk.type === 'target') {
+    mob = mobs.get(tid); if (legacy && !mob) mob = mobs.get(p.target);
+    const why = hitBlock(c, mob, sk.range);
+    if (why === 'range' && legacy) { p.target = mob.id; p.pendingSkill = true; return false; } // old client: walk in, then cast
+    if (why) return failMsg(p, sid, why);
+  } else if (sk.type === 'area') {
+    area = [...mobs.values()].filter(mb => !hitBlock(c, mb, sk.range));
+    if (!area.length) return failMsg(p, sid, 'notarget');
+  }
+  c.sp -= sk.sp; p.cd[sid] = now + sk.cd; p.gcd = now + GCD;
+  bcast(c.map, { t: 'fx', k: 'cast', id: p.id, s: sid, to: mob ? mob.id : 0 });
+  send(p, { t: 'cd', s: sid, ms: sk.cd, g: GCD });
+  if (mob) {
+    p.nextAtk = now + c.aspd;
+    for (let i = 0; i < (sk.hits || 1) && mobs.has(mob.id); i++) playerAttack(p, mob, (sk.mult || 1) * lvm, true, { sure: !sk.hits, magic: sk.magic });
+  } else if (area) {
+    p.nextAtk = now + c.aspd;
+    for (const mb of area) if (mobs.has(mb.id)) playerAttack(p, mb, sk.mult * lvm, true);
+  } else if (sid === 'heal') {
+    const before = c.hp; c.hp = Math.min(c.maxhp, c.hp + Math.round((c.maxhp * 0.2 + c.st.int * 3) * lvm));
+    bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: c.hp - before });
+  } else if (sid === 'focus') {
+    const before = c.sp; c.sp = Math.min(c.maxsp, c.sp + Math.round(c.maxsp * 0.25 * lvm));
+    bcast(c.map, { t: 'fx', k: 'heal', id: p.id, sp: c.sp - before });
+  }
+  me(p);
+  return true;
 }
 function mobAttack(mob, p) {
   const d = MOBS[mob.type], c = p.c;
@@ -352,7 +448,7 @@ function npcTalk(p, npcId, act, arg) {
     const intro = c.q.step === 0 ? 'ยินดีต้อนรับสู่ โซลคารา เมืองหลวงแห่งเอลินดรา!\nดวงดาวตกลงมาเมื่อคืน และมอนสเตอร์รอบเมืองก็ดุร้ายขึ้น...\n\n' : '';
     return dlg(`${intro}ภารกิจ: ${q.txt}\nความคืบหน้า: ${c.q.k}/${q.n}\n\n(แตะพื้นเพื่อเดิน แตะมอนเพื่อโจมตี)`);
   }
-  if (npc.id === 'heal') { c.hp = c.maxhp; c.sp = c.maxsp; me(p); bcast(c.map, { t: 'fx', k: 'heal', id: p.id }); return dlg('ฟื้นฟู HP/SP ให้เต็มแล้วค่ะ ระวังตัวด้วยนะคะ~'); }
+  if (npc.id === 'heal') { const hv = c.maxhp - c.hp, sv = c.maxsp - c.sp; c.hp = c.maxhp; c.sp = c.maxsp; me(p); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: hv, sp: sv }); return dlg('ฟื้นฟู HP/SP ให้เต็มแล้วค่ะ ระวังตัวด้วยนะคะ~'); }
   if (npc.id === 'warp') {
     if (act === 'go') { const t = { plains: ['plains', 3, 22], woods: ['woods', 25, 2] }[arg]; if (t) { send(p, { t: 'dlgclose' }); return warp(p, t[0], t[1], t[2]); } }
     return dlg('จะไปที่ไหนดี? ไปส่งฟรี!', [['go:plains', 'ทุ่งทรายสีทอง (Lv 1-10)'], ['go:woods', 'ป่าโอเอซิส (Lv 5-15)']]);
@@ -379,7 +475,7 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server, maxPayload: 4096 });
 const conns = new Set();
 wss.on('connection', ws => {
-  const p = { id: NID++, ws, c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0, authBusy: false, authFails: 0 };
+  const p = { id: NID++, ws, c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0, authBusy: false, authFails: 0, cd: {}, gcd: 0 };
   conns.add(p);
   // without a listener, a protocol error (e.g. a message over maxPayload) is thrown and kills the process
   ws.on('error', e => console.error('[ws]', e.message));
@@ -408,10 +504,11 @@ function enterWorld(p, u) {
     logout(o); // drop the old session now; its socket can take up to 30s to finish closing
     o.ws.close();
   }
-  p.acct = u; p.c = fixChar(a.char);
+  p.acct = u; p.c = fixChar(a.char); p.knows = new Set(SKILL_IDS.filter(id => ownsSkill(p.c, id)));
   if (p.c.hp <= 0) { p.c.hp = Math.floor(p.c.maxhp / 2); p.c.map = 'solkara'; p.c.x = 21; p.c.y = 20; }
   players.set(p.id, p);
-  send(p, { t: 'welcome', id: p.id, items: ITEMS, mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss }])) });
+  send(p, { t: 'welcome', id: p.id, items: ITEMS, mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, aggro: !!v.aggro }])),
+    skills: Object.fromEntries(SKILL_IDS.map(id => { const { n, th, type, range, sp, cd, lv, d } = SKILLS[id]; return [id, { n, th, type, range, sp, cd, lv, d }]; })), melee: MELEE });
   warp(p, p.c.map, p.c.x, p.c.y);
   bcastAll({ t: 'sys', m: `${p.c.name} เข้าสู่โลก Elyndra`, col: '#9ad0ff' });
   if (p.c.q.step === 0 && p.c.q.k === 0) sys(p, 'คุยกับ ไอริส ที่ลานกลางเมืองเพื่อรับภารกิจแรก', '#ffd34d');
@@ -461,7 +558,7 @@ function handle(p, m) {
     return;
   }
   const c = p.c, map = MAPS[c.map];
-  if (p.dead && m.t !== 'respawn' && m.t !== 'chat') return;
+  if (p.dead && m.t !== 'respawn' && m.t !== 'chat') { if (m.t === 'cast' || m.t === 'attack') failMsg(p, String(m.s || 'attack').slice(0, 16), 'dead'); return; }
   switch (m.t) {
     case 'move': {
       const x = m.x | 0, y = m.y | 0;
@@ -470,15 +567,27 @@ function handle(p, m) {
       p.path = pa;
       break;
     }
-    case 'attack': { const mob = mobs.get(m.id); if (mob && mob.map === c.map) { if (p.target !== mob.id) p.pendingSkill = false; p.target = mob.id; p.pick = null; } break; }
-    case 'skill': {
-      // the mob the player just tapped wins over an older target
-      let mob = mobs.get(m.id); if (!mob || mob.map !== c.map) mob = mobs.get(p.target);
-      if (!mob || mob.map !== c.map) return sys(p, 'เลือกเป้าหมายก่อน (แตะมอน)');
-      if (c.sp < 8) return sys(p, 'SP ไม่พอ');
-      if (Date.now() < (p.skillAt || 0)) return; // global cooldown so the skill can't be spammed every message
-      if (Math.max(Math.abs(mob.x - c.x), Math.abs(mob.y - c.y)) > 1.6) { p.target = mob.id; p.pendingSkill = true; return; }
-      c.sp -= 8; playerAttack(p, mob, 2.2, true); p.nextAtk = p.skillAt = Date.now() + c.aspd; me(p);
+    case 'attack': {
+      // m.n = attack button: only swings if the target is already in reach (no auto-walk);
+      // without it (tap a selected mob / AUTO) the old chase-and-attack behaviour is kept
+      const mob = mobs.get(m.id);
+      if (!mob || mob.map !== c.map) { if (m.n) failMsg(p, 'attack', 'target'); break; }
+      if (p.target !== mob.id) p.pendingSkill = false;
+      p.pick = null; p.npcGo = null;
+      if (m.n) {
+        const why = hitBlock(c, mob, MELEE); if (why) { p.target = null; failMsg(p, 'attack', why); break; }
+        p.target = mob.id; p.noChase = true; p.path = null;
+        if (Date.now() >= p.nextAtk) { p.nextAtk = Date.now() + c.aspd; playerAttack(p, mob); }
+      } else { p.target = mob.id; p.noChase = false; }
+      break;
+    }
+    case 'skill': castSkill(p, 'bash', m.id, true); break; // legacy Bash message
+    case 'cast': castSkill(p, m.s, m.id); break;
+    case 'hot': { // hotbar: 6 slots of owned-or-locked skill ids / null
+      if (!Array.isArray(m.h)) return;
+      const seen = new Set(); // learned skills only, each in at most one slot
+      c.hot = Array.from({ length: 6 }, (_, i) => { const id = m.h[i]; if (typeof id !== 'string' || !ownsSkill(c, id) || seen.has(id)) return null; seen.add(id); return id; });
+      dirty = true; me(p);
       break;
     }
     case 'pick': { const d = drops.get(m.id); if (d && d.map === c.map) { p.pick = d.id; p.target = null; p.path = findPath(map, c.x, c.y, d.x, d.y) || []; } break; }
@@ -515,9 +624,10 @@ function handle(p, m) {
     case 'use': {
       const s = c.inv[m.i | 0]; if (!s || (m.id != null && s.id !== m.id)) return; const it = ITEMS[s.id];
       if (it.ty === 'use') {
+        const hp0 = c.hp, sp0 = c.sp;
         if (it.heal) c.hp = Math.min(c.maxhp, c.hp + it.heal);
         if (it.sp) c.sp = Math.min(c.maxsp, c.sp + it.sp);
-        delSlot(c, m.i | 0); bcast(c.map, { t: 'fx', k: 'heal', id: p.id }); me(p);
+        delSlot(c, m.i | 0); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: c.hp - hp0, sp: c.sp - sp0 }); me(p);
       } else if (it.ty === 'eq') {
         const old = c.eq[it.slot]; c.eq[it.slot] = s.id; c.inv.splice(m.i | 0, 1); if (old) addItem(c, old); me(p); dirty = true;
       }
@@ -567,11 +677,13 @@ setInterval(() => {
       const mob = mobs.get(p.target);
       if (!mob || mob.map !== c.map) { p.target = null; p.pendingSkill = false; }
       else {
-        const d = Math.max(Math.abs(mob.x - c.x), Math.abs(mob.y - c.y));
-        if (d <= 1.6) {
+        const d = reach(c, mob), inReach = d <= MELEE && los(MAPS[c.map], c.x, c.y, mob.x, mob.y);
+        if (inReach) {
           pe.path = null;
-          if (p.pendingSkill && c.sp >= 8) { p.pendingSkill = false; c.sp -= 8; playerAttack(p, mob, 2.2, true); p.nextAtk = p.skillAt = now + c.aspd; me(p); }
-          else if (now >= p.nextAtk) { playerAttack(p, mob); p.nextAtk = now + c.aspd; }
+          if (p.pendingSkill) { p.pendingSkill = false; castSkill(p, 'bash', mob.id); }
+          else if (now >= p.nextAtk) { p.nextAtk = now + c.aspd; playerAttack(p, mob); }
+        } else if (p.noChase) {
+          if (d > 12) p.target = null; // attack-button target wandered off; stop tracking it
         } else if (!pe.path || !pe.path.length || (p.chaseAt || 0) < now) {
           pe.path = findPath(MAPS[c.map], c.x, c.y, Math.round(mob.x), Math.round(mob.y), 300);
           if (pe.path && pe.path.length) pe.path.pop();
@@ -647,7 +759,7 @@ setInterval(() => {
   // snapshot per map
   const per = {};
   for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.head || 0, p.dead ? 1 : 0]); }
-  for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp]); }
+  for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp, mob.target || 0]); }
   for (const d of drops.values()) { const s = per[d.map]; if (s) s.d.push([d.id, d.item, d.x, d.y]); }
   for (const k in per) per[k] = JSON.stringify({ t: 's', ...per[k] }); // serialize once per map, not once per player
   for (const p of players.values()) { const s = per[p.c.map]; if (s && p.ws.readyState === 1) p.ws.send(s); }

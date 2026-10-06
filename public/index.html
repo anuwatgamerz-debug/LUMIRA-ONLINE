@@ -79,15 +79,63 @@ body.barc1 #topbar .lp1,body.barc2 #topbar .lp2{display:none}
 #joy.act{opacity:1;transition:opacity .1s}
 #joy::after{content:'';position:absolute;inset:1.3rem;border-radius:50%;border:1px dashed #e8c46a55}
 #knob{position:absolute;left:50%;top:50%;width:4.6rem;height:4.6rem;margin:-2.3rem 0 0 -2.3rem;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fb2ff,#2f5cc0 60%,#1a3070);border:2px solid var(--gold);box-shadow:0 2px 6px #000a}
-/* combat buttons (bottom-right) */
-#acts{position:absolute;right:var(--sr);bottom:var(--sb);width:20.4rem;height:18.4rem;pointer-events:none}
-#hud .rb{pointer-events:auto;position:absolute;width:5.4rem;height:5.4rem;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.95rem;line-height:1;background:radial-gradient(circle at 40% 30%,#3d4a8c,#161c3a 70%);border:2px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,0 3px 6px #000a}
-.rb .pi{width:2.6rem;height:2.6rem;margin-bottom:.1rem}
-#hud .rb.big{width:7.8rem;height:7.8rem;right:.4rem;bottom:.4rem;background:radial-gradient(circle at 40% 30%,#c0533d,#5a1a14 70%);border-color:var(--gold)}
-.rb.big .pi{width:3.6rem;height:3.6rem}
-#skill{right:9rem;bottom:.4rem}#bPot{right:7.6rem;bottom:6.8rem}#bPick{right:.8rem;bottom:9rem}#bAuto{right:14.2rem;bottom:5.6rem}
+/* combat wheel (bottom-right). Button centres sit on two arcs around Attack; positions are rem from the corner. */
+#acts{position:absolute;right:var(--sr);bottom:var(--sb);width:21.4rem;height:21.4rem;pointer-events:none}
+#hud .rb{pointer-events:auto;position:absolute;width:5rem;height:5rem;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.9rem;line-height:1;background:radial-gradient(circle at 40% 30%,#3d4a8c,#161c3a 70%);border:2px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,0 3px 6px #000a;touch-action:manipulation}
+.rb .pi{width:2.4rem;height:2.4rem;margin-bottom:.1rem}
+#hud .rb.big{width:7.2rem;height:7.2rem;right:1rem;bottom:1rem;font-size:1.05rem;background:radial-gradient(circle at 40% 30%,#c0533d,#5a1a14 70%);border-color:var(--gold)}
+.rb.big .pi{width:3.4rem;height:3.4rem}
+#hud .rb.sm{width:4.2rem;height:4.2rem;font-size:.8rem}
+.rb.sm .pi{width:2rem;height:2rem}
+#sk1{right:10.5rem;bottom:2.1rem}#sk2{right:8.04rem;bottom:8.04rem}#sk3{right:2.1rem;bottom:10.5rem}
+#sk4{right:15.37rem;bottom:5.9rem}#sk5{right:11.86rem;bottom:11.86rem}#sk6{right:5.9rem;bottom:15.37rem}
+#bInt{right:16.5rem;bottom:.9rem}#bPot{right:.9rem;bottom:16.5rem}#bTgt{right:17.1rem;bottom:11.1rem}#bAuto{right:11.1rem;bottom:17.1rem}
 #hud .rb.on{border-color:#7dff8a;box-shadow:0 0 0 2px #0a0d1c,0 0 1.4rem #7dff8a}
-.rb .q{position:absolute;right:-.2rem;bottom:-.2rem;background:#0a0d1c;border:1px solid var(--gold2);border-radius:.6rem;font-size:1rem;padding:0 .3rem}
+.rb .q{position:absolute;right:-.3rem;bottom:-.3rem;background:#0a0d1c;border:1px solid var(--gold2);border-radius:.6rem;font-size:1rem;padding:0 .3rem}
+#hud .rb.dis{opacity:.45;filter:grayscale(.7)}
+.rb.sk .pi{width:2.8rem;height:2.8rem;margin:0}
+.rb.sk .key{position:absolute;left:-.1rem;top:-.3rem;font-size:.9rem;line-height:1.3rem;background:#0a0d1c;border:1px solid var(--gold2);border-radius:.5rem;padding:0 .35rem;color:var(--gold)}
+.rb.sk .ssp{position:absolute;right:-.3rem;bottom:-.3rem;font-size:.85rem;line-height:1.2rem;color:#8fb8ff;background:#0a0d1c;border-radius:.5rem;padding:0 .3rem}
+.rb.sk .slv{position:absolute;left:-.3rem;bottom:-.3rem;font-size:.8rem;line-height:1.2rem;color:#ffe39a;background:#0a0d1c;border-radius:.5rem;padding:0 .3rem}
+.rb.sk .ssp:empty,.rb.sk .slv:empty{display:none}
+.rb.sk .cdo{position:absolute;inset:0;border-radius:50%;background:conic-gradient(#05070fd8 calc(var(--p,0) * 1turn),transparent 0);display:none;pointer-events:none}
+.rb.sk .cdt{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:1.35rem;color:#fff;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none}
+.rb.sk.cd .cdo{display:block}.rb.sk.cd .cdt{display:flex}
+#hud .rb.sk.empty{border-style:dashed;background:#0a0d1c99;box-shadow:0 0 0 2px #0a0d1c}
+.rb.sk.empty::after{content:'+';color:var(--dim);font-size:1.8rem;line-height:1}
+.rb.sk.lock .pi{filter:grayscale(1) brightness(.45)}
+.rb.sk.nosp .pi{filter:grayscale(.85) brightness(.8)}.rb.sk.nosp .ssp{color:#ff6b6b}
+#hud .rb.sk.oor{border-color:#ff6b6b}
+.rb.press{animation:rbpress .2s}
+@keyframes rbpress{40%{transform:scale(.86);filter:brightness(1.7)}}
+.rb.shake{animation:rbshake .3s}
+@keyframes rbshake{25%{transform:translateX(-.35rem)}75%{transform:translateX(.35rem)}}
+body.cs-dead #acts .rb{opacity:.35;pointer-events:none}
+/* target panel */
+#tgt{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--st) + 6.2rem);width:22rem;display:none;align-items:center;gap:.6rem;padding:.4rem .6rem}
+#tgt.on{display:flex}
+#tgpic{width:4.4rem;height:4.4rem;image-rendering:pixelated;background:radial-gradient(#4a2a2a,#1a0f12);border:1px solid var(--gold2);border-radius:.4rem;flex:0 0 auto}
+#tgt .tgi{flex:1;min-width:0}
+#tgt .tgn{display:flex;justify-content:space-between;gap:.4rem;font-size:1.2rem;white-space:nowrap}
+#tgName{overflow:hidden;text-overflow:ellipsis}#tgLv{color:var(--gold)}
+#tgt .bar{height:1.3rem}#tgt .bar b{line-height:1.3rem;font-size:.95rem}
+#tgSt{font-size:1rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tgSt .hot{color:#ff8b8b}#tgSt .far{color:#ffb35c}
+#hud #tgX{padding:.1rem .6rem;font-size:1.1rem;align-self:flex-start}
+body.portrait #tgt{left:auto;right:var(--sr);transform:none;top:calc(var(--st) + 19.4rem);width:19.4rem}
+/* skills window: hotbar preview + tap-to-assign */
+.hotrow{display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap}
+#hud .hotrow .hs{width:4.6rem;height:4.6rem;padding:0;position:relative;display:flex;align-items:center;justify-content:center;background:#0c1022}
+#hud .hotrow .hs.on{border-color:#7dff8a;box-shadow:0 0 .8rem #7dff8a}
+.hotrow .hs span{position:absolute;left:.3rem;top:.1rem;font-size:.95rem;color:var(--gold)}
+.hotrow .hs .pi{width:3rem;height:3rem}
+.skli{cursor:pointer}.skli.locked{opacity:.55}.skli.on{border-color:#7dff8a}
+.skli small{font-size:1.05rem}
+.slotpick{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.2rem 0 .4rem 4rem}
+#hud .slotpick button{min-width:3.6rem;padding:.4rem .6rem}
+/* combat toast ("Out of range", "SP ไม่เพียงพอ"): one reused element */
+#ctoast{position:absolute;left:50%;top:30%;transform:translateX(-50%);padding:.4rem 1.2rem;border-radius:1.4rem;background:#0a0d1cd8;border:1px solid #ff8b8b;color:#ffd0d0;font-size:1.3rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s}
+#ctoast.on{opacity:1;transition:none}
 /* compact chat (bottom) */
 #chat{position:absolute;bottom:var(--sb);left:calc(var(--sl) + 15rem);right:calc(var(--sr) + 21.6rem);display:flex;align-items:flex-end;gap:.4rem;pointer-events:none}
 #log{flex:1;min-width:0;font-size:1.15rem;line-height:1.45;height:calc(1.45em * 4 + .8rem);overflow:hidden;padding:.4rem .7rem;display:flex;flex-direction:column;justify-content:flex-end;text-shadow:1px 1px 0 #000,0 0 3px #000;background:linear-gradient(90deg,#0a0d1caa,#0a0d1c33);border-radius:.4rem;pointer-events:auto;cursor:pointer}
@@ -99,7 +147,7 @@ body.barc1 #topbar .lp1,body.barc2 #topbar .lp2{display:none}
 body.portrait #topbar{left:var(--sl);right:var(--sr);top:calc(var(--st) + 13.6rem)}
 body.portrait #topbar>:first-child{margin-left:0}
 body.portrait #quest{top:calc(var(--st) + 19.4rem)}
-body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 19rem)}
+body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.2rem)}
 /* windows */
 .win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(44rem,calc(100vw - var(--sl) - var(--sr)));max-height:calc(100vh - var(--st) - var(--sb) - 1rem);max-height:calc(100dvh - var(--st) - var(--sb) - 1rem);overflow:auto;padding:1.2rem;display:none;z-index:8;font-size:1.35rem}
 .win h3{margin:0 0 .8rem;color:var(--gold);display:flex;justify-content:space-between;align-items:center;font-weight:500;font-size:1.6rem}
@@ -190,13 +238,21 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 19rem
   <div id="quest" class="frame"><b>📌 ภารกิจหลัก</b><div id="qt">-</div></div>
   <div id="joyzone"><div id="joy"><div id="knob"></div></div></div>
   <div id="chat"><div id="log" title="แตะเพื่อเปิดแชท"></div><button id="bChat" data-icon="chat" aria-label="แชท"></button></div>
+  <div id="tgt" class="frame"><canvas id="tgpic" width="64" height="64"></canvas><div class="tgi"><div class="tgn"><span id="tgName">-</span><span id="tgLv" class="num"></span></div><div class="bar hp"><i id="tgHp"></i><b id="tgHpT" class="num"></b></div><div id="tgSt"></div></div><button id="tgX" aria-label="ยกเลิกเป้าหมาย">✕</button></div>
   <div id="acts">
     <button class="rb big" id="bAtk" data-icon="attack">โจมตี</button>
-    <button class="rb" id="skill" data-icon="skill">Bash</button>
-    <button class="rb" id="bPot" data-icon="potion">ยา<span class="q num" id="potq">0</span></button>
-    <button class="rb" id="bPick" data-icon="loot">เก็บ</button>
-    <button class="rb" id="bAuto" data-icon="auto">AUTO</button>
+    <button class="rb sk empty" id="sk1" data-slot="0" aria-label="สกิลช่อง 1"><i class="pi"></i><span class="key num">1</span><span class="slv num"></span><span class="ssp num"></span><span class="cdo"></span><b class="cdt num"></b></button>
+    <button class="rb sk empty" id="sk2" data-slot="1" aria-label="สกิลช่อง 2"><i class="pi"></i><span class="key num">2</span><span class="slv num"></span><span class="ssp num"></span><span class="cdo"></span><b class="cdt num"></b></button>
+    <button class="rb sk empty" id="sk3" data-slot="2" aria-label="สกิลช่อง 3"><i class="pi"></i><span class="key num">3</span><span class="slv num"></span><span class="ssp num"></span><span class="cdo"></span><b class="cdt num"></b></button>
+    <button class="rb sk empty" id="sk4" data-slot="3" aria-label="สกิลช่อง 4"><i class="pi"></i><span class="key num">4</span><span class="slv num"></span><span class="ssp num"></span><span class="cdo"></span><b class="cdt num"></b></button>
+    <button class="rb sk empty" id="sk5" data-slot="4" aria-label="สกิลช่อง 5"><i class="pi"></i><span class="key num">5</span><span class="slv num"></span><span class="ssp num"></span><span class="cdo"></span><b class="cdt num"></b></button>
+    <button class="rb sk empty" id="sk6" data-slot="5" aria-label="สกิลช่อง 6"><i class="pi"></i><span class="key num">6</span><span class="slv num"></span><span class="ssp num"></span><span class="cdo"></span><b class="cdt num"></b></button>
+    <button class="rb sm" id="bPot" data-icon="potion"><span class="q num" id="potq">0</span></button>
+    <button class="rb sm dis" id="bInt" data-icon="loot"><span id="intL">เก็บ</span></button>
+    <button class="rb sm" id="bTgt" data-icon="target">เป้า</button>
+    <button class="rb sm" id="bAuto" data-icon="auto">AUTO</button>
   </div>
+  <div id="ctoast"></div>
   <div id="fps" class="num"></div>
   <div id="dead" class="frame">คุณหมดสติ<br><button id="bRes" style="margin-top:10px">ฟื้นที่โซลคารา</button></div>
   <div id="wDlg" class="win frame"><h3><span id="dlgname">NPC</span><button class="x">✕</button></h3><div id="dlgtext"></div><div id="dlgopts"></div></div>
@@ -222,11 +278,12 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 19rem
     <div class="opt"><span>แสดงชื่อผู้เล่น/มอน</span><div class="seg" data-k="names"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
     <div class="opt"><span>แสดง FPS</span><div class="seg" data-k="fps"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
     <div class="opt"><span>เต็มจอ</span><div class="seg"><button id="bFull">สลับเต็มจอ</button></div></div>
-    <div class="note" style="margin-top:8px">คีย์บอร์ด: WASD/ลูกศร เดิน · Space โจมตี · Q สกิล · 1 ยา · I กระเป๋า · M แผนที่ · Enter แชท · Esc ปิดหน้าต่าง</div>
+    <div class="note" style="margin-top:8px">คีย์บอร์ด: WASD/ลูกศร เดิน · Tab เลือกเป้า · Space โจมตี · 1-6 สกิล · R ยา · F เก็บของ/คุย · C ตัวละคร · I กระเป๋า · K สกิล · M แผนที่ · Enter แชท · Esc ปิดหน้าต่าง/ยกเลิกเป้า</div>
   </div>
   <div id="wMore" class="win frame"><h3><span>เมนู</span><button class="x">✕</button></h3><div class="mgrid" id="moregrid"></div></div>
 </div>
 <script src="hud.js"></script>
 <script src="game.js"></script>
+<script src="combat.js"></script>
 </body>
 </html>
