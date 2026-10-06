@@ -206,7 +206,7 @@ function me(p) {
   const now = Date.now(), B = buffsOf(c);
   send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit,
     matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
-    cls: clsOf(c).id, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
+    cls: clsOf(c).id, guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
     buffs: Object.entries(B).filter(([, b]) => b.until > now).map(([id, b]) => ({ id, th: b.th, ms: b.until - now })) } });
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
@@ -216,6 +216,7 @@ function mapInfo(m) {
 }
 function warp(p, mapId, x, y) {
   if (p.wave && p.wave.map !== mapId) endWave(p, false);
+  if (p.c.map !== mapId) SOC.onWarp(p);
   p.c.map = mapId; p.c.x = x; p.c.y = y; p.path = null; p.target = null; p.pick = null; p.pendingSkill = false; p.noChase = false; p.shop = null; p.station = null; p.npcGo = null; p.nodeGo = null;
   send(p, { t: 'map', map: mapInfo(MAPS[mapId]), x, y });
   me(p);
@@ -304,7 +305,8 @@ function mobDie(mob, killer) {
   for (const [pid, v] of mob.dmg) {
     const p = players.get(pid); if (!p || p.c.map !== mob.map) continue;
     const share = Math.max(d.exp ? 1 : 0, Math.round(d.exp * v / total));
-    if (share) gainExp(p, share);
+    if (share) for (const [o, e] of SOC.shareExp(p, share, mob.map)) { gainExp(o, e); if (o !== p) me(o); } // party members nearby share it
+    SOC.onKill(p, !!d.boss);
     if (d.jexp) gainJob(p, Math.max(1, Math.round(d.jexp * v / total)));
     const q = IRIS[p.c.q.step];
     if (q && q.mob === mob.type && p.c.q.k < q.n) { p.c.q.k++; sys(p, `[เควส] ${d.n} ${p.c.q.k}/${q.n}${p.c.q.k >= q.n ? ' - กลับไปหาไอริส!' : ''}`, '#8fe38f'); }
@@ -634,6 +636,7 @@ wss.on('connection', ws => {
 setInterval(() => { for (const p of conns) p.msgs = 0; }, 1000);
 function logout(p) {
   if (!p.c) return;
+  SOC.onLeave(p);
   if (p.wave) endWave(p, false);
   db.accounts[p.acct].char = p.c; dirty = true;
   players.delete(p.id);
@@ -676,6 +679,9 @@ const GUIDE = (() => {
   for (const mb of Object.values(MOBS)) for (const t of Object.values(mb.drops || {})) for (const [it] of t) (drops[it] = drops[it] || []).push(mb.id);
   return { npcs, spawns, nodes, portals, drops, legacy: [['jellop', 10], ['crab', 8], ['leafling', 10], ['kingjel', 1]], legacyNpc: 'solkara:iris' };
 })();
+// social: rankings, party, guild, trade (engine/social.js)
+const SOC = require('./engine/social')({ players, send, sys, getDb: () => db, setDirty: () => { dirty = true; }, ITEMS, addItem, countItem, takeItem, me, MAPS, itemsChanged: p => Q.onItems(p) });
+setInterval(() => SOC.tick(), 500);
 // static game data the client needs once (monster visuals, world map, quest texts, classes, recipes)
 function welcomeData(c) {
   return {
@@ -700,7 +706,7 @@ function enterWorld(p, u) {
   if (p.c.hp <= 0) { p.c.hp = Math.floor(p.c.maxhp / 2); p.c.map = p.c.save.map; p.c.x = p.c.save.x; p.c.y = p.c.save.y; }
   players.set(p.id, p);
   send(p, Object.assign({ t: 'welcome', id: p.id }, welcomeData(p.c)));
-  warp(p, p.c.map, p.c.x, p.c.y);
+  warp(p, p.c.map, p.c.x, p.c.y); SOC.onLogin(p);
   bcastAll({ t: 'sys', m: `${p.c.name} เข้าสู่โลก Elyndra`, col: '#9ad0ff' });
   if (p.c.qs.a.mq1 && p.c.qs.a.mq1.s === 0) sys(p, 'คุยกับ ผู้ใหญ่บ้านมาเรน (บ้านทางเหนือของลานหมู่บ้าน) เพื่อเริ่มการผจญภัย', '#ffd34d');
   else if (p.c.q.step === 0 && p.c.q.k === 0 && p.c.map === 'solkara') sys(p, 'คุยกับ ไอริส ที่ลานกลางเมืองเพื่อรับภารกิจแรก', '#ffd34d');
@@ -750,6 +756,7 @@ function handle(p, m) {
     return;
   }
   const c = p.c, map = MAPS[c.map];
+  if (SOC.handle(p, m)) return; // rankings / party / guild / trade / party+guild chat
   if (p.dead && m.t !== 'respawn' && m.t !== 'chat') { if (m.t === 'cast' || m.t === 'attack') failMsg(p, String(m.s || 'attack').slice(0, 16), 'dead'); return; }
   switch (m.t) {
     case 'move': {
@@ -1068,7 +1075,7 @@ setInterval(() => {
   // snapshots: only the player's map, and only entities near them (area of interest). Players standing in the
   // same 8x8 block share one serialized snapshot.
   const per = {};
-  for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.chead || p.c.eq.head || 0, p.dead ? 1 : 0, p.c.cls, p.c.eq.arm || 0]); }
+  for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.chead || p.c.eq.head || 0, p.dead ? 1 : 0, p.c.cls, p.c.eq.arm || 0, p.c.guild || '', p.party || 0]); }
   for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp, mob.target || 0]); }
   for (const d of drops.values()) { const s = per[d.map]; if (s) s.d.push([d.id, d.item, d.x, d.y]); }
   snapCache.clear();

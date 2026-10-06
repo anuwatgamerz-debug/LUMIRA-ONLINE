@@ -380,6 +380,23 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 #itemact .iah canvas{width:4rem;height:4rem}#itemact .grow{flex:1;min-width:10rem;font-size:1.1rem}#itemact .iab{display:flex;gap:.4rem;width:100%;justify-content:flex-end}#itemact .iab button{min-height:2.6rem;padding:0 1rem;font-size:1.05rem}
 .slot.locked{opacity:.45}
 #bPot .potart{position:absolute;inset:18%;background:center/contain no-repeat;pointer-events:none;border-radius:50%}
+/* social: player menu, invites, rank board, trade */
+#pmenu{position:absolute;left:50%;top:22%;transform:translateX(-50%);width:min(22rem,88vw);display:none;padding:.7rem;z-index:14}
+#pmenu .pmh{display:flex;flex-direction:column;margin-bottom:.4rem}#pmenu .pmh b{color:var(--gold);font-size:1.3rem}#pmenu .pmh small{color:var(--dim)}
+#pmenu .pmb{display:flex;flex-direction:column;gap:.35rem}#pmenu .pmb button{min-height:2.6rem;font-size:1.1rem;text-align:left;padding:0 .8rem}
+#invbox,#sinfo{position:absolute;left:50%;top:14%;transform:translateX(-50%);width:min(24rem,90vw);display:none;padding:.8rem 1rem;text-align:center;font-size:1.15rem;z-index:31}
+#sinfo h3{margin:0 0 .4rem;color:var(--gold)}#sinfo button{margin-top:.6rem}
+.rktabs{flex-wrap:wrap}.rktabs button{flex:1 1 30%;font-size:.95rem}
+.rkme{background:#1d2a5a;border:2px solid #3d6fd8;border-radius:.6rem;padding:.5rem .7rem;margin-bottom:.5rem}
+.rk{display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;margin:.25rem 0;background:#0c1022;border:2px solid #2b3466;border-radius:.6rem}
+.rk.top{border-color:#c8913a;background:linear-gradient(90deg,#2a2210,#0c1022)}.rk.me{border-color:#3d6fd8;box-shadow:0 0 .5rem #3d6fd866}
+.rkn{width:2.2rem;text-align:center;font-size:1.2rem}.rk .grow{flex:1;min-width:0}.rk small{color:var(--dim)}.rkv{color:var(--gold);white-space:nowrap}
+#wTrade{width:min(48rem,94vw)}
+.trcols{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}.trc{border:2px solid #2b3466;border-radius:.6rem;padding:.4rem;background:#0a0e20}.trc.lk{border-color:#e8c46a;box-shadow:0 0 .5rem #e8c46a55}
+.trlist,.trbag{display:grid;grid-template-columns:repeat(auto-fill,minmax(5.6rem,1fr));gap:.3rem;margin:.3rem 0}.trbag{max-height:12rem;overflow:auto}
+.trlist .slot,.trbag .slot{position:relative;font-size:.8rem;text-align:center;padding:.2rem;cursor:pointer}.trlist .slot canvas,.trbag .slot canvas{width:2.6rem;height:2.6rem;display:block;margin:0 auto}
+.trx{position:absolute;top:0;right:0;padding:0 .3rem;min-height:1.4rem;font-size:.7rem}.trz{color:var(--gold);font-size:.95rem}
+.trbtn{display:flex;gap:.4rem;margin-top:.5rem}.trbtn button{flex:1;min-height:2.8rem}
 </style>
 </head>
 <body>
@@ -437,6 +454,9 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
   <div id="quest" class="frame"><div id="qhead" role="button" aria-label="ย่อ/ขยายภารกิจ"><i class="pi qmark" data-icon="quest" data-skin="quest_mark"></i><b id="qtitle">ภารกิจหลัก</b><span id="qprog" class="num"></span><button id="qauto" aria-label="Auto Quest" title="Auto Quest: เดินไปทำภารกิจอัตโนมัติ">▶</button><span id="qtog">▾</span></div><div id="qt">-</div></div>
   <div id="acQuick" class="frame"><b class="t">AUTO</b><span class="s"><i class="pi" data-icon="skill"></i><em class="sv">OFF</em></span><span class="h"><i class="pi" data-icon="potion"></i><em class="hv">OFF</em></span><span class="p"><i class="pi sp" data-icon="potion"></i><em class="pv">OFF</em></span><button id="acGear" aria-label="ตั้งค่า AUTO">⚙</button></div>
   <div id="itemact" class="frame"></div>
+  <div id="pmenu" class="frame"></div>
+  <div id="invbox" class="frame"></div>
+  <div id="sinfo" class="frame"><h3 id="sinfoT"></h3><div id="sinfoB"></div><button id="sinfoX">ปิด</button></div>
   <div id="aqask" class="frame"><div>ดำเนินภารกิจต่อหรือไม่?</div><div class="aqb"><button id="aqYes">ดำเนินการต่อ</button><button id="aqNo" class="ghost">ยกเลิก</button></div></div>
   <div id="joyzone"><div id="joy"><div id="knob"></div></div></div>
   <div id="chat"><div id="log" title="แตะเพื่อเปิดแชท"></div><button id="bChat" data-icon="chat" aria-label="แชท"></button></div>
@@ -463,8 +483,10 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
   <div id="wStat" class="win frame"><h3><span>ข้อมูลตัวละคร</span><button class="x">✕</button></h3><div id="statbody"></div></div>
   <div id="wSkill" class="win frame"><h3><span>สกิล</span><button class="x">✕</button></h3><div id="skillbody"></div></div>
   <div id="wQuest" class="win frame"><h3><span>ภารกิจ</span><button class="x">✕</button></h3><div id="questbody"></div></div>
-  <div id="wParty" class="win frame"><h3><span>ปาร์ตี้</span><button class="x">✕</button></h3><div class="note">ระบบปาร์ตี้ยังไม่เปิดให้บริการ<br>เมื่อเปิดแล้วจะสามารถชวนเพื่อน แบ่ง EXP และเห็นตำแหน่งสมาชิกบนแผนที่ได้</div></div>
-  <div id="wGuild" class="win frame"><h3><span>กิลด์</span><button class="x">✕</button></h3><div class="note">ระบบกิลด์ยังไม่เปิดให้บริการ<br>เมื่อเปิดแล้วจะสามารถสร้าง/เข้าร่วมกิลด์ และคุยในช่องแชทกิลด์ได้</div></div>
+  <div id="wParty" class="win frame"><h3><span>ปาร์ตี้</span><button class="x">✕</button></h3><div id="partybody"></div></div>
+  <div id="wGuild" class="win frame"><h3><span>กิลด์</span><button class="x">✕</button></h3><div id="guildbody"></div></div>
+  <div id="wRank" class="win frame"><h3><span>🏆 จัดอันดับ</span><button class="x">✕</button></h3><div class="tabs2 rktabs" id="ranktabs"></div><div id="rankbody"></div></div>
+  <div id="wTrade" class="win frame"><h3><span>⇄ แลกเปลี่ยน</span></h3><div id="tradebody"></div></div>
   <div id="wShop" class="win frame"><h3><span id="shopt">ร้านค้า</span><button class="x">✕</button></h3><div class="list" id="shoplist"></div></div>
   <div id="wMap" class="win frame"><h3><span id="bmn">แผนที่</span><button class="x">✕</button></h3>
     <div class="tabs2" id="maptabs"><button data-t="local" class="on">แผนที่นี้</button><button data-t="world">แผนที่โลก</button></div>
@@ -510,6 +532,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 <script src="combat.js"></script>
 <script src="autoquest.js"></script>
 <script src="autocombat.js"></script>
+<script src="social.js"></script>
 <script src="audio-events.js"></script>
 </body>
 </html>

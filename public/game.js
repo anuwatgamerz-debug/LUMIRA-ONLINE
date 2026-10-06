@@ -312,6 +312,7 @@ function onMsg(m) {
     case 'fx': snd('fx', m); onFx(m); break; // sound first: a 'die' removes the entity
     case 'sys': log(m.m, m.col || '#ffe9a8'); break;
     case 'chat': onChat(m); break;
+    case 'rank': case 'pinfo': case 'party': case 'guild': case 'trade': case 'invite': onSocial(m); break;
     case 'dlg': openDlg(m); break;
     case 'dlgclose': closeWins(); break;
     case 'shop': openShop(m); break;
@@ -328,12 +329,12 @@ function onMsg(m) {
 }
 function snap(m) {
   const seen = new Set();
-  for (const [id, name, x, y, dir, hp, maxhp, lv, look, wpn, head, dead, cls, arm] of m.p) {
+  for (const [id, name, x, y, dir, hp, maxhp, lv, look, wpn, head, dead, cls, arm, guild, party] of m.p) {
     seen.add(id); let e = ents.get(id);
     if (!e) { e = { kind: 'p', x, y, row: SRV2ROW[dir] ?? 2, ph: Math.random() * 3 }; ents.set(id, e); img(heroOf(look)); }
     if (e.sdir !== dir && !e.moving) e.row = SRV2ROW[dir] ?? 2;
     if (dead && !e.dead) e.dieT = now();
-    Object.assign(e, { name, tx: x, ty: y, sdir: dir, hp, maxhp, lv, look, wpn, head, dead, cls, arm });
+    Object.assign(e, { name, tx: x, ty: y, sdir: dir, hp, maxhp, lv, look, wpn, head, dead, cls, arm, guild: guild || '', party: party || 0 });
   }
   for (const [id, type, x, y, dir, hp, maxhp, tg] of m.m) {
     seen.add(id); let e = ents.get(id);
@@ -492,7 +493,7 @@ function drawPortrait() {
 // ------------------------------------------------------------ chat (compact 4-line log + full window with channels)
 const chatLog = []; let chTab = 'all';
 const CH_TAG = { world: '[โลก] ', whisper: '[กระซิบ] ', party: '[ปาร์ตี้] ', guild: '[กิลด์] ' };
-const CH_NOTE = { all: 'ส่งในช่องท้องถิ่น (ผู้เล่นในแผนที่นี้) · พิมพ์ /w ชื่อ ข้อความ เพื่อกระซิบ', sys: 'ช่องนี้แสดงข้อความระบบเท่านั้น', local: 'ส่งถึงผู้เล่นในแผนที่เดียวกัน', world: 'ส่งถึงผู้เล่นทุกคนในเซิร์ฟเวอร์ (ทุก 3 วินาที)', whisper: 'ข้อความส่วนตัวถึงผู้เล่นที่ออนไลน์', party: 'ยังไม่ได้อยู่ในปาร์ตี้', guild: 'ยังไม่ได้เข้าร่วมกิลด์' };
+const CH_NOTE = { all: 'ส่งในช่องท้องถิ่น (ผู้เล่นในแผนที่นี้) · พิมพ์ /w ชื่อ ข้อความ เพื่อกระซิบ', sys: 'ช่องนี้แสดงข้อความระบบเท่านั้น', local: 'ส่งถึงผู้เล่นในแผนที่เดียวกัน', world: 'ส่งถึงผู้เล่นทุกคนในเซิร์ฟเวอร์ (ทุก 3 วินาที)', whisper: 'ข้อความส่วนตัวถึงผู้เล่นที่ออนไลน์', party: 'ส่งถึงสมาชิกปาร์ตี้ (ชวนเข้าปาร์ตี้: แตะตัวละครผู้เล่นอื่น)', guild: 'ส่งถึงสมาชิกกิลด์' };
 function addChat(ch, text, col) {
   chatLog.push({ ch, text, col }); if (chatLog.length > 150) chatLog.shift();
   renderLog(); if ($('wChat').style.display === 'block') renderChatList();
@@ -506,7 +507,7 @@ function renderChatList() {
   for (const e of list) l.appendChild(chatLine(e));
   if (!list.length) l.innerHTML = '<div class="note">ยังไม่มีข้อความ</div>';
   l.scrollTop = l.scrollHeight;
-  const locked = chTab === 'party' || chTab === 'guild' || chTab === 'sys';
+  const locked = chTab === 'sys' || (chTab === 'party' && !(typeof PARTY !== 'undefined' && PARTY.id)) || (chTab === 'guild' && !(me && me.guild));
   $('ci').disabled = $('cs').disabled = locked;
   $('wto').style.display = chTab === 'whisper' ? 'block' : 'none';
   $('chnote').textContent = CH_NOTE[chTab] || '';
@@ -520,7 +521,7 @@ function onChat(m) {
 }
 function sendChat() {
   const v = $('ci').value.trim(); if (!v) return;
-  let o = { t: 'chat', ch: chTab === 'world' || chTab === 'whisper' ? chTab : 'local', m: v };
+  let o = { t: 'chat', ch: ['world', 'whisper', 'party', 'guild'].includes(chTab) ? chTab : 'local', m: v };
   const w = /^\/w\s+(\S+)\s+(.+)$/.exec(v);
   if (w) o = { t: 'chat', ch: 'whisper', to: w[1], m: w[2] };
   else if (o.ch === 'whisper') { o.to = $('wto').value.trim(); if (!o.to) { $('chnote').textContent = 'ใส่ชื่อผู้รับก่อน'; return; } }
@@ -656,7 +657,7 @@ document.querySelectorAll('#wSet .seg[data-k] button').forEach(b => b.onclick = 
 });
 $('bFull').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => { }); } catch (e) { } };
 const MORE = [['char', 'ตัวละคร', 'pport'], ['skill', 'สกิล', 'bSkill'], ['equip', 'อุปกรณ์', 'bEquip'], ['bag', 'กระเป๋า', 'bBag'], ['quest', 'เควส', 'bQuest'], ['map', 'แผนที่', 'bMap'],
-  ['party', 'ปาร์ตี้', 'bParty'], ['guild', 'กิลด์', 'bGuild'], ['auto', 'ออโต้', 'bAuto'], ['chat', 'แชท', 'bChat'], ['gear', 'ตั้งค่า', 'bSet'],
+  ['party', 'ปาร์ตี้', 'bParty'], ['guild', 'กิลด์', 'bGuild'], ['auto', 'ออโต้', 'bAuto'], ['chat', 'แชท', 'bChat'], ['gear', 'ตั้งค่า', 'bSet'], ['quest', 'อันดับ', () => openRank()],
   ['quest', 'เครดิตภาพ', () => open('credits.html', '_blank')], ['more', 'ออกจากระบบ', () => { if (confirm('ออกจากระบบ?')) { me = null; try { ws.close(); } catch (e) { } location.reload(); } }]];
 function renderMore() {
   const g = $('moregrid'); g.innerHTML = '';
@@ -677,8 +678,8 @@ $('bQuest').onclick = toggleWin('wQuest', renderQuest); $('quest').onclick = e =
 // chevron folds the tracker; a folded tracker unfolds on any tap; the rest opens the quest window
 const qFold = e => { e.stopPropagation(); e._fold = 1; HUD.S.qCol = !HUD.S.qCol; HUD.saveSettings(); if (me) updQuestTrack(); };
 $('qtog').onclick = qFold; $('quest').addEventListener('click', e => { if (HUD.S.qCol) qFold(e); }, true);
-$('bParty').onclick = toggleWin('wParty');
-$('bGuild').onclick = toggleWin('wGuild');
+$('bParty').onclick = toggleWin('wParty', () => { renderParty(); send({ t: 'party', a: 'view' }); });
+$('bGuild').onclick = toggleWin('wGuild', () => { renderGuild(); send({ t: 'guild', a: 'view' }); });
 $('bSet').onclick = toggleWin('wSet', renderSettings);
 $('bMore').onclick = toggleWin('wMore', renderMore);
 $('log').onclick = $('bChat').onclick = () => openChat(false);
@@ -712,7 +713,7 @@ function pickAt(clientX, clientY, npcs = true) {
     if (wx > sx - wid && wx < sx + wid && wy > sy - hgt && wy < sy + 8) { const s = Math.hypot(wx - sx, wy - (sy - hgt / 2)) + (kind === 'd' ? 16 : 0); if (s < bs) { bs = s; best = [id, kind]; } }
   };
   // hit boxes a little larger than the sprites so monsters are easy to tap; the closest centre wins
-  for (const [id, en] of ents) { if (id === myId || en.kind === 'p') continue; if (en.kind === 'd') test(id, en, 'd', 22, 14); else { const sc = en.type === 'kingjel' ? 1.55 : Math.max(1, mobScale(en.type)); test(id, en, 'm', Math.round(50 * sc), Math.round(26 * Math.min(sc, 1.8))); } }
+  for (const [id, en] of ents) { if (id === myId) continue; if (en.kind === 'p') { if (npcs) test(id, en, 'p', 46, 15); continue; } if (en.kind === 'd') test(id, en, 'd', 22, 14); else { const sc = en.type === 'kingjel' ? 1.55 : Math.max(1, mobScale(en.type)); test(id, en, 'm', Math.round(50 * sc), Math.round(26 * Math.min(sc, 1.8))); } }
   if (npcs) for (const nd of map.nodes || []) test(nd.id, nd, 'o', 30, 16);
   if (npcs) for (const n of map.npcs) test(n.id, n, 'n', 52, 18);
   return { best, wx, wy };
@@ -727,6 +728,7 @@ cv.addEventListener('pointerdown', e => {
     if (kind === 'm') { if (id === selected && me.hp > 0) send({ t: 'attack', id }); else setTarget(id); }
     else if (kind === 'd') send({ t: 'pick', id });
     else if (kind === 'o') send({ t: 'node', id });
+    else if (kind === 'p') openPlayerMenu(id);
     else send({ t: 'npc', id });
     return;
   }
@@ -887,7 +889,7 @@ function frame(t) {
       e.top = lastPaperSet === 'hd' || lastPaperSet === 'lpc' ? heroTopOf(lastPaperSet, typeof e.head === 'string' ? e.head : (e.head && ITEMS[e.head] && ITEMS[e.head].vis) || '') : 60;
       if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, true);
       hpBar(x, y + 4, e.hp / e.maxhp, 24, '#58d65a');
-      if (HUD.S.names || id === myId) labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : '#c8f7c5', 'pc']);
+      if (HUD.S.names || id === myId) { labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : e.party && typeof PARTY !== 'undefined' && e.party === PARTY.id ? '#7dffb0' : '#c8f7c5', 'pc']); if (e.guild) labels.push([x, y + 22, `<${e.guild}>`, '#ffd98a', 'pc']); }
       const b = bubbles.get(id); if (b && b.until > t) labels.push([x, y - e.top, b.m, '#2a1f3a', 'bubble']);
     } });
   }
