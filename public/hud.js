@@ -97,13 +97,56 @@
   }
   const urls = {};
   const iconURL = name => urls[name] || (urls[name] = pix(name).toDataURL());
+
+  // ---------------------------------------------------------- UI art (public/assets/ui, built by tools/build_ui_assets.py)
+  // Pure visual layer: an element keeps its id/events; if its data-icon (or data-skin) has art in the atlas it is drawn
+  // with that art, otherwise with the pixel icon above. If ui.json never loads the game simply keeps the pixel icons.
+  const UI = { man: null };
+  const SKIN = {   // data-icon -> sprite (atlas cell or single file in ui.json)
+    attack: 'attack', potion: 'btn_potion', loot: 'btn_pick', interact: 'btn_talk', target: 'btn_target',
+    // top menu / More menu / gold
+    skill: 'menu_skill', equip: 'menu_equip', bag: 'menu_bag', quest: 'menu_quest', map: 'menu_map', party: 'menu_party',
+    guild: 'menu_guild', auto: 'menu_auto', gear: 'menu_settings', more: 'menu_more', coin: 'menu_gold', chat: 'btn_talk',
+  };
+  function spriteStyle(name) {
+    const m = UI.man; if (!m || !name) return null;
+    if (m[name] && m[name].file && !m[name].map) return { img: `url(assets/ui/${m[name].file})`, size: 'contain', pos: '50% 50%' };
+    for (const k of ['icons', 'items']) {
+      const a = m[k]; const i = a && a.map[name]; if (i == null) continue;
+      const c = i % a.cols, r = Math.floor(i / a.cols);
+      return { img: `url(assets/ui/${a.file})`, size: `${a.cols * 100}% ${a.rows * 100}%`, pos: `${a.cols > 1 ? c / (a.cols - 1) * 100 : 0}% ${a.rows > 1 ? r / (a.rows - 1) * 100 : 0}%` };
+    }
+    return null;
+  }
+  // paint an element with a sprite (atlas cells are square, so the element should be square too)
+  function sprite(el, name) {
+    const s = spriteStyle(name); if (!s) return false;
+    el.style.backgroundImage = s.img; el.style.backgroundSize = s.size; el.style.backgroundPosition = s.pos; el.style.backgroundRepeat = 'no-repeat';
+    return true;
+  }
+  // atlas image + cell lookup for canvas drawing (loaded on first use)
+  const atlasImg = {};
+  function atlasCell(kind, name) {
+    const a = UI.man && UI.man[kind]; if (!a || a.map[name] == null) return null;
+    let im = atlasImg[kind]; if (!im) { im = atlasImg[kind] = new Image(); im.src = 'assets/ui/' + a.file; }
+    if (!im.complete || !im.naturalWidth) return null;
+    const i = a.map[name]; return { im, sx: (i % a.cols) * a.cell, sy: Math.floor(i / a.cols) * a.cell, s: a.cell };
+  }
   function applyIcons(root) {
     (root || document).querySelectorAll('[data-icon]').forEach(el => {
       let i = el.classList.contains('pi') ? el : el.querySelector(':scope > i.pi');
       if (!i) { i = document.createElement('i'); i.className = 'pi'; el.prepend(i); }
+      const art = UI.man && (el.dataset.skin || SKIN[el.dataset.icon]);
+      if (art && sprite(i, art)) { el.classList.add('skinned'); return; }
+      el.classList.remove('skinned');
+      i.style.backgroundSize = i.style.backgroundPosition = '';
       i.style.backgroundImage = `url(${iconURL(el.dataset.icon)})`;
     });
   }
+  fetch('assets/ui/ui.json').then(r => r.json()).then(m => {
+    UI.man = m; document.body.classList.add('skin'); applyIcons();
+    dispatchEvent(new Event('uiskin')); // let renderers that draw sprites (hotbar, canvas) refresh
+  }).catch(() => { });
 
   // ---------------------------------------------------------- settings
   const DEF = { uiSize: 1, zoom: 'normal', joy: 'float', names: true, fps: false };
@@ -133,5 +176,5 @@
   addEventListener('resize', layout);
   addEventListener('orientationchange', () => setTimeout(layout, 150));
 
-  window.HUD = { icon: pix, iconURL, applyIcons, S, saveSettings, layout, fitBar };
+  window.HUD = { icon: pix, iconURL, applyIcons, S, saveSettings, layout, fitBar, UI, SKIN, sprite, atlasCell };
 })();

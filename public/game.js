@@ -221,7 +221,19 @@ function drawIcon(g, id) {
 }
 const iconCache = {};
 function icon16(id) { if (!iconCache[id]) { const c = mkCanvas(16, 16); drawIcon(c.getContext('2d'), id); iconCache[id] = c; } return iconCache[id]; }
-function iconCanvas(id) { const c = mkCanvas(32, 32); const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(icon16(id), 0, 0, 32, 32); c.style.imageRendering = 'pixelated'; return c; }
+// item icon for windows: art from the item atlas (real item id -> artwork) or the 16px pixel icon as fallback
+function iconCanvas(id) {
+  const art = HUD.atlasCell('items', String(id));
+  if (art) { const c = mkCanvas(64, 64), g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(art.im, art.sx, art.sy, art.s, art.s, 0, 0, 64, 64); c.className = 'art'; return c; }
+  const c = mkCanvas(32, 32); const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(icon16(id), 0, 0, 32, 32); c.style.imageRendering = 'pixelated'; return c;
+}
+// faded silhouette for an empty equipment slot (art only; plain label otherwise)
+function slotHint(d, k, lab) {
+  const art = HUD.atlasCell('items', 'slot_' + k);
+  if (art) { const c = mkCanvas(64, 64), g = c.getContext('2d'); g.drawImage(art.im, art.sx, art.sy, art.s, art.s, 0, 0, 64, 64); c.className = 'art hint'; d.appendChild(c); d.append(lab); }
+  else d.textContent = lab;
+}
+addEventListener('uiskin', () => { HUD.atlasCell('items', '1'); }); // start loading the item atlas once the art manifest is in
 
 // ------------------------------------------------------------ state
 let ws, myId = 0, map = null, ITEMS = {}, MOBN = {}, me = null;
@@ -244,7 +256,7 @@ function onMsg(m) {
   switch (m.t) {
     case 'err': $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
     case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) img('m_' + k); SK = m.skills || {}; MELEE_R = m.melee || 1.6; break;
-    case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) img(NPC_SPR[n.look]); break;
+    case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) img(NPC_SPR[n.look]); break;
     case 'me': me = m.c; updHud(); break;
     case 's': snap(m); break;
     case 'fx': onFx(m); break;
@@ -323,6 +335,8 @@ function updHud() {
   $('hpb').style.width = (me.hp / me.maxhp * 100) + '%'; $('hpt').textContent = `${me.hp} / ${me.maxhp}`;
   $('spb').style.width = (me.sp / me.maxsp * 100) + '%'; $('spt').textContent = `${me.sp} / ${me.maxsp}`;
   $('xpb').style.width = (me.exp / me.next * 100) + '%'; $('hX').textContent = (me.exp / me.next * 100).toFixed(1) + '%';
+  $('hpP').textContent = Math.round(me.hp / me.maxhp * 100) + '%'; $('spP').textContent = Math.round(me.sp / me.maxsp * 100) + '%';
+  if ($('hX2')) $('hX2').textContent = $('hX').textContent;
   const z = me.zeny.toLocaleString(); if ($('hZ').textContent !== z) { $('hZ').textContent = z; HUD.fitBar(); } // wider gold can push buttons out of the bar
   const s = me.q.step;
   $('qt').innerHTML = QT[s] ? `${QT[s].replace('\n', '<br>')} <span class="num qk">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ กลับไปหาไอริส</span>' : ''}` : 'จบบททดสอบแล้ว!';
@@ -334,6 +348,51 @@ function updHud() {
   if ($('wEquip').style.display === 'block') renderEquip();
   if ($('wQuest').style.display === 'block') renderQuest();
   if ($('wShop').style.display === 'block' && shopMode === 'sell') renderSell();
+}
+// player status on the art frame: same elements, placed on the frame's cleaned areas (boxes from ui.json)
+function skinHud() {
+  const f = HUD.UI.man && HUD.UI.man.hud; if (!f || !f.boxes) return;
+  const P = $('pstat'), B = f.boxes; P.classList.add('art'); P.style.setProperty('--ar', `${f.w} / ${f.h}`); P.style.backgroundImage = `url(assets/ui/${f.file})`;
+  const put = (el, b, rel) => { // rel: box of the positioned parent the element lives in
+    const [x, y, w, h] = rel ? [(b[0] - rel[0]) / rel[2] * 100, (b[1] - rel[1]) / rel[3] * 100, b[2] / rel[2] * 100, b[3] / rel[3] * 100] : b;
+    Object.assign(el.style, { left: x + '%', top: y + '%', width: w + '%', height: h + '%' });
+  };
+  put($('pport'), B.portrait); put($('lvb'), B.level, B.portrait); put($('hName'), B.name); put($('hJob'), B.job);
+  const tall = b => [b[0], b[1] - b[3] * 0.3, b[2], b[3] * 1.6]; // the art's tracks are thin: cover their outline so numbers fit
+  put(P.querySelector('.bar.hp'), tall(B.hp)); put(P.querySelector('.bar.sp'), tall(B.sp)); put(P.querySelector('.bar.xp'), B.exp);
+  put($('hpP'), B.hpv); put($('spP'), B.spv);
+  if (!$('hX2')) { const x = document.createElement('span'); x.id = 'hX2'; x.className = 'num'; P.appendChild(x); x.textContent = $('hX').textContent; }
+  put($('hX2'), B.expv);
+  P.appendChild($('buffs')); put($('buffs'), B.buffs); // buff icons sit in the frame's slot row
+  HUD.fitBar();
+}
+addEventListener('uiskin', skinHud); if (HUD.UI.man) skinHud();
+// minimap on the art frame: same canvas/labels, placed in the frame's hollow and plates; the canvas gets the
+// hollow's aspect so the map isn't stretched (drawMinimap already reads the canvas size)
+function skinMinimap() {
+  const f = HUD.UI.man && HUD.UI.man.minimap; if (!f || !f.boxes) return;
+  const M = $('mm'), B = f.boxes; M.classList.add('art'); M.style.setProperty('--ar', `${f.w} / ${f.h}`); M.style.backgroundImage = `url(assets/ui/${f.file})`;
+  const put = (el, b) => Object.assign(el.style, { left: b[0] + '%', top: b[1] + '%', width: b[2] + '%', height: b[3] + '%' });
+  put($('mmc'), B.map); put($('mmn'), B.title); put($('mmxy2'), B.coords); put($('mmp'), B.players);
+  const c = $('mmc'); c.width = 150; c.height = Math.round(150 * (B.map[3] * f.h) / (B.map[2] * f.w));
+}
+// shrink a label's font until its text fits the plate (map names vary in length); the text width is measured
+// with a Range because scrollWidth never reports less than the box itself
+function fitText(el, max = 1, min = 0.55) {
+  if (!el || !el.offsetParent) return;
+  const r = document.createRange(), over = () => { r.selectNodeContents(el); return r.getBoundingClientRect().width > el.clientWidth - 4; };
+  let f = max; el.style.fontSize = f + 'rem';
+  while (over() && f > min) { f -= 0.05; el.style.fontSize = f.toFixed(2) + 'rem'; }
+  // still too long: show the name before "(…)" (e.g. the level range) and keep the full name as the tooltip
+  if (over() && el.textContent.includes(' (')) { el.title = el.textContent; el.textContent = el.textContent.split(' (')[0]; fitText(el, max, min); }
+}
+addEventListener('uiskin', () => { skinMinimap(); fitText($('mmn')); }); if (HUD.UI.man) skinMinimap();
+// NPC badge over the head by role (Iris: "!" while a quest is running, "✓" when it can be turned in)
+const NPC_BADGE = { iris: 'npc_quest', merchant: 'npc_shop', sage: 'npc_shop', nurse: 'npc_heal', warper: 'npc_portal' };
+function drawNpcBadge(n, x, y) {
+  let k = NPC_BADGE[n.look]; if (n.look === 'iris' && me && QN[me.q.step] != null && me.q.k >= QN[me.q.step]) k = 'npc_done';
+  const art = k && HUD.atlasCell('icons', k); if (!art) return drawExcl(x, y);
+  ctx.imageSmoothingEnabled = true; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 12), Math.round(y - 4), 24, 24); ctx.imageSmoothingEnabled = false;
 }
 let portraitT = 0;
 function drawPortrait() {
@@ -418,7 +477,7 @@ function renderBag() {
   const eg = $('eqgrid'); eg.innerHTML = '';
   for (const [k, lab] of [['wpn', 'อาวุธ'], ['arm', 'เสื้อ'], ['head', 'หมวก']]) {
     const d = document.createElement('div'); d.className = 'slot eq'; const id = me.eq[k];
-    if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else d.textContent = lab;
+    if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else slotHint(d, k, lab);
     eg.appendChild(d);
   }
   const g = $('invgrid'); g.innerHTML = '';
@@ -449,7 +508,7 @@ function renderEquip() {
   const eg = document.createElement('div'); eg.className = 'grid';
   for (const [k, lab] of EQS) {
     const d = document.createElement('div'); d.className = 'slot eq'; const id = me.eq[k];
-    if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else d.textContent = lab + ' (ว่าง)';
+    if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else slotHint(d, k, lab + ' (ว่าง)');
     eg.appendChild(d);
   }
   b.appendChild(eg);
@@ -487,6 +546,7 @@ function renderMore() {
   const g = $('moregrid'); g.innerHTML = '';
   for (const [ic, lab, act] of MORE) {
     const b = document.createElement('button'); b.dataset.icon = ic; b.textContent = lab;
+    if (lab === 'ออกจากระบบ') b.dataset.skin = 'npc_portal'; // "leave the world"; the grid art means "More"
     b.onclick = () => { closeWins(); typeof act === 'function' ? act() : $(act).click(); };
     g.appendChild(b);
   }
@@ -669,15 +729,17 @@ function frame(t) {
   for (const p of props) if (p.x > vx0 - 140 && p.x < vx1 + 140 && p.y > vy0 && p.y < vy1 + 60) list.push({ y: p.sort ?? p.y, f: () => { if (p.sh) shadow(p.x, p.y, p.sh); drawProp(p.n, p.x, p.y); } });
   for (const n of map.npcs) {
     const x = (n.x + 0.5) * TP, y = (n.y + 0.5) * TP + 12;
-    list.push({ y, f: () => { shadow(x, y, 9); drawChar(NPC_SPR[n.look], 'stand', 0, 2, x, y); const b = Math.round(Math.sin(tn * 4) * 2); drawExcl(x, y - 58 + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
+    list.push({ y, f: () => { shadow(x, y, 9); drawChar(NPC_SPR[n.look], 'stand', 0, 2, x, y); const b = Math.round(Math.sin(tn * 4) * 2); drawNpcBadge(n, x, y - 60 + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
   }
   for (const [id, e] of ents) {
     const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 12;
     if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
-    if (e.kind === 'd') list.push({ y: y - 6, f: () => { const bob = Math.round(Math.sin(tn * 3 + id)); shadow(x, y - 6, 5); ctx.drawImage(icon16(e.item), Math.round(x - 8), Math.round(y - 22 + bob)); if (Math.floor(tn * 2 + id) % 4 === 0) { ctx.fillStyle = '#fff'; ctx.fillRect(Math.round(x + 4), Math.round(y - 22 + bob), 1, 1); } } });
+    if (e.kind === 'd') list.push({ y: y - 6, f: () => { const bob = Math.round(Math.sin(tn * 3 + id)); shadow(x, y - 6, 5); const art = HUD.atlasCell('items', String(e.item));
+        if (art) { ctx.imageSmoothingEnabled = true; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 10), Math.round(y - 25 + bob), 20, 20); ctx.imageSmoothingEnabled = false; }
+        else ctx.drawImage(icon16(e.item), Math.round(x - 8), Math.round(y - 22 + bob)); if (Math.floor(tn * 2 + id) % 4 === 0) { ctx.fillStyle = '#fff'; ctx.fillRect(Math.round(x + 4), Math.round(y - 22 + bob), 1, 1); } } });
     else if (e.kind === 'm') list.push({ y, f: () => {
       const nm = 'm_' + e.type, big = e.type === 'kingjel';
-      if (id === selected) drawTargetRing(x, y, big ? 30 : 14, tn);
+      if (id === selected) drawTargetMarker(x, y, big ? 30 : 14, tn, e.tg === myId || !!(MOBN[e.type] && MOBN[e.type].aggro));
       shadow(x, y, big ? 28 : 11);
       const [an, at] = entAnim(e, nm, tn);
       const fl = e.hurtT && tn - e.hurtT < 0.1;
@@ -768,6 +830,18 @@ function frame(t) {
 }
 function drawExcl(x, y) { x = Math.round(x); y = Math.round(y); ctx.fillStyle = '#3a2410'; ctx.fillRect(x - 3, y - 1, 6, 12); ctx.fillRect(x - 3, y + 12, 6, 5); ctx.fillStyle = '#ffd34d'; ctx.fillRect(x - 2, y, 4, 10); ctx.fillRect(x - 2, y + 13, 4, 3); ctx.fillStyle = '#fff6b0'; ctx.fillRect(x - 2, y, 1, 8); }
 function hpBar(x, y, r, w, col) { x = Math.round(x - w / 2); y = Math.round(y); ctx.fillStyle = '#10131f'; ctx.fillRect(x - 1, y - 1, w + 2, 5); ctx.fillStyle = '#3a1620'; ctx.fillRect(x, y, w, 3); ctx.fillStyle = col; ctx.fillRect(x, y, Math.max(0, Math.round(w * r)), 3); ctx.fillStyle = '#ffffff55'; ctx.fillRect(x, y, Math.max(0, Math.round(w * r)), 1); }
+// target marker: art rune ring at the feet + arrow over the head (red = fighting you / aggressive, blue = passive);
+// falls back to the pixel ring below while the art isn't loaded
+function drawTargetMarker(x, y, r, tn, hostile) {
+  const ring = HUD.atlasCell('icons', hostile ? 'tgt_ring_red' : 'tgt_ring_blue'), arr = HUD.atlasCell('icons', 'tgt_arrow');
+  if (!ring || !arr) return drawTargetRing(x, y, r, tn);
+  ctx.imageSmoothingEnabled = true; // painted art, not pixel art: smooth when scaling down
+  const w = Math.round(r * 3.4 * (1 + Math.sin(tn * 5) * 0.04));
+  ctx.globalAlpha = 0.9; ctx.drawImage(ring.im, ring.sx, ring.sy, ring.s, ring.s, Math.round(x - w / 2), Math.round(y - w / 2 + 2), w, w); ctx.globalAlpha = 1;
+  const a = r > 20 ? 30 : 22, b = Math.round(Math.sin(tn * 6) * 2.5);
+  ctx.drawImage(arr.im, arr.sx, arr.sy, arr.s, arr.s, Math.round(x - a / 2), Math.round(y - (r > 20 ? 118 : 80) + b), a, a);
+  ctx.imageSmoothingEnabled = false;
+}
 function drawTargetRing(x, y, r, tn) { ctx.fillStyle = '#ffd34d'; const n = 16; for (let i = 0; i < n; i++) { if (i % 2) continue; const a = i / n * 6.283 + tn * 2; ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r * 0.45), 2, 1); } const b = Math.round(Math.sin(tn * 6) * 2); ctx.fillStyle = '#3a2410'; ctx.fillRect(Math.round(x) - 4, Math.round(y) - (r > 20 ? 104 : 66) + b, 9, 5); ctx.fillStyle = '#7dff8a'; for (let i = 0; i < 4; i++) ctx.fillRect(Math.round(x) - 3 + i, Math.round(y) - (r > 20 ? 104 : 66) + b + i, 7 - i * 2, 1); }
 function drawMagicCircle(x, y, tn, scale = 1, col = '#7fd4ff') {
   ctx.save(); ctx.translate(Math.round(x), Math.round(y));

@@ -465,11 +465,18 @@ const server = http.createServer((req, res) => {
   if (u === '/') u = '/index.html';
   const f = path.join(PUB, path.normalize(u).replace(/^(\.\.[\/\\])+/, ''));
   if (!f.startsWith(PUB + path.sep)) { res.writeHead(403); return res.end(); }
-  fs.readFile(f, (e, b) => {
-    if (e) { res.writeHead(404); return res.end('not found'); }
-    const ext = path.extname(f);
-    res.writeHead(200, { 'Content-Type': { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.webp': 'image/webp', '.css': 'text/css' }[ext] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
-    res.end(b);
+  // still 'no-cache' (always revalidate, so a new build shows up at once), but with an ETag an unchanged file
+  // costs a 304 instead of a full download on every visit (the UI art is a few hundred KB)
+  fs.stat(f, (se, st) => {
+    if (se || !st.isFile()) { res.writeHead(404); return res.end('not found'); }
+    const etag = `W/"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
+    const type = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.webp': 'image/webp', '.css': 'text/css' }[path.extname(f)] || 'application/octet-stream';
+    if (req.headers['if-none-match'] === etag) { res.writeHead(304, { ETag: etag, 'Cache-Control': 'no-cache' }); return res.end(); }
+    fs.readFile(f, (e, b) => {
+      if (e) { res.writeHead(404); return res.end('not found'); }
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', ETag: etag });
+      res.end(b);
+    });
   });
 });
 const wss = new WebSocketServer({ server, maxPayload: 4096 });

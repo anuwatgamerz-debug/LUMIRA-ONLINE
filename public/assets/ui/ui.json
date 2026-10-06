@@ -1,0 +1,246 @@
+{
+ "icons": {
+  "file": "ui_icons.webp",
+  "cell": 136,
+  "cols": 8,
+  "rows": 5,
+  "w": 1088,
+  "h": 680,
+  "map": {
+   "menu_skill": 0,
+   "menu_equip": 1,
+   "menu_bag": 2,
+   "menu_gold": 3,
+   "menu_quest": 4,
+   "menu_map": 5,
+   "menu_party": 6,
+   "menu_guild": 7,
+   "menu_auto": 8,
+   "menu_settings": 9,
+   "menu_more": 10,
+   "sk_twin": 11,
+   "sk_bolt": 12,
+   "orb_ice": 13,
+   "sk_cleave": 14,
+   "sk_focus": 15,
+   "sk_heal": 16,
+   "btn_potion": 17,
+   "btn_target": 18,
+   "btn_pick": 19,
+   "btn_auto": 20,
+   "sk_bash": 21,
+   "slot_empty": 22,
+   "btn_talk": 23,
+   "npc_quest": 24,
+   "npc_done": 25,
+   "npc_shop": 26,
+   "npc_smith": 27,
+   "npc_heal": 28,
+   "npc_portal": 29,
+   "npc_talk": 30,
+   "npc_boss": 31,
+   "npc_party": 32,
+   "quest_mark": 33,
+   "tgt_arrow": 34,
+   "tgt_ring_blue": 35,
+   "tgt_ring_red": 36,
+   "joy_knob": 37
+  }
+ },
+ "items": {
+  "file": "ui_items.webp",
+  "cell": 72,
+  "cols": 8,
+  "rows": 3,
+  "w": 576,
+  "h": 216,
+  "map": {
+   "1": 0,
+   "2": 1,
+   "3": 2,
+   "10": 3,
+   "11": 4,
+   "12": 5,
+   "13": 6,
+   "14": 7,
+   "15": 8,
+   "20": 9,
+   "21": 10,
+   "22": 11,
+   "23": 12,
+   "30": 13,
+   "31": 14,
+   "40": 15,
+   "41": 16,
+   "slot_wpn": 17,
+   "slot_head": 18,
+   "slot_arm": 19,
+   "slot_shield": 20,
+   "slot_acc": 21,
+   "slot_shoes": 22
+  }
+ },
+ "attack": {
+  "file": "btn_attack.webp",
+  "w": 288,
+  "h": 292
+ },
+ "joy_ring": {
+  "file": "joy_ring.webp",
+  "w": 320,
+  "h": 347
+ },
+ "hud": {
+  "file": "hud_frame.webp",
+  "w": 640,
+  "h": 302,
+  "src": {
+   "x0": 18,
+   "y0": 185,
+   "w": 1403,
+   "h": 661
+  },
+  "boxes": {
+   "portrait": [
+    6.7,
+    21.63,
+    22.52,
+    45.39
+   ],
+   "level": [
+    14.04,
+    69.59,
+    7.13,
+    11.35
+   ],
+   "name": [
+    41.2,
+    24.96,
+    29.08,
+    7.26
+   ],
+   "job": [
+    81.4,
+    25.87,
+    14.54,
+    5.75
+   ],
+   "hp": [
+    47.83,
+    41.91,
+    38.13,
+    4.39
+   ],
+   "sp": [
+    47.83,
+    52.65,
+    38.13,
+    4.54
+   ],
+   "exp": [
+    48.18,
+    63.99,
+    37.78,
+    4.24
+   ],
+   "hpv": [
+    86.96,
+    40.7,
+    9.84,
+    6.81
+   ],
+   "spv": [
+    86.96,
+    51.44,
+    9.84,
+    6.96
+   ],
+   "expv": [
+    86.96,
+    62.78,
+    9.84,
+    6.66
+   ],
+   "buffs": [
+    38.06,
+    74.58,
+    49.61,
+    14.22
+   ]
+  }
+ },
+ "target": {
+  "file": "target_frame.webp",
+  "w": 600,
+  "h": 186,
+  "boxes": {
+   "portrait": [
+    8.89,
+    19.06,
+    19.0,
+    61.39
+   ],
+   "level": [
+    13.03,
+    69.55,
+    10.42,
+    11.88
+   ],
+   "name": [
+    44.14,
+    37.87,
+    34.33,
+    15.84
+   ],
+   "hp": [
+    33.87,
+    59.65,
+    56.55,
+    9.41
+   ],
+   "status": [
+    34.79,
+    70.05,
+    54.41,
+    9.9
+   ],
+   "close": [
+    85.36,
+    75.99,
+    6.51,
+    17.33
+   ]
+  }
+ },
+ "minimap": {
+  "file": "minimap_frame.webp",
+  "w": 420,
+  "h": 437,
+  "boxes": {
+   "map": [
+    18.71,
+    24.15,
+    62.84,
+    52.54
+   ],
+   "title": [
+    33.89,
+    14.32,
+    31.42,
+    6.1
+   ],
+   "coords": [
+    43.69,
+    81.1,
+    21.62,
+    5.76
+   ],
+   "players": [
+    65.31,
+    81.1,
+    11.47,
+    5.76
+   ]
+  }
+ }
+}

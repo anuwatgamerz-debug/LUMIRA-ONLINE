@@ -44,6 +44,12 @@ async function run(srv, R) {
   ok(await get('/a%00b') === 400, 'null byte URL -> 400');
   ok(await get('/..%2f..%2fdata/db.json') !== 200, 'path traversal blocked');
   ok(await get('/') === 200 && await get('/game.js') === 200 && await get('/combat.js') === 200 && await get('/assets/meta.json') === 200, 'static files still served');
+  { // static files revalidate cheaply: same ETag -> 304 without a body
+    const r1 = await new Promise(r => http.get(srv.http + '/assets/ui/ui.json', res => { res.resume(); r(res); }));
+    const r2 = await new Promise(r => http.get(srv.http + '/assets/ui/ui.json', { headers: { 'If-None-Match': r1.headers.etag } }, res => { res.resume(); r(res); }));
+    ok(r1.statusCode === 200 && !!r1.headers.etag && r2.statusCode === 304, 'static files: ETag + 304 on revalidation (UI art not re-downloaded)');
+    ok(await get('/assets/') === 404 && await get('/nope.png') === 404, 'directories / missing files -> 404');
+  }
   const big = client(URL); await big.open; big.ws.send('x'.repeat(5000)); await big.closed; await sleep(200);
   ok(await get('/') === 200, 'server alive after oversized ws message');
 
@@ -197,14 +203,15 @@ async function run(srv, R) {
 
   // two players on the same monster: both credited
   const p1 = await login(URL, 's_two_a'), p2 = await login(URL, 's_two_b');
-  const shared = await engage(p1, m => m.type === 'crab'); // crabs last long enough for the second player to arrive
+  // a fresh crab (earlier tests leave half-dead ones behind) lasts long enough for the second player to arrive
+  const shared = await engage(p1, m => m.type === 'crab' && m.hp === m.maxhp);
   if (shared) {
     const e1 = me(p1).exp + me(p1).lv * 1e6, e2 = me(p2).exp + me(p2).lv * 1e6;
     p2.send({ t: 'attack', id: shared.id });
     const p2hit = await p2.wait(m => m.t === 'fx' && m.k === 'hit' && m.from === p2.id && m.to === shared.id, 25000);
     const died = await p1.wait(m => m.t === 'fx' && m.k === 'die' && m.id === shared.id, 30000);
     await sleep(400);
-    ok(!!p2hit && !!died, 'two players fight the same monster until it dies');
+    ok(!!p2hit && !!died, 'two players fight the same monster until it dies', JSON.stringify({ p2hit: !!p2hit, died: !!died, p1: myPos(p1), p2: myPos(p2), mob: mobsOf(p1).find(m => m.id === shared.id) }));
     ok(me(p1).exp + me(p1).lv * 1e6 > e1 && me(p2).exp + me(p2).lv * 1e6 > e2, 'both players receive EXP for the shared kill');
     // target cleanup: dead monster can't be hit or cast at
     await sleep(500); p1.send({ t: 'cast', s: 'bash', id: shared.id }); f = await p1.next(m => m.t === 'castfail', 1500);

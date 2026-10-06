@@ -79,6 +79,14 @@
 
 หมายเหตุพฤติกรรม: แตะมอนครั้งแรก = เลือกเป้า, แตะเป้าเดิมซ้ำ = เดินเข้าไปตี (พฤติกรรมเดิม), ปุ่มโจมตีไม่เดินเข้าหาเอง (แจ้ง Out of range)
 
+### Visual Asset Upgrade ✅ (ระหว่าง Phase 2 → 3)
+ภาพจาก `public/assets/import/` (11 แผ่น) ถูกตัดเป็น asset รายชิ้นด้วย `tools/build_ui_assets.py` → `public/assets/ui/`
+(`ui_icons.webp` atlas 41 ชิ้น, `ui_items.webp` atlas 23 ชิ้น, เฟรม HUD/target/minimap, ปุ่มโจมตี, วงจอยสติ๊ก + `ui.json`)
+- ลบตัวอักษร/ตัวเลขตัวอย่างที่ติดมากับภาพ, เจาะช่อง portrait/แผนที่ให้เกมวาดข้อมูลจริงด้านหลัง
+- ไม่ใช้ส่วนที่มาจากเกมอื่น ("Poring", "Prontera") และส่วนที่เกมยังไม่มีระบบ (Cash Shop, Premium)
+- ชั้น skin อยู่ใน `HUD.applyIcons()` (hud.js): ถ้าโหลด art ไม่ได้ เกมใช้ไอคอน pixel เดิมอัตโนมัติ
+- สร้างใหม่หลังเพิ่ม/แก้ภาพ: `pip install pillow numpy scipy && python3 tools/build_ui_assets.py`
+
 ## Tests
 
 `npm test` รัน server.js กับฐานข้อมูลชั่วคราว (`LUMIRA_DATA`) — ไม่แตะ `data/db.json`

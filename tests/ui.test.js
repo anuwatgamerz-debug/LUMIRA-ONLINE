@@ -119,9 +119,11 @@ async function responsive(b, srv, R) {
       const clipped = [...document.getElementById('topbar').children].filter(c => c.offsetParent && (c.getBoundingClientRect().left < bar.left - 1 || c.getBoundingClientRect().right > bar.right + 1)).map(c => c.id || c.className);
       const atk = document.getElementById('bAtk').getBoundingClientRect().width, sk = document.getElementById('sk1').getBoundingClientRect().width, sm = document.getElementById('bPot').getBoundingClientRect().width;
       const tgtShown = document.getElementById('tgt').getBoundingClientRect().width > 0;
-      return { ov, off, clipped, atk, sk, sm, tgtShown, wheel: document.getElementById('acts').getBoundingClientRect().width, W: innerWidth };
+      const skin = document.body.classList.contains('skin') && document.getElementById('pstat').classList.contains('art') && document.getElementById('tgt').classList.contains('art') && document.getElementById('bAtk').classList.contains('skinned');
+      return { ov, off, clipped, atk, sk, sm, tgtShown, skin, wheel: document.getElementById('acts').getBoundingClientRect().width, W: innerWidth };
     });
     const ratio = r.atk / r.sk;
+    R.ok(r.skin, `responsive ${n}: art skin active (status/target frames, wheel art)`);
     R.ok(r.tgtShown && !r.ov.length && !r.off.length && !r.clipped.length && !pg.errs.length, `responsive ${n}: no overlap (incl. target panel) / off-screen / clipped bar / errors`, JSON.stringify({ tgt: r.tgtShown, ov: r.ov, off: r.off, clipped: r.clipped, errs: pg.errs }));
     R.ok(ratio >= 1.25 && ratio <= 1.5 && r.sm < r.sk && r.sk >= 36, `responsive ${n}: attack ${r.atk.toFixed(0)}px = ${ratio.toFixed(2)}× skill ${r.sk.toFixed(0)}px, small ${r.sm.toFixed(0)}px, wheel ${(r.wheel / r.W * 100).toFixed(0)}% of width`);
     await pg.screenshot({ path: require('path').join(require('os').tmpdir(), `lumira-${w}x${h}.png`) });
@@ -317,9 +319,12 @@ async function phase2Desktop(b, srv, R) {
   const pt = await findMob(pg, 'd > 1.5', 15000);
   if (pt) { await tapMob(pg, pt, false); R.ok(await pg.evaluate(() => selected) === pt.id, 'D1 mouse click selects a monster'); }
   else R.skipped('mouse click select', 'no visible monster');
+  // cycling needs at least two monsters in range; monsters wander, so wait for that instead of assuming it
+  const two = await waitFor(pg, () => targetList().length >= 2, null, 20000);
   const seq = []; for (let i = 0; i < 3; i++) { await pg.keyboard.press('Tab'); await pg.waitForTimeout(80); seq.push(await pg.evaluate(() => selected)); }
   await pg.keyboard.press('Shift+Tab'); const back = await pg.evaluate(() => selected);
-  R.ok(seq.every(Boolean) && (new Set(seq).size > 1 || (await pg.evaluate(() => targetList().length)) < 2) && back === seq[1], `D2 Tab cycles targets, Shift+Tab goes back (${seq.join(',')} <- ${back})`);
+  if (two) R.ok(seq.every(Boolean) && new Set(seq).size > 1 && back === seq[1], `D2 Tab cycles targets, Shift+Tab goes back (${seq.join(',')} <- ${back})`);
+  else R.skipped('D2 Tab cycling', 'fewer than 2 monsters in range for 20s');
   await pg.keyboard.press('i'); await pg.waitForTimeout(100); await pg.keyboard.press('Escape');
   R.ok(await pg.$eval('#wBag', e => e.style.display !== 'block') && await pg.evaluate(() => selected) !== 0, 'D3 Esc closes an open window first (target kept)');
   await pg.keyboard.press('Escape'); R.ok(await pg.evaluate(() => selected) === 0, 'D4 Esc again clears the target');

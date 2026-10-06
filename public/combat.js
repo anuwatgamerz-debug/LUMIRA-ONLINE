@@ -10,7 +10,13 @@ let lastHit = 0, lastMyHitT = 0;      // mob I hit most recently (target priorit
 // TARGET_KEEP must exceed what can be on screen (portrait phones show ~20 tiles above/below), or a monster
 // you can see and tap would be dropped the moment it's selected
 const TARGET_RANGE = 10, TARGET_KEEP = 26;
-const SKICON = { bash: 'skill', heal: 'sk_heal', bolt: 'sk_bolt', focus: 'sk_focus', cleave: 'sk_cleave', twin: 'sk_twin' };
+const SKICON = { bash: 'skill', heal: 'sk_heal', bolt: 'sk_bolt', focus: 'sk_focus', cleave: 'sk_cleave', twin: 'sk_twin' }; // pixel fallback
+const SKART = { bash: 'sk_bash', heal: 'sk_heal', bolt: 'sk_bolt', focus: 'sk_focus', cleave: 'sk_cleave', twin: 'sk_twin' }; // art orbs (ui_icons atlas)
+// draw a skill's icon on an element: art orb when the atlas is loaded, pixel icon otherwise
+function skillIcon(el, sid) {
+  if (HUD.sprite(el, SKART[sid])) return true;
+  el.style.backgroundSize = el.style.backgroundPosition = ''; el.style.backgroundImage = `url(${HUD.iconURL(SKICON[sid] || 'skill')})`; return false;
+}
 const SK_TYPE = { target: 'เป้าหมาย', self: 'ใช้กับตัวเอง', area: 'รอบตัว' };
 const FAIL_MSG = { sp: 'SP ไม่เพียงพอ', range: 'อยู่นอกระยะ (Out of range)', los: 'มีสิ่งกีดขวางบังอยู่', target: 'เป้าหมายไม่ถูกต้อง', own: 'ยังไม่ได้เรียนสกิลนี้', dead: 'หมดสติอยู่', notarget: 'ไม่มีศัตรูในระยะ', bad: 'สกิลไม่ถูกต้อง' };
 const slotEl = [1, 2, 3, 4, 5, 6].map(i => $('sk' + i));
@@ -136,7 +142,8 @@ function renderHotbar() {
     const sid = me.hot && me.hot[i], sk = sid && SK[sid], i0 = b.querySelector('.pi');
     b.classList.toggle('empty', !sk);
     b.classList.toggle('lock', !!sk && !(me.sk && me.sk[sid]));
-    i0.style.backgroundImage = sk ? `url(${HUD.iconURL(SKICON[sid] || 'skill')})` : '';
+    i0.style.backgroundImage = ''; i0.style.backgroundSize = i0.style.backgroundPosition = '';
+    b.classList.toggle('skinned', sk ? skillIcon(i0, sid) : HUD.sprite(i0, 'slot_empty')); // art orb / empty orb frame
     b.querySelector('.ssp').textContent = sk && sk.sp ? sk.sp : '';
     b.querySelector('.slv').textContent = sk && me.sk && me.sk[sid] ? 'Lv' + me.sk[sid] : '';
     b.title = sk ? `${sk.th} (${sk.n}) · SP ${sk.sp}` : 'ช่องว่าง — แตะเพื่อใส่สกิล';
@@ -178,7 +185,7 @@ function renderSkills() {
   const row = document.createElement('div'); row.className = 'hotrow';
   for (let i = 0; i < 6; i++) {
     const sid = me.hot[i], b = document.createElement('button'); b.className = 'hs' + (assignSlot === i ? ' on' : '');
-    b.innerHTML = `<span class="num">${i + 1}</span>`; if (sid) { const ic = document.createElement('i'); ic.className = 'pi'; ic.style.backgroundImage = `url(${HUD.iconURL(SKICON[sid])})`; b.appendChild(ic); }
+    b.innerHTML = `<span class="num">${i + 1}</span>`; if (sid) { const ic = document.createElement('i'); ic.className = 'pi'; skillIcon(ic, sid); b.appendChild(ic); }
     b.onclick = () => { if (assignPick) assignSkill(assignPick, i); else { assignSlot = assignSlot === i ? -1 : i; renderSkills(); } };
     b.addEventListener('dragover', e => e.preventDefault());
     b.addEventListener('drop', e => { e.preventDefault(); const s = e.dataTransfer.getData('text/skill'); if (s) assignSkill(s, i); });
@@ -190,7 +197,7 @@ function renderSkills() {
     const sk = SK[sid], lv = me.sk && me.sk[sid], d = document.createElement('div');
     d.className = 'li skli' + (lv ? '' : ' locked') + (assignPick === sid ? ' on' : '');
     d.draggable = !!lv; d.addEventListener('dragstart', e => e.dataTransfer.setData('text/skill', sid));
-    const ic = document.createElement('i'); ic.className = 'pi'; ic.style.backgroundImage = `url(${HUD.iconURL(SKICON[sid])})`; d.appendChild(ic);
+    const ic = document.createElement('i'); ic.className = 'pi'; skillIcon(ic, sid); d.appendChild(ic);
     const slot = me.hot.indexOf(sid);
     d.insertAdjacentHTML('beforeend', `<div class="grow"><b>${esc(sk.th)}</b> <small>${esc(sk.n)}</small> ${lv ? `<small class="num" style="color:#ffe39a">Lv${lv}</small>` : `<small style="color:#ff8b8b">ปลดล็อก Lv ${sk.lv}</small>`}<br><small style="color:var(--dim)">${esc(sk.d)}<br>${SK_TYPE[sk.type]}${sk.range ? ` · ระยะ ${sk.range < 2 ? 'ประชิด' : sk.range + ' ช่อง'}` : ''} · SP ${sk.sp} · คูลดาวน์ ${sk.cd / 1000} วิ${slot >= 0 ? ` · อยู่ช่อง ${slot + 1}` : ''}</small></div>`);
     d.onclick = () => { if (!lv) { toast(`ปลดล็อกที่ Lv ${sk.lv}`); return; } if (assignSlot >= 0) assignSkill(sid, assignSlot); else { assignPick = assignPick === sid ? null : sid; renderSkills(); } };
@@ -253,6 +260,18 @@ setInterval(() => {
     $('bInt').dataset.icon = k === 'n' ? 'interact' : 'loot'; $('intL').textContent = k === 'n' ? 'คุย' : 'เก็บ'; HUD.applyIcons($('acts'));
   }
 }, 150);
+
+// target panel on the art frame: the same elements, placed on the frame's cleaned areas (boxes come from ui.json)
+function skinTarget() {
+  const t = HUD.UI.man && HUD.UI.man.target; if (!t || !t.boxes) return;
+  const P = $('tgt'); P.classList.add('art'); P.style.setProperty('--ar', `${t.w} / ${t.h}`); P.style.backgroundImage = `url(assets/ui/${t.file})`;
+  const put = (el, b) => Object.assign(el.style, { left: b[0] + '%', top: b[1] + '%', width: b[2] + '%', height: b[3] + '%' });
+  put($('tgpic'), t.boxes.portrait); put($('tgLv'), t.boxes.level); put($('tgName'), t.boxes.name);
+  put(P.querySelector('.bar'), t.boxes.hp); put($('tgSt'), t.boxes.status); put($('tgX'), t.boxes.close);
+}
+// art skin arrived after login: repaint the hotbar, joystick knob and target panel
+addEventListener('uiskin', () => { renderHotbar(); HUD.sprite($('knob'), 'joy_knob'); skinTarget(); });
+if (HUD.UI.man) { HUD.sprite($('knob'), 'joy_knob'); skinTarget(); }
 
 // ------------------------------------------------------------ AUTO (simple; full auto-combat is Phase 3)
 $('bAuto').onclick = null; onPress($('bAuto'), toggleAuto);
