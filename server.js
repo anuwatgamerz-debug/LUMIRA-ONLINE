@@ -1,134 +1,43 @@
-// LUMIRA ONLINE - Phase 1 server (pixel MMORPG)
+// LUMIRA ONLINE - server (pixel MMORPG)
 // node server.js  ->  http://<host>:3400
+// Game content (maps, monsters, NPCs, classes, quests, items, drops, shops) lives in content/; this file is the
+// engine: networking, characters, combat, monster AI, quests and the game loop.
 'use strict';
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
+const C = require('./content');
+const createQuests = require('./engine/quests');
 
 const PORT = +process.env.PORT || 3400;
 const DATA = process.env.LUMIRA_DATA ? path.resolve(process.env.LUMIRA_DATA) : path.join(__dirname, 'data', 'db.json');
 const PUB = path.join(__dirname, 'public');
 const TICK = 100;
+if (C.report.err.length) { console.error('[content] errors:\n  ' + C.report.err.join('\n  ')); process.exit(1); }
+for (const w of C.report.warn) console.warn('[content]', w);
 
-// ---------------------------------------------------------------- data
-const ITEMS = {
-  1: { n: 'ยาแดง', ty: 'use', heal: 45, buy: 50 },
-  2: { n: 'ยาส้ม', ty: 'use', heal: 110, buy: 160 },
-  3: { n: 'ยาฟ้า', ty: 'use', sp: 40, buy: 400 },
-  10: { n: 'เยลลี่', ty: 'etc', sell: 8 },
-  11: { n: 'กระดองปู', ty: 'etc', sell: 20 },
-  12: { n: 'หนามกระบองเพชร', ty: 'etc', sell: 30 },
-  13: { n: 'เศษกระดูกเก่า', ty: 'etc', sell: 55 },
-  14: { n: 'ใบไม้วิเศษ', ty: 'etc', sell: 18 },
-  15: { n: 'คริสตัลวิญญาณ', ty: 'etc', sell: 48 },
-  20: { n: 'มีดสั้น', ty: 'eq', slot: 'wpn', atk: 10, buy: 100 },
-  21: { n: 'ดาบไม้', ty: 'eq', slot: 'wpn', atk: 18, buy: 600 },
-  22: { n: 'ดาบเหล็ก', ty: 'eq', slot: 'wpn', atk: 32, buy: 2400 },
-  23: { n: 'เขี้ยวพระจันทร์', ty: 'eq', slot: 'wpn', atk: 45, sell: 3000 },
-  30: { n: 'เสื้อผ้าฝ้าย', ty: 'eq', slot: 'arm', def: 2, buy: 80 },
-  31: { n: 'เสื้อหนัง', ty: 'eq', slot: 'arm', def: 6, buy: 1000 },
-  40: { n: 'หมวกแก๊ป', ty: 'eq', slot: 'head', def: 2, buy: 500 },
-  41: { n: 'มงกุฎเจลลอป', ty: 'eq', slot: 'head', def: 5, sell: 1500 },
-};
-for (const k in ITEMS) { const it = ITEMS[k]; it.id = +k; if (!it.sell) it.sell = Math.floor((it.buy || 10) / 4); }
-const SHOP = [1, 2, 3, 20, 21, 22, 30, 31, 40];
-const EQ_SLOTS = ['wpn', 'arm', 'head'], STATS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
-
-// skills: type target (needs a mob in range + line of sight), self, area (mobs around the caster).
-// Ownership comes from character level, so no new save data is needed beyond the hotbar.
-const SKILLS = {
-  bash:   { n: 'Bash', th: 'ฟันกระแทก', type: 'target', range: 1.6, sp: 8, cd: 1200, lv: 1, mult: 2.2, d: 'ฟันแรง ×2.2 โดนแน่นอน (ระยะประชิด)' },
-  heal:   { n: 'First Aid', th: 'ปฐมพยาบาล', type: 'self', sp: 12, cd: 8000, lv: 1, d: 'ฟื้น HP 20% + INT×3' },
-  bolt:   { n: 'Spark Bolt', th: 'ลูกไฟประกาย', type: 'target', range: 6, sp: 10, cd: 2500, lv: 3, magic: 1, d: 'ยิงเวทระยะไกล 6 ช่อง แรงตาม INT' },
-  focus:  { n: 'Focus', th: 'รวมสมาธิ', type: 'self', sp: 0, cd: 20000, lv: 4, d: 'ฟื้น SP 25%' },
-  cleave: { n: 'Cleave', th: 'ฟันกวาด', type: 'area', range: 1.8, sp: 16, cd: 6000, lv: 5, mult: 1.4, d: 'ฟันมอนรอบตัวทุกตัว ×1.4' },
-  twin:   { n: 'Twin Strike', th: 'ฟันคู่', type: 'target', range: 1.6, sp: 14, cd: 4000, lv: 8, mult: 1.2, hits: 2, d: 'ฟัน 2 ครั้ง ×1.2 (ระยะประชิด)' },
-};
+// ---------------------------------------------------------------- data (from content/)
+const { ITEMS, MOBS, MAPS, SKILLS, CLASSES, QUESTS, SHOPS, RECIPES, LV, EQ_SLOTS, slotFits, WEAPON_TYPES, ARMOR_TYPES } = C;
+const SHOP = SHOPS.legacy.items; // the original shop list (old clients buy without opening a shop first)
+const STATS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+const MAX_LV = LV.MAX_LEVEL;
 const SKILL_IDS = Object.keys(SKILLS);
 const GCD = 400; // global cooldown between any two skills
 const MELEE = 1.6; // basic attack reach (tiles, Chebyshev)
 const HOT_DEFAULT = ['bash', 'heal', null, null, null, null];
-const skLv = (c, sk) => Math.min(10, 1 + Math.floor((c.lv - sk.lv) / 4));
-const ownsSkill = (c, id) => Object.hasOwn(SKILLS, id) && c.lv >= SKILLS[id].lv;
-
-const MOBS = {
-  jellop:   { n: 'เจลลอป', lv: 1, hp: 40, atk: [3, 5], def: 0, flee: 2, exp: 6, spd: 2.2, aggro: 0, drops: [[10, .6], [1, .08]], z: 2 },
-  crab:     { n: 'ปูทราย', lv: 4, hp: 95, atk: [6, 9], def: 2, flee: 6, exp: 16, spd: 2.4, aggro: 0, drops: [[11, .5], [1, .1]], z: 4 },
-  leafling: { n: 'ลีฟลิง', lv: 6, hp: 130, atk: [8, 12], def: 2, flee: 10, exp: 25, spd: 2.8, aggro: 0, drops: [[14, .55], [2, .05]], z: 5 },
-  cactimp:  { n: 'อิมป์กระบองเพชร', lv: 8, hp: 170, atk: [11, 15], def: 3, flee: 10, exp: 36, spd: 2.6, aggro: 1, drops: [[12, .5], [40, .03]], z: 6 },
-  dunewolf: { n: 'อัศวินกระดูก', lv: 11, hp: 280, atk: [15, 21], def: 4, flee: 14, exp: 66, spd: 3.6, aggro: 1, drops: [[13, .45], [21, .04]], z: 8 },
-  mosshog:  { n: 'จอมเวทกระดูก', lv: 13, hp: 360, atk: [18, 24], def: 6, flee: 12, exp: 85, spd: 3.0, aggro: 1, drops: [[15, .45], [31, .03]], z: 8 },
-  kingjel:  { n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk: [26, 36], def: 8, flee: 15, exp: 700, spd: 2.0, aggro: 1, boss: 1, drops: [[41, .35], [23, .15], [2, 1]], z: 14 },
-};
+const clsOf = c => CLASSES[c.cls] || CLASSES.adventurer;
+const lineOf = c => C.lineage(clsOf(c).id);
+// class skills level with the job level, the six basics with the base level (as before)
+const skLv = (c, sk) => sk.cls ? Math.min(10, 1 + Math.floor(((c.jlv || 1) - 1) / 4)) : Math.min(10, 1 + Math.floor((c.lv - sk.lv) / 4));
+const ownsSkill = (c, id) => Object.hasOwn(SKILLS, id) && c.lv >= SKILLS[id].lv && (!SKILLS[id].cls || lineOf(c).includes(SKILLS[id].cls));
+const skillsFor = c => SKILL_IDS.filter(id => !SKILLS[id].cls || lineOf(c).includes(SKILLS[id].cls));
 
 // ---------------------------------------------------------------- maps
-function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
-// tiles: 0 sand 1 grass 2 water 3 wall 4 path 5 tree 6 rock 7 cactus 8 portal 9 roof 10 floor(plaza) 11 flower 12 bridge
-const SOLID = new Set([2, 3, 5, 6, 7, 9]);
-const MAPS = {};
-function mkMap(id, name, w, h, fill) { const t = new Array(w * h).fill(fill); return { id, name, w, h, t, portals: [], npcs: [], spawns: [], bossSpawn: null, props: [] }; }
-function set(m, x, y, v) { if (x >= 0 && y >= 0 && x < m.w && y < m.h) m.t[y * m.w + x] = v; }
-function get(m, x, y) { if (x < 0 || y < 0 || x >= m.w || y >= m.h) return 3; return m.t[y * m.w + x]; }
-function rect(m, x0, y0, x1, y1, v) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(m, x, y, v); }
-function border(m, v) { for (let x = 0; x < m.w; x++) { set(m, x, 0, v); set(m, x, m.h - 1, v); } for (let y = 0; y < m.h; y++) { set(m, 0, y, v); set(m, m.w - 1, y, v); } }
-function building(m, x, y, w, h, k) { rect(m, x, y, x + w - 1, y + h - 2, 9); rect(m, x, y + h - 1, x + w - 1, y + h - 1, 3); m.props.push({ k: k || 'home_A', x, y, w, h }); }
-
-(function buildTown() {
-  const m = mkMap('solkara', 'โซลคารา (เมืองหลวง)', 44, 34, 0);
-  border(m, 3);
-  rect(m, 2, 15, 41, 17, 4); rect(m, 20, 2, 22, 31, 4);
-  rect(m, 15, 11, 27, 21, 10);
-  rect(m, 19, 14, 23, 18, 2); set(m, 21, 16, 2);
-  building(m, 4, 4, 7, 5, 'tavern'); building(m, 12, 4, 6, 4, 'home_A'); building(m, 27, 4, 7, 5, 'church'); building(m, 35, 5, 5, 4, 'blacksmith');
-  building(m, 4, 23, 6, 5, 'market'); building(m, 30, 23, 8, 5, 'barracks'); building(m, 12, 25, 5, 4, 'home_B');
-  for (const [x, y] of [[14, 10], [28, 10], [14, 22], [28, 22], [9, 13], [33, 19]]) set(m, x, y, 5);
-  for (let i = 0; i < 20; i++) { const r = rng(77 + i); const x = 2 + Math.floor(r() * 40), y = 2 + Math.floor(r() * 30); if (get(m, x, y) === 0) set(m, x, y, 11); }
-  set(m, 43, 16, 8); set(m, 42, 16, 4); set(m, 21, 33, 8); set(m, 21, 32, 4);
-  m.portals = [{ x: 43, y: 16, to: 'plains', tx: 2, ty: 22 }, { x: 21, y: 33, to: 'woods', tx: 25, ty: 2 }];
-  m.npcs = [
-    { id: 'iris', n: 'ไอริส', x: 21, y: 12, look: 'iris', label: '[เควส] ไอริส' },
-    { id: 'shop', n: 'พ่อค้าซาฮีร์', x: 16, y: 19, look: 'merchant', label: '[ร้านค้า] ซาฮีร์' },
-    { id: 'heal', n: 'นางพยาบาลมีน่า', x: 26, y: 19, look: 'nurse', label: '[ฮีลฟรี] มีน่า' },
-    { id: 'warp', n: 'นักเดินทางคาเรน', x: 26, y: 13, look: 'warper', label: '[วาร์ป] คาเรน' },
-    { id: 'sell', n: 'นักสะสมโบราณ', x: 16, y: 13, look: 'sage', label: '[รับซื้อของ] ปราชญ์' },
-  ];
-  m.spawn = { x: 21, y: 20 };
-  m.town = 1;
-  MAPS[m.id] = m;
-})();
-
-(function buildPlains() {
-  const m = mkMap('plains', 'ทุ่งทรายสีทอง (Lv 1-10)', 64, 46, 0);
-  const r = rng(2026);
-  border(m, 6);
-  for (let i = 0; i < 90; i++) { const x = 1 + Math.floor(r() * 62), y = 1 + Math.floor(r() * 44); set(m, x, y, r() < .55 ? 7 : 6); }
-  for (let i = 0; i < 40; i++) { const x = 1 + Math.floor(r() * 62), y = 1 + Math.floor(r() * 44); set(m, x, y, 11); }
-  rect(m, 40, 30, 47, 35, 2); rect(m, 41, 29, 46, 36, 2); rect(m, 39, 32, 48, 33, 2);
-  rect(m, 1, 21, 20, 23, 4); rect(m, 0, 22, 1, 22, 4);
-  set(m, 0, 22, 8);
-  m.portals = [{ x: 0, y: 22, to: 'solkara', tx: 41, ty: 16 }];
-  m.spawns = [['jellop', 22, 4, 2, 34, 44], ['crab', 16, 10, 2, 44, 44], ['cactimp', 9, 36, 2, 62, 44], ['dunewolf', 5, 44, 2, 62, 28]];
-  m.bossSpawn = { type: 'kingjel', x: 52, y: 10, every: 600 };
-  m.spawn = { x: 3, y: 22 };
-  MAPS[m.id] = m;
-})();
-
-(function buildWoods() {
-  const m = mkMap('woods', 'ป่าโอเอซิส (Lv 5-15)', 52, 52, 1);
-  const r = rng(4242);
-  border(m, 5);
-  for (let i = 0; i < 260; i++) { const x = 1 + Math.floor(r() * 50), y = 1 + Math.floor(r() * 50); set(m, x, y, 5); }
-  for (let i = 0; i < 50; i++) { const x = 1 + Math.floor(r() * 50), y = 1 + Math.floor(r() * 50); set(m, x, y, 11); }
-  rect(m, 14, 26, 37, 30, 2); rect(m, 24, 26, 26, 30, 12);
-  rect(m, 24, 1, 26, 51, 4); rect(m, 24, 26, 26, 30, 12);
-  rect(m, 23, 0, 27, 0, 5); set(m, 25, 0, 8);
-  m.portals = [{ x: 25, y: 0, to: 'solkara', tx: 21, ty: 31 }];
-  m.spawns = [['jellop', 10, 2, 4, 50, 24], ['leafling', 18, 2, 6, 50, 25], ['mosshog', 10, 2, 32, 50, 50], ['crab', 6, 2, 31, 50, 50]];
-  m.spawn = { x: 25, y: 2 };
-  MAPS[m.id] = m;
-})();
+const { SOLID, get } = C;
+const SPAWN = { map: 'lumira', x: 25, y: 20 };      // new characters start in Lumira Village
+const OLD_HOME = { map: 'solkara', x: 21, y: 20 };   // save point of characters made before the village existed
 
 // ---------------------------------------------------------------- db
 const BAK = DATA + '.bak';
@@ -163,45 +72,64 @@ function hashPw(pw, salt, cb) { crypto.scrypt(pw, salt, 32, (e, k) => cb(e, k &&
 function samePw(a, b) { const x = Buffer.from(a, 'hex'), y = Buffer.from(String(b), 'hex'); return x.length === y.length && crypto.timingSafeEqual(x, y); }
 
 // ---------------------------------------------------------------- formulas
-const expNext = lv => Math.floor(18 * Math.pow(lv, 1.85) + 10);
+const expNext = LV.expNext;
+const jobNext = c => LV.jobNext(c.jlv || 1, clsOf(c).tier);
+// buffs are runtime-only (non-enumerable, so they never reach the save file)
+const buffsOf = c => { if (!Object.hasOwn(c, '_b')) Object.defineProperty(c, '_b', { value: {}, writable: true, enumerable: false }); return c._b; };
+function buffSum(c, k) { let s = 0; const now = Date.now(), B = buffsOf(c); for (const id in B) { if (B[id].until < now) { delete B[id]; continue; } s += B[id][k] || 0; } return s; }
 function derive(c) {
-  const eq = c.eq || {};
-  const w = ITEMS[eq.wpn], a = ITEMS[eq.arm], hd = ITEMS[eq.head];
-  c.maxhp = 40 + c.st.vit * 8 + c.lv * 12;
-  c.maxsp = 12 + c.st.int * 4 + c.lv * 2;
-  c.atk = 4 + c.st.str * 2 + c.lv + (w ? w.atk : 0);
-  c.def = Math.floor(c.st.vit / 2) + (a ? a.def : 0) + (hd ? hd.def : 0);
-  c.hit = c.lv + c.st.dex * 2;
-  c.flee = c.lv + c.st.agi * 2;
-  c.aspd = Math.max(380, 1400 - c.st.agi * 14 - c.st.dex * 4);
-  c.crit = Math.floor(c.st.luk * 0.4) + 1;
+  const eq = c.eq || {}, K = clsOf(c);
+  const gear = ['wpn', 'arm', 'head', 'acc1', 'acc2'].map(s => ITEMS[eq[s]]).filter(Boolean);
+  const add = k => gear.reduce((s, it) => s + (it[k] || 0), 0);
+  const st = {}; for (const k of STATS) st[k] = c.st[k] + add(k); // accessories add stats without touching the base stats
+  const w = ITEMS[eq.wpn], wt = w && w.id >= 200 ? WEAPON_TYPES[w.wt] : null; // original items keep their original feel
+  c.maxhp = Math.round((40 + st.vit * 8 + c.lv * 12) * K.hp) + add('hp');
+  c.maxsp = Math.round((12 + st.int * 4 + c.lv * 2) * K.sp) + add('sp');
+  c.atk = Math.round((4 + st.str * 2 + c.lv + add('atk')) * K.atk * (1 + buffSum(c, 'atk')));
+  c.matk = Math.round((st.int * 3 + c.lv * 2 + 12 + add('matk')) * K.matk * (1 + buffSum(c, 'matk')));
+  c.def = Math.round((Math.floor(st.vit / 2) + add('def')) * (1 + buffSum(c, 'def')));
+  c.mdef = Math.floor(st.int / 2) + add('mdef');
+  c.hit = c.lv + st.dex * 2;
+  const arm = ITEMS[eq.arm], at = arm && ARMOR_TYPES[arm.at];
+  c.flee = Math.round((c.lv + st.agi * 2 + (at && arm.id >= 300 ? at.flee || 0 : 0)) * (1 + buffSum(c, 'flee')));
+  c.aspd = Math.round(Math.max(380, 1400 - st.agi * 14 - st.dex * 4 + (wt ? wt.aspd || 0 : 0)) * (1 - buffSum(c, 'aspd')));
+  c.crit = Math.floor(st.luk * 0.4) + 1 + (K.crit || 0) + (wt ? wt.crit || 0 : 0);
+  c.range = w && w.range ? w.range : MELEE;
   if (c.hp > c.maxhp) c.hp = c.maxhp;
   if (c.sp > c.maxsp) c.sp = c.maxsp;
 }
 function newChar(name, look) {
   const c = {
     name, look, lv: 1, exp: 0, zeny: 300, pts: 10, st: { str: 5, agi: 5, vit: 5, int: 5, dex: 5, luk: 5 },
-    map: 'solkara', x: 21, y: 20, inv: [{ id: 1, q: 10 }], eq: { wpn: 20, arm: 30 }, q: { step: 0, k: 0 }, hp: 1, sp: 1, hot: HOT_DEFAULT.slice(),
+    map: SPAWN.map, x: SPAWN.x, y: SPAWN.y, inv: [{ id: 1, q: 10 }], eq: { wpn: 20, arm: 30 }, q: { step: 0, k: 0 }, hp: 1, sp: 1, hot: HOT_DEFAULT.slice(),
+    cls: 'adventurer', jlv: 1, jexp: 0, save: { ...SPAWN }, store: [], bank: 0, qs: { a: { mq1: { s: 0, k: 0, f: [] } }, d: {}, t: 'mq1', fl: {} },
   };
   derive(c); c.hp = c.maxhp; c.sp = c.maxsp;
   return c;
 }
+const validSpot = (s) => s && MAPS[s.map] && walkable(MAPS[s.map], Math.round(s.x), Math.round(s.y));
 // fill anything an older/hand-edited save may be missing, so the game loop never trips on it
 function fixChar(c) {
   const st = c.st = Object.assign({ str: 5, agi: 5, vit: 5, int: 5, dex: 5, luk: 5 }, c.st);
-  for (const k in st) st[k] = Math.max(1, Math.min(99, +st[k] || 5));
-  c.lv = Math.max(1, Math.min(99, c.lv | 0 || 1)); c.exp = Math.max(0, +c.exp || 0);
+  for (const k in st) st[k] = Math.max(1, Math.min(LV.STAT_CAP, +st[k] || 5));
+  c.lv = Math.max(1, Math.min(MAX_LV, c.lv | 0 || 1)); c.exp = c.lv >= MAX_LV ? 0 : Math.max(0, +c.exp || 0);
   c.zeny = Math.max(0, +c.zeny || 0); c.pts = Math.max(0, c.pts | 0);
-  c.look = c.look || { hair: 0, hc: 0, cc: 0, sex: 0 };
+  c.look = c.look && typeof c.look === 'object' ? c.look : { hair: 0, hc: 0, cc: 0, sex: 0 };
+  c.look.hair = Math.max(0, Math.min(5, c.look.hair | 0)); c.look.hc = Math.max(0, Math.min(8, c.look.hc | 0)); c.look.cc = Math.max(0, Math.min(4, c.look.cc | 0)); c.look.sex = c.look.sex ? 1 : 0;
   c.inv = Array.isArray(c.inv) ? c.inv.filter(s => s && ITEMS[s.id] && s.q > 0) : [];
   c.eq = c.eq && typeof c.eq === 'object' ? c.eq : {};
-  for (const sl in c.eq) if (!ITEMS[c.eq[sl]] || ITEMS[c.eq[sl]].slot !== sl) delete c.eq[sl];
+  for (const sl in c.eq) if (!EQ_SLOTS.includes(sl) || !slotFits(ITEMS[c.eq[sl]], sl)) delete c.eq[sl];
   c.q = c.q && typeof c.q === 'object' ? c.q : { step: 0, k: 0 }; c.q.step |= 0; c.q.k |= 0;
+  if (!CLASSES[c.cls] || CLASSES[c.cls].status !== 'open') c.cls = 'adventurer';
+  c.jlv = Math.max(1, Math.min(LV.JOB_CAP[clsOf(c).tier] || 50, c.jlv | 0 || 1)); c.jexp = Math.max(0, +c.jexp || 0);
   c.hot = Array.from({ length: 6 }, (_, i) => (Array.isArray(c.hot) ? c.hot : HOT_DEFAULT)[i] || null).map(id => (id && Object.hasOwn(SKILLS, id) ? id : null));
   if (typeof c.hp !== 'number' || isNaN(c.hp)) c.hp = 1;
   if (typeof c.sp !== 'number' || isNaN(c.sp)) c.sp = 0;
-  const m = MAPS[c.map];
-  if (!m || !(Number.isFinite(c.x) && Number.isFinite(c.y)) || !walkable(m, Math.round(c.x), Math.round(c.y))) { c.map = 'solkara'; c.x = 21; c.y = 20; }
+  if (!validSpot(c.save)) c.save = { ...OLD_HOME };
+  c.store = Array.isArray(c.store) ? c.store.filter(s => s && ITEMS[s.id] && s.q > 0) : [];
+  c.bank = Math.max(0, +c.bank || 0);
+  Q.st(c); for (const id of Object.keys(c.qs.a)) if (!QUESTS[id]) delete c.qs.a[id];
+  if (!(Number.isFinite(c.x) && Number.isFinite(c.y)) || !validSpot(c)) { c.map = c.save.map; c.x = c.save.x; c.y = c.save.y; }
   derive(c);
   return c;
 }
@@ -215,38 +143,58 @@ const nameTaken = n => Object.values(db.accounts).some(a => a.char && a.char.nam
 
 function walkable(m, x, y) { return !SOLID.has(get(m, x, y)); }
 function occupiedByNpc(m, x, y) { return m.npcs.some(n => n.x === x && n.y === y); }
-function findPath(m, sx, sy, tx, ty, max = 600) {
+// A* over the tile grid with a binary heap (the bigger maps need long paths for tap-to-move). max = node budget.
+function findPath(m, sx, sy, tx, ty, max = 3000) {
   sx = Math.round(sx); sy = Math.round(sy);
   if (!walkable(m, tx, ty) || occupiedByNpc(m, tx, ty)) return null;
-  const key = (x, y) => y * m.w + x;
-  const open = [[sx, sy]], came = new Map(), g = new Map([[key(sx, sy), 0]]);
-  const h = (x, y) => Math.max(Math.abs(x - tx), Math.abs(y - ty));
-  const f = new Map([[key(sx, sy), h(sx, sy)]]);
+  const W = m.w, N = W * m.h, start = sy * W + sx, goal = ty * W + tx;
+  const g = new Float32Array(N).fill(Infinity), came = new Int32Array(N).fill(-1), closed = new Uint8Array(N);
+  const heap = [], hf = []; // heap of node ids, ordered by f
+  const push = (k, f) => { heap.push(k); hf.push(f); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (hf[p] <= hf[i]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; [hf[p], hf[i]] = [hf[i], hf[p]]; i = p; } };
+  const pop = () => { const top = heap[0], lk = heap.pop(), lf = hf.pop(); if (heap.length) { heap[0] = lk; hf[0] = lf; let i = 0; for (;;) { const l = i * 2 + 1, r = l + 1; let b = i; if (l < heap.length && hf[l] < hf[b]) b = l; if (r < heap.length && hf[r] < hf[b]) b = r; if (b === i) break; [heap[b], heap[i]] = [heap[i], heap[b]]; [hf[b], hf[i]] = [hf[i], hf[b]]; i = b; } } return top; };
+  const h = (x, y) => Math.max(Math.abs(x - tx), Math.abs(y - ty)) + 0.41 * Math.min(Math.abs(x - tx), Math.abs(y - ty));
+  g[start] = 0; push(start, h(sx, sy));
   let n = 0;
-  while (open.length && n++ < max) {
-    let bi = 0; for (let i = 1; i < open.length; i++) if (f.get(key(...open[i])) < f.get(key(...open[bi]))) bi = i;
-    const [x, y] = open.splice(bi, 1)[0];
-    if (x === tx && y === ty) { const p = [[x, y]]; let k = key(x, y); while (came.has(k)) { k = came.get(k); p.unshift([k % m.w, Math.floor(k / m.w)]); } p.shift(); return p; }
+  while (heap.length && n++ < max) {
+    const k = pop(); if (closed[k]) continue; closed[k] = 1;
+    const x = k % W, y = (k - x) / W;
+    if (k === goal) { const p = []; let c = k; while (c !== start) { p.unshift([c % W, Math.floor(c / W)]); c = came[c]; } return p; }
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
       const nx = x + dx, ny = y + dy;
       if (!walkable(m, nx, ny) || occupiedByNpc(m, nx, ny)) continue;
       if (dx && dy && (!walkable(m, x + dx, y) || !walkable(m, x, y + dy))) continue;
-      const nk = key(nx, ny), ng = g.get(key(x, y)) + (dx && dy ? 1.41 : 1);
-      if (!g.has(nk) || ng < g.get(nk)) { g.set(nk, ng); f.set(nk, ng + h(nx, ny)); came.set(nk, key(x, y)); if (!open.some(o => o[0] === nx && o[1] === ny)) open.push([nx, ny]); }
+      const nk = ny * W + nx; if (closed[nk]) continue;
+      const ng = g[k] + (dx && dy ? 1.41 : 1);
+      if (ng < g[nk]) { g[nk] = ng; came[nk] = k; push(nk, ng + h(nx, ny)); }
     }
   }
   return null;
 }
-function randFree(m, z) { z = z || [1, 1, m.w - 2, m.h - 2]; for (let i = 0; i < 400; i++) { const x = z[0] + Math.floor(Math.random() * (z[2] - z[0] + 1)), y = z[1] + Math.floor(Math.random() * (z[3] - z[1] + 1)); const t = get(m, x, y); if (walkable(m, x, y) && t !== 8 && t !== 4 && Math.hypot(x - m.spawn.x, y - m.spawn.y) > 6) return [x, y]; } return [m.spawn.x, m.spawn.y]; }
+const inSafe = (m, x, y) => (m.safe || []).some(([x0, y0, x1, y1]) => x >= x0 && x <= x1 && y >= y0 && y <= y1);
+// a free spawn tile: walkable, not a road/portal, away from the map entrance, from players and from other monsters
+const SPACING = 1.6, PLAYER_GAP = 5;
+function randFree(m, z, allowSafe) {
+  z = z || [1, 1, m.w - 2, m.h - 2];
+  const near = []; for (const o of mobs.values()) if (o.map === m.id) near.push(o);
+  const pl = []; for (const p of players.values()) if (p.c && p.c.map === m.id) pl.push(p.c);
+  for (let pass = 0; pass < 2; pass++) for (let i = 0; i < 300; i++) {
+    const x = z[0] + Math.floor(Math.random() * (z[2] - z[0] + 1)), y = z[1] + Math.floor(Math.random() * (z[3] - z[1] + 1)); const t = get(m, x, y);
+    if (!walkable(m, x, y) || t === 8 || t === 4 || Math.hypot(x - m.spawn.x, y - m.spawn.y) <= 6 || occupiedByNpc(m, x, y)) continue;
+    if (!allowSafe && inSafe(m, x, y)) continue;
+    if (pass === 0 && (near.some(o => Math.hypot(o.x - x, o.y - y) < SPACING) || pl.some(c => Math.hypot(c.x - x, c.y - y) < PLAYER_GAP))) continue;
+    return [x, y];
+  }
+  return [m.spawn.x, m.spawn.y];
+}
 
-function spawnMob(mapId, type, x, y) {
+function spawnMob(mapId, type, x, y, o = {}) {
   const m = MAPS[mapId], d = MOBS[type];
-  if (x == null) { const sp = m.spawns.find(s => s[0] === type); [x, y] = randFree(m, sp && sp.length > 2 ? sp.slice(2) : null); }
-  const mob = { id: NID++, kind: 'm', type, map: mapId, x, y, hx: x, hy: y, hp: d.hp, maxhp: d.hp, path: null, target: null, nextAtk: 0, nextWander: Date.now() + Math.random() * 4000, dmg: new Map() };
+  if (x == null) { const sp = m.spawns.find(s => s.mob === type); [x, y] = randFree(m, sp ? sp.zone : null, m.town); }
+  const mob = Object.assign({ id: NID++, kind: 'm', type, map: mapId, x, y, hx: x, hy: y, hp: d.hp, maxhp: d.hp, path: null, target: null, nextAtk: 0, nextWander: Date.now() + Math.random() * 4000, dmg: new Map(), phase: 0, skillAt: Date.now() + 6000 }, o);
   mobs.set(mob.id, mob);
   return mob;
 }
-for (const id in MAPS) for (const [type, n] of MAPS[id].spawns) for (let i = 0; i < n; i++) spawnMob(id, type);
+for (const id in MAPS) for (const s of MAPS[id].spawns) for (let i = 0; i < s.n; i++) spawnMob(id, s.mob);
 const bossTimer = {};
 
 // ---------------------------------------------------------------- net helpers
@@ -255,14 +203,23 @@ function bcast(mapId, o) { const s = JSON.stringify(o); for (const p of players.
 function bcastAll(o) { const s = JSON.stringify(o); for (const p of players.values()) if (p.ws.readyState === 1) p.ws.send(s); }
 function me(p) {
   const c = p.c; derive(c);
-  send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(SKILL_IDS.filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])) } });
+  const now = Date.now(), B = buffsOf(c);
+  send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit,
+    matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
+    cls: clsOf(c).id, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV,
+    buffs: Object.entries(B).filter(([, b]) => b.until > now).map(([id, b]) => ({ id, th: b.th, ms: b.until - now })) } });
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
-function mapInfo(m) { return { id: m.id, name: m.name, w: m.w, h: m.h, t: m.t, portals: m.portals, npcs: m.npcs, props: m.props, town: !!m.town }; }
+function mapInfo(m) {
+  return { id: m.id, name: m.name, w: m.w, h: m.h, t: m.t, portals: m.portals, props: m.props, deco: m.deco, town: !!m.town, env: m.env, region: m.region, lv: m.lv, music: m.music, safe: m.safe,
+    npcs: m.npcs.map(({ id, n, x, y, look, label, role, cls }) => ({ id, n, x, y, look, label, role, cls })), nodes: m.nodes.map(({ id, k, n, x, y }) => ({ id, k, n, x, y })) };
+}
 function warp(p, mapId, x, y) {
-  p.c.map = mapId; p.c.x = x; p.c.y = y; p.path = null; p.target = null; p.pick = null; p.pendingSkill = false; p.noChase = false;
+  if (p.wave && p.wave.map !== mapId) endWave(p, false);
+  p.c.map = mapId; p.c.x = x; p.c.y = y; p.path = null; p.target = null; p.pick = null; p.pendingSkill = false; p.noChase = false; p.shop = null; p.station = null; p.npcGo = null; p.nodeGo = null;
   send(p, { t: 'map', map: mapInfo(MAPS[mapId]), x, y });
   me(p);
+  Q.onMove(p);
 }
 
 // ---------------------------------------------------------------- inventory
@@ -274,28 +231,69 @@ function addItem(c, id, q = 1) {
   return true;
 }
 function delSlot(c, i, q = 1) { const s = c.inv[i]; if (!s) return; s.q -= q; if (s.q <= 0) c.inv.splice(i, 1); }
+const countItem = (c, id) => c.inv.reduce((n, s) => n + (s.id === id ? s.q : 0), 0);
+function takeItem(c, id, q) { for (let i = c.inv.length - 1; i >= 0 && q > 0; i--) { const s = c.inv[i]; if (s.id !== id) continue; const n = Math.min(q, s.q); delSlot(c, i, n); q -= n; } return q <= 0; }
 
-// ---------------------------------------------------------------- quests (Iris chain)
-const QUESTS = [
+// ---------------------------------------------------------------- quests
+// original Iris chain (kept as it was: c.q = {step, k})
+const IRIS = [
   { txt: 'ปราบ เจลลอป 10 ตัว ที่ทุ่งทรายสีทอง (ทางออกตะวันออก)', mob: 'jellop', n: 10, zeny: 300, exp: 120, item: [1, 10] },
   { txt: 'ปราบ ปูทราย 8 ตัว ที่ทุ่งทรายสีทอง', mob: 'crab', n: 8, zeny: 600, exp: 400, item: [2, 5] },
   { txt: 'ปราบ ลีฟลิง 10 ตัว ที่ป่าโอเอซิส (ทางออกใต้)', mob: 'leafling', n: 10, zeny: 1000, exp: 900, item: [21, 1] },
   { txt: 'ปราบ ราชาเจลลอป บอสแห่งทุ่งทราย (มุมขวาบน)', mob: 'kingjel', n: 1, zeny: 3000, exp: 3000, item: [31, 1] },
 ];
+const Q = createQuests(C, {
+  sys, count: countItem, take: takeItem, give: (c, id, q) => addItem(c, id, q),
+  mail: (p, id, q) => { p.c.store.push({ id, q }); sys(p, `กระเป๋าเต็ม: ส่ง ${ITEMS[id].n} x${q} ไปที่คลังเก็บของแล้ว`, '#ffb36b'); },
+  exp: (p, e) => gainExp(p, e), jexp: (p, e) => gainJob(p, e), changeClass: (p, id) => changeClass(p, id),
+  changed: (p) => { dirty = true; p.meDue = true; }, startWave: (p, id) => startWave(p, id), fx: (p, k) => bcast(p.c.map, { t: 'fx', k, id: p.id, v: 0 }),
+});
+// quest marks for NPCs on the player's map: id -> 'avail' | 'turnin' | 'progress' | 'lv'
+function npcMarks(c) {
+  const m = MAPS[c.map], out = {}; if (!m) return out;
+  for (const n of m.npcs) { const l = Q.forNpc(c, m.id + ':' + n.id); const k = l.find(x => x.what === 'turnin') || l.find(x => x.what === 'avail') || l.find(x => x.what === 'progress') || l.find(x => x.what === 'lv'); if (k) out[n.id] = k.what; }
+  if (out.iris == null && m.id === 'solkara') { const qd = IRIS[c.q.step]; if (qd) out.iris = c.q.k >= qd.n ? 'turnin' : 'progress'; }
+  return out;
+}
+function changeClass(p, id) {
+  const c = p.c, K = CLASSES[id]; if (!K) return;
+  c.cls = id; c.jlv = 1; c.jexp = 0; derive(c); c.hp = c.maxhp; c.sp = c.maxsp;
+  for (const sid of skillsFor(c)) if (SKILLS[sid].cls === id && ownsSkill(c, sid) && !c.hot.includes(sid)) { const free = c.hot.indexOf(null); if (free >= 0) c.hot[free] = sid; }
+  p.knows = new Set(skillsFor(c).filter(s => ownsSkill(c, s)));
+  bcast(c.map, { t: 'fx', k: 'lvup', id: p.id, cls: id });
+  bcastAll({ t: 'sys', m: `🎉 ${c.name} ได้เปลี่ยนอาชีพเป็น ${K.th} (${K.en})!`, col: '#ffd34d' });
+  send(p, { t: 'skills', skills: skillDefs(c) });
+}
+const skillDefs = c => Object.fromEntries(skillsFor(c).map(id => { const { n, th, type, range, sp, cd, lv, d, cls, fx } = SKILLS[id]; return [id, { n, th, type, range, sp, cd, lv, d, cls, fx }]; }));
 
 // ---------------------------------------------------------------- combat
 function gainExp(p, e) {
-  const c = p.c; c.exp += e;
+  const c = p.c; if (c.lv >= MAX_LV) { c.exp = 0; return; }
+  c.exp += e;
   let up = false;
-  while (c.exp >= expNext(c.lv) && c.lv < 99) { c.exp -= expNext(c.lv); c.lv++; c.pts += 5; up = true; }
+  while (c.lv < MAX_LV && c.exp >= expNext(c.lv)) { c.exp -= expNext(c.lv); c.lv++; c.pts += LV.statPointsAt(c.lv); up = true; }
+  if (c.lv >= MAX_LV) c.exp = 0;
   if (up) {
-    derive(c); c.hp = c.maxhp; c.sp = c.maxsp; bcast(c.map, { t: 'fx', k: 'lvup', id: p.id }); sys(p, `เลเวลอัพ! ตอนนี้ Lv ${c.lv} (+5 แต้มสเตตัส)`, '#ffd34d');
-    for (const id of SKILL_IDS) if (ownsSkill(c, id) && !c.hot.includes(id) && !p.knows?.has(id)) {
+    derive(c); c.hp = c.maxhp; c.sp = c.maxsp; bcast(c.map, { t: 'fx', k: 'lvup', id: p.id }); sys(p, `เลเวลอัพ! ตอนนี้ Lv ${c.lv} (+${LV.statPointsAt(c.lv)} แต้มสเตตัส)`, '#ffd34d');
+    for (const id of skillsFor(c)) if (ownsSkill(c, id) && !c.hot.includes(id) && !p.knows?.has(id)) {
       const free = c.hot.indexOf(null); if (free >= 0) c.hot[free] = id;
       sys(p, `เรียนรู้สกิลใหม่: ${SKILLS[id].th} (${SKILLS[id].n})${free >= 0 ? ` → ช่อง ${free + 1}` : ' — ใส่ในช่องได้จากหน้าต่างสกิล'}`, '#9fe7ff');
     }
-    p.knows = new Set(SKILL_IDS.filter(id => ownsSkill(c, id)));
+    p.knows = new Set(skillsFor(c).filter(id => ownsSkill(c, id)));
+    if (c.lv === 10 && c.cls === 'adventurer') sys(p, 'ถึง Lv 10 แล้ว! ไปพบครูอาชีพเพื่อทำบททดสอบเปลี่ยนอาชีพ (ถามแอสเตอร์ที่หมู่บ้านลูมิร่า)', '#ffd34d');
+    p.meDue = true;
   }
+}
+function gainJob(p, e) {
+  const c = p.c; let need = jobNext(c); if (!need) return;
+  c.jexp += e;
+  while (need && c.jexp >= need) { c.jexp -= need; c.jlv++; sys(p, `Job Lv ${c.jlv}! สกิลอาชีพแรงขึ้น`, '#9fe7ff'); need = jobNext(c); }
+  if (!need) c.jexp = 0;
+}
+function rollDrops(d) {
+  const out = [];
+  for (const t of C.DROP_TIERS) for (const [id, ch] of d.drops[t] || []) if (Math.random() < ch) out.push(id);
+  return out;
 }
 function mobDie(mob, killer) {
   const d = MOBS[mob.type];
@@ -305,44 +303,59 @@ function mobDie(mob, killer) {
   let total = 0; for (const v of mob.dmg.values()) total += v;
   for (const [pid, v] of mob.dmg) {
     const p = players.get(pid); if (!p || p.c.map !== mob.map) continue;
-    const share = Math.max(1, Math.round(d.exp * v / total));
-    gainExp(p, share);
-    const q = QUESTS[p.c.q.step];
+    const share = Math.max(d.exp ? 1 : 0, Math.round(d.exp * v / total));
+    if (share) gainExp(p, share);
+    if (d.jexp) gainJob(p, Math.max(1, Math.round(d.jexp * v / total)));
+    const q = IRIS[p.c.q.step];
     if (q && q.mob === mob.type && p.c.q.k < q.n) { p.c.q.k++; sys(p, `[เควส] ${d.n} ${p.c.q.k}/${q.n}${p.c.q.k >= q.n ? ' - กลับไปหาไอริส!' : ''}`, '#8fe38f'); }
+    const w = ITEMS[p.c.eq.wpn]; Q.onKill(p, mob.type, { wt: w && w.wt });
     me(p);
   }
-  // drops
+  // drops: rolled here, each tier separately; owner keeps first pick for 6s
   const owner = killer ? killer.id : null;
-  for (const [id, ch] of d.drops) if (Math.random() < ch) {
+  if (!mob.noLoot) for (const id of rollDrops(d)) {
     const dr = { id: NID++, kind: 'd', item: id, map: mob.map, x: Math.round(mob.x) + (Math.random() < .5 ? 0 : (Math.random() < .5 ? 1 : -1)), y: Math.round(mob.y), owner, until: Date.now() + 6000, expire: Date.now() + 90000 };
     if (!walkable(MAPS[mob.map], dr.x, dr.y)) dr.x = Math.round(mob.x);
     drops.set(dr.id, dr);
   }
+  if (mob.wave) { const p = players.get(mob.wave); if (p && p.wave) p.wave.left.delete(mob.id); }
+  if (mob.minion) return;
   if (d.boss) {
-    bcastAll({ t: 'sys', m: `[BOSS] ${d.n} ถูกปราบโดย ${killer ? killer.c.name : '???'}! จะกลับมาอีกใน 10 นาที`, col: '#ff7a7a' });
-    if (killer) killer.c.zeny += 500;
-    bossTimer[mob.map] = Date.now() + MAPS[mob.map].bossSpawn.every * 1000;
-  } else {
-    setTimeout(() => spawnMob(mob.map, mob.type), 8000 + Math.random() * 8000);
+    for (const o of [...mobs.values()]) if (o.minion === mob.id) { mobs.delete(o.id); bcast(o.map, { t: 'fx', k: 'die', id: o.id }); }
+    const B = MAPS[mob.map].bosses.find(b => b.mob === mob.type), mins = Math.round((B ? B.every : 600) / 60);
+    bcastAll({ t: 'sys', m: `[BOSS] ${d.n} ถูกปราบโดย ${killer ? killer.c.name : '???'}! จะกลับมาอีกใน ${mins} นาที`, col: '#ff7a7a' });
+    if (killer) killer.c.zeny += d.legacy ? 500 : Math.round(d.lv * 40);
+    bossTimer[mob.map + ':' + mob.type] = Date.now() + (B ? B.every : 600) * 1000;
+  } else if (!mob.wave) {
+    setTimeout(() => spawnMob(mob.map, mob.type), d.respawn ? d.respawn * 1000 * (0.8 + Math.random() * 0.4) : 8000 + Math.random() * 8000);
   }
 }
-// skill=true marks the hit as a skill for the client; opts.sure (default = skill) skips the hit roll, opts.magic uses INT
+const ELEM = { holy: { undead: 2, void: 2, demon: 1.6, spirit: 0.6 }, fire: { plant: 1.5, insect: 1.3, ice: 1.5, aquatic: 0.6 }, water: { desert: 1.4, elemental: 1.2, aquatic: 0.5 } };
+// skill=true marks the hit as a skill for the client; opts.sure (default = skill) skips the hit roll, opts.magic uses MATK
 function playerAttack(p, mob, mult = 1, skill = false, opts = {}) {
   const c = p.c, d = MOBS[mob.type], sure = opts.sure ?? skill;
   const hitc = Math.min(97, Math.max(10, 82 + c.hit - d.flee - d.lv));
   let dmg = 0, crit = false;
+  const el = (opts.element && ELEM[opts.element] && ELEM[opts.element][d.family]) || 1;
   if (opts.magic) {
-    const matk = c.st.int * 3 + c.lv * 2 + 12;
-    dmg = Math.max(1, Math.round(matk * (0.9 + Math.random() * 0.2) * mult - d.def * 0.5));
+    dmg = Math.max(1, Math.round(c.matk * (0.9 + Math.random() * 0.2) * mult * el - (d.mdef || d.def) * 0.5));
   } else if (sure || Math.random() * 100 < hitc) {
-    crit = !skill && Math.random() * 100 < c.crit;
-    dmg = Math.max(1, Math.round(c.atk * (0.85 + Math.random() * 0.3) * mult * (crit ? 1.5 : 1) - (crit ? 0 : d.def)));
+    crit = opts.crit || (!skill && Math.random() * 100 < c.crit);
+    dmg = Math.max(1, Math.round(c.atk * (0.85 + Math.random() * 0.3) * mult * el * (crit ? 1.5 : 1) - (crit ? 0 : d.def)));
   }
+  if (d.dummy && !Q.st(c).a.cls_ranger && !mob.hitOk) dmg = Math.min(dmg, Math.max(0, mob.hp - 1)); // training targets only fall for the Ranger trial
   mob.hp -= dmg;
   mob.dmg.set(p.id, (mob.dmg.get(p.id) || 0) + dmg);
-  if (!mob.target) mob.target = p.id;
+  if (!mob.target && !d.dummy) mob.target = p.id;
+  mob.hitAt = Date.now();
+  if (d.assist) callHelp(mob, p);
   bcast(c.map, { t: 'fx', k: 'hit', from: p.id, to: mob.id, dmg, crit, skill });
   if (mob.hp <= 0) { mobDie(mob, p); p.target = null; }
+}
+// assist / pack: same-family monsters nearby join the fight
+function callHelp(mob, p) {
+  const d = MOBS[mob.type];
+  for (const o of mobs.values()) if (o !== mob && o.map === mob.map && !o.target && MOBS[o.type].family === d.family && Math.hypot(o.x - mob.x, o.y - mob.y) <= d.assist) o.target = p.id;
 }
 // tiles that block attacks/projectiles (walls, roofs, trees, rocks); water and cactus don't
 const BLOCK_LOS = new Set([3, 5, 6, 9]);
@@ -395,66 +408,190 @@ function castSkill(p, sid, tid, legacy) {
   c.sp -= sk.sp; p.cd[sid] = now + sk.cd; p.gcd = now + GCD;
   bcast(c.map, { t: 'fx', k: 'cast', id: p.id, s: sid, to: mob ? mob.id : 0 });
   send(p, { t: 'cd', s: sid, ms: sk.cd, g: GCD });
+  const opts = { magic: sk.magic, element: sk.element, crit: sk.crit };
   if (mob) {
     p.nextAtk = now + c.aspd;
-    for (let i = 0; i < (sk.hits || 1) && mobs.has(mob.id); i++) playerAttack(p, mob, (sk.mult || 1) * lvm, true, { sure: !sk.hits, magic: sk.magic });
+    if (sk.dash) { const dx = c.x - mob.x, dy = c.y - mob.y, l = Math.hypot(dx, dy) || 1, tx = Math.round(mob.x + dx / l), ty = Math.round(mob.y + dy / l); if (walkable(MAPS[c.map], tx, ty)) { c.x = tx; c.y = ty; p.path = null; } }
+    for (let i = 0; i < (sk.hits || 1) && mobs.has(mob.id); i++) playerAttack(p, mob, (sk.mult || 1) * lvm, true, { sure: !sk.hits, ...opts });
+    if (sk.taunt) for (const o of mobs.values()) if (o.map === c.map && Math.hypot(o.x - c.x, o.y - c.y) < 4 && !MOBS[o.type].dummy) o.target = p.id;
+    if (sk.slow && mobs.has(mob.id)) mob.slowUntil = now + sk.slow;
   } else if (area) {
     p.nextAtk = now + c.aspd;
-    for (const mb of area) if (mobs.has(mb.id)) playerAttack(p, mb, sk.mult * lvm, true);
-  } else if (sid === 'heal') {
-    const before = c.hp; c.hp = Math.min(c.maxhp, c.hp + Math.round((c.maxhp * 0.2 + c.st.int * 3) * lvm));
+    for (const mb of area) if (mobs.has(mb.id)) playerAttack(p, mb, sk.mult * lvm, true, opts);
+  }
+  if (sk.heal) {
+    const before = c.hp; c.hp = Math.min(c.maxhp, c.hp + Math.round((c.maxhp * sk.heal.pct + c.st.int * sk.heal.int) * lvm));
     bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: c.hp - before });
-  } else if (sid === 'focus') {
-    const before = c.sp; c.sp = Math.min(c.maxsp, c.sp + Math.round(c.maxsp * 0.25 * lvm));
+  }
+  if (sk.spRestore) {
+    const before = c.sp; c.sp = Math.min(c.maxsp, c.sp + Math.round(c.maxsp * sk.spRestore * lvm));
     bcast(c.map, { t: 'fx', k: 'heal', id: p.id, sp: c.sp - before });
+  }
+  if (sk.buff) {
+    buffsOf(c)[sk.buff.id] = Object.assign({}, sk.buff, { until: now + sk.buff.ms });
+    if (sk.buff.stealth) for (const o of mobs.values()) if (o.target === p.id && !MOBS[o.type].boss) { o.target = null; o.path = null; }
+    bcast(c.map, { t: 'fx', k: 'buff', id: p.id, s: sid });
   }
   me(p);
   return true;
 }
-function mobAttack(mob, p) {
-  const d = MOBS[mob.type], c = p.c;
+const stealthed = c => buffSum(c, 'stealth') > 0;
+function mobAttack(mob, p, magic) {
+  const d = MOBS[mob.type], c = p.c, mul = mob.atkMul || 1;
   const hitc = Math.min(95, Math.max(5, 80 + d.lv * 2 - c.flee));
   let dmg = 0;
-  if (Math.random() * 100 < hitc) dmg = Math.max(1, Math.round(d.atk[0] + Math.random() * (d.atk[1] - d.atk[0]) - c.def));
+  if (magic) dmg = Math.max(1, Math.round(d.matk * mul * (0.9 + Math.random() * 0.2) - c.mdef * 0.5));
+  else if (Math.random() * 100 < hitc) dmg = Math.max(1, Math.round((d.atk[0] + Math.random() * (d.atk[1] - d.atk[0])) * mul - c.def));
+  hurtPlayer(p, dmg, mob.id, magic);
+}
+function hurtPlayer(p, dmg, from, magic) {
+  const c = p.c; if (p.dead) return;
   c.hp -= dmg;
-  bcast(c.map, { t: 'fx', k: 'hit', from: mob.id, to: p.id, dmg });
+  bcast(c.map, { t: 'fx', k: 'hit', from, to: p.id, dmg, magic: magic ? 1 : 0 });
   if (c.hp <= 0) {
     c.hp = 0; p.dead = true; p.path = null; p.target = null;
-    const loss = Math.floor(expNext(c.lv) * 0.01); c.exp = Math.max(0, c.exp - loss);
+    const loss = c.lv <= 5 ? 0 : Math.floor(expNext(c.lv) * 0.01); c.exp = Math.max(0, c.exp - loss); // beginner protection: no exp loss up to Lv5
     bcast(c.map, { t: 'fx', k: 'pdie', id: p.id });
-    sys(p, `คุณหมดสติ... เสีย EXP ${loss} - กดปุ่มฟื้นที่เมือง`, '#ff7a7a');
+    sys(p, `คุณหมดสติ... ${loss ? `เสีย EXP ${loss}` : 'ไม่เสีย EXP (ผู้เริ่มต้น)'} - กดปุ่มฟื้นที่จุดเซฟ`, '#ff7a7a');
     for (const m of mobs.values()) if (m.target === p.id) m.target = null;
+    if (p.wave) endWave(p, false);
   }
   me(p);
 }
 
+// ---------------------------------------------------------------- Vanguard trial: waves at Lumira's east gate
+const WAVES = { lumira_gate: { map: 'lumira', zone: [44, 18, 47, 22], waves: [['raider', 3], ['raider', 4], ['raider', 5]] } };
+function startWave(p, id) {
+  const W = WAVES[id]; if (!W) return 'ไม่มีบททดสอบนี้';
+  if (p.c.map !== W.map) return 'บททดสอบนี้ต้องทำที่หมู่บ้านลูมิร่า';
+  if (p.wave) return 'บททดสอบกำลังดำเนินอยู่!';
+  p.wave = { id, map: W.map, n: 0, left: new Set(), next: Date.now() + 1500 };
+  sys(p, '[บททดสอบ] ผู้รุกรานระลอก 1/3 กำลังมาทางประตูตะวันออก!', '#ffb36b');
+  return '';
+}
+function waveTick(p, now) {
+  const w = p.wave, W = WAVES[w.id]; if (!w || now < w.next || w.left.size) return;
+  if (w.n >= W.waves.length) { p.wave = null; sys(p, '[บททดสอบ] ป้องกันหมู่บ้านสำเร็จ!', '#8fe38f'); Q.onWave(p, w.id, true); return; }
+  const [mob, n] = W.waves[w.n++];
+  for (let i = 0; i < n; i++) { const [x, y] = randFree(MAPS[W.map], W.zone, true); const mb = spawnMob(W.map, mob, x, y, { wave: p.id, target: p.id, noLoot: w.n < 3 }); w.left.add(mb.id); }
+  if (w.n > 1) sys(p, `[บททดสอบ] ระลอก ${w.n}/${W.waves.length}!`, '#ffb36b');
+  w.next = now + 2500;
+}
+function endWave(p, ok) {
+  const w = p.wave; if (!w) return; p.wave = null;
+  for (const id of w.left) { const mb = mobs.get(id); if (mb) { mobs.delete(id); bcast(mb.map, { t: 'fx', k: 'die', id }); } }
+  if (!ok) Q.onWave(p, w.id, false);
+}
+
 // ---------------------------------------------------------------- npc dialogs
-function npcTalk(p, npcId, act, arg) {
-  const m = MAPS[p.c.map], npc = m.npcs.find(n => n.id === npcId); if (!npc) return;
+const npcAt = (m, id) => m.npcs.find(n => n.id === id);
+function npcTalk(p, npcId, act, arg, arg2) {
+  const m = MAPS[p.c.map], npc = npcAt(m, npcId); if (!npc) return;
   if (Math.max(Math.abs(npc.x - p.c.x), Math.abs(npc.y - p.c.y)) > 4) return sys(p, 'อยู่ไกลเกินไป เดินเข้าไปใกล้ก่อน');
-  const c = p.c;
-  const dlg = (text, opts = []) => send(p, { t: 'dlg', npc: npc.id, name: npc.n, text, opts });
+  const c = p.c, key = m.id + ':' + npc.id;
+  const dlg = (text, opts = []) => send(p, { t: 'dlg', npc: npc.id, name: npc.n, text, opts, role: npc.role });
+  // quest lines first: picking one, or the NPC has something to hand in
+  if (act === 'q') { const r = Q.talk(p, key, arg, arg2); if (r) { me(p); return dlg(r.text, (r.opts || []).filter(o => o[0])); } }
+  const ql = Q.forNpc(c, key).filter(x => x.what !== 'progress' || QUESTS[x.id].giver === key);
+  const qopts = ql.map(x => [`q:${x.id}`, (x.what === 'turnin' ? '✔ ' : x.what === 'avail' ? '❗ ' : x.what === 'lv' ? `🔒 (Lv ${x.lv}) ` : '… ') + QUESTS[x.id].th]);
+  const turnin = ql.some(x => x.what === 'turnin' || x.what === 'avail');
   if (npc.id === 'iris') {
-    const q = QUESTS[c.q.step];
+    const q = IRIS[c.q.step];
     if (!q) return dlg('ขอบคุณที่ช่วยโซลคารานะ นักผจญภัย!\nเรื่องราวบทต่อไปกำลังจะมาเร็วๆ นี้... (Phase 2)');
     if (act === 'done' && c.q.k >= q.n) {
       const ri = ITEMS[q.item[0]], stacks = ri.ty !== 'eq' && c.inv.some(s => s.id === ri.id);
       if (!stacks && c.inv.length + (ri.ty === 'eq' ? q.item[1] : 1) > 40) return dlg('กระเป๋าของเจ้าเต็มแล้ว เคลียร์ช่องว่างก่อนแล้วค่อยมารับรางวัลนะ');
       c.zeny += q.zeny; gainExp(p, q.exp); addItem(c, q.item[0], q.item[1]);
       c.q.step++; c.q.k = 0; dirty = true; me(p);
-      return dlg(`เยี่ยมมาก! รับรางวัล ${q.zeny} Zeny, EXP ${q.exp} และ ${ITEMS[q.item[0]].n} x${q.item[1]}\n\n${QUESTS[c.q.step] ? 'ภารกิจถัดไป: ' + QUESTS[c.q.step].txt : 'เจ้าผ่านบททดสอบทั้งหมดแล้ว!'}`);
+      return dlg(`เยี่ยมมาก! รับรางวัล ${q.zeny} Zeny, EXP ${q.exp} และ ${ITEMS[q.item[0]].n} x${q.item[1]}\n\n${IRIS[c.q.step] ? 'ภารกิจถัดไป: ' + IRIS[c.q.step].txt : 'เจ้าผ่านบททดสอบทั้งหมดแล้ว!'}`);
     }
     if (c.q.k >= q.n) return dlg('เจ้าทำภารกิจสำเร็จแล้ว! รับรางวัลเลยไหม?', [['done', 'รับรางวัล']]);
     const intro = c.q.step === 0 ? 'ยินดีต้อนรับสู่ โซลคารา เมืองหลวงแห่งเอลินดรา!\nดวงดาวตกลงมาเมื่อคืน และมอนสเตอร์รอบเมืองก็ดุร้ายขึ้น...\n\n' : '';
     return dlg(`${intro}ภารกิจ: ${q.txt}\nความคืบหน้า: ${c.q.k}/${q.n}\n\n(แตะพื้นเพื่อเดิน แตะมอนเพื่อโจมตี)`);
   }
-  if (npc.id === 'heal') { const hv = c.maxhp - c.hp, sv = c.maxsp - c.sp; c.hp = c.maxhp; c.sp = c.maxsp; me(p); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: hv, sp: sv }); return dlg('ฟื้นฟู HP/SP ให้เต็มแล้วค่ะ ระวังตัวด้วยนะคะ~'); }
-  if (npc.id === 'warp') {
-    if (act === 'go') { const t = { plains: ['plains', 3, 22], woods: ['woods', 25, 2] }[arg]; if (t) { send(p, { t: 'dlgclose' }); return warp(p, t[0], t[1], t[2]); } }
-    return dlg('จะไปที่ไหนดี? ไปส่งฟรี!', [['go:plains', 'ทุ่งทรายสีทอง (Lv 1-10)'], ['go:woods', 'ป่าโอเอซิส (Lv 5-15)']]);
+  const say = npc.say ? npc.say[Math.floor(Math.random() * npc.say.length)] : '';
+  switch (npc.role) {
+    case 'heal': { const hv = c.maxhp - c.hp, sv = c.maxsp - c.sp; c.hp = c.maxhp; c.sp = c.maxsp; me(p); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: hv, sp: sv }); return dlg('ฟื้นฟู HP/SP ให้เต็มแล้วค่ะ ระวังตัวด้วยนะคะ~', qopts); }
+    case 'teleport': case 'gate': {
+      if (act === 'go') {
+        const t = (npc.dest || []).find(d => d[0] === arg); if (!t) return;
+        if (t[4] && c.lv < t[4]) return dlg(`ปลายทางนี้ต้องการ Lv ${t[4]} ขึ้นไป`);
+        send(p, { t: 'dlgclose' }); return warp(p, t[0], t[1], t[2]);
+      }
+      return dlg(npc.role === 'gate' ? (say || 'ประตูดันเจี้ยน') : 'จะไปที่ไหนดี? ไปส่งฟรี!', [...qopts, ...npc.dest.map(d => [`go:${d[0]}`, d[3] + (d[4] && c.lv < d[4] ? ' 🔒' : '')])]);
+    }
+    case 'shop': case 'sell':
+      if (act === 'shop' || (!turnin && act == null)) return openShop(p, npc);
+      return dlg(say || 'ต้องการอะไรไหม?', [...qopts, ['shop', npc.role === 'sell' ? 'ขายของ' : 'ซื้อของ']]);
+    case 'inn':
+      if (act === 'save') { c.save = { map: m.id, x: npc.x, y: npc.y + 1 }; dirty = true; me(p); return dlg('บันทึกจุดเกิดที่นี่แล้ว! ถ้าหมดสติหรือใช้คัมภีร์กลับบ้าน จะกลับมาที่นี่', qopts); }
+      if (act === 'rest') { if (c.zeny < npc.rest) return dlg('Zeny ไม่พอค่าห้องจ้ะ'); c.zeny -= npc.rest; const hv = c.maxhp - c.hp, sv = c.maxsp - c.sp; c.hp = c.maxhp; c.sp = c.maxsp; me(p); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: hv, sp: sv }); return dlg('หลับสบายไหม? พลังกลับมาเต็มแล้ว'); }
+      return dlg(say || 'ยินดีต้อนรับ!', [...qopts, ['save', 'บันทึกจุดเกิดที่นี่'], ['rest', `พักผ่อน (${npc.rest} Zeny)`]]);
+    case 'storage': if (act === 'open' || !turnin) { p.station = 'storage:' + npc.id; return send(p, { t: 'storage', items: c.store, max: 100 }); } return dlg('คลังเก็บของ', [...qopts, ['open', 'เปิดคลัง']]);
+    case 'bank': p.station = 'bank:' + npc.id; return send(p, { t: 'bankui', bank: c.bank, zeny: c.zeny });
+    case 'craft': case 'smith':
+      if (act === 'open' || !turnin) { p.station = npc.station + ':' + npc.id; return send(p, { t: 'craftui', station: npc.station, name: npc.n, recipes: Object.values(RECIPES).filter(r => r.station === npc.station).map(r => r.id) }); }
+      return dlg(say || 'ต้องการสร้างอะไร?', [...qopts, ['open', 'เปิดโต๊ะช่าง']]);
+    case 'board': {
+      const daily = Object.values(QUESTS).filter(q => q.giver === key);
+      const lines = daily.map(q => `• ${q.th} ${Q.done(c, q.id) ? '(วันนี้ทำแล้ว)' : c.qs.a[q.id] ? '(กำลังทำ)' : q.req.lv && c.lv < q.req.lv ? `(Lv ${q.req.lv}+)` : q.req.max && c.lv > q.req.max ? '(เลเวลเกิน)' : ''}`).join('\n');
+      return dlg(`กระดานประกาศ — เควสประจำวัน (รีเซ็ตทุกวัน)\n${lines || 'ยังไม่มีประกาศ'}`, qopts);
+    }
+    case 'master': {
+      const K = CLASSES[npc.cls];
+      const head = `${say}\n\nอาชีพ: ${K.th} (${K.en}) — ${K.role}\n${K.d}\nเงื่อนไข: Lv ${K.reqLv}+ และยังเป็นนักผจญภัย`;
+      if (c.cls === npc.cls) return dlg(`${say}\nเจ้าคือ ${K.th} แล้ว ฝึกฝนต่อไป! (อาชีพขั้นที่ 2 ปลดที่ Lv ${CLASSES[C.childrenOf(K.id)[0]].reqLv} — เร็วๆ นี้)`, qopts);
+      if (c.cls !== 'adventurer') return dlg(`${say}\nเจ้าเลือกเส้นทางอื่นไปแล้ว`, qopts);
+      return dlg(head, qopts);
+    }
+    default: return dlg(say || '...', qopts);
   }
-  if (npc.id === 'shop') return send(p, { t: 'shop', mode: 'buy', items: SHOP.map(id => ({ id, n: ITEMS[id].n, price: ITEMS[id].buy })) });
-  if (npc.id === 'sell') return send(p, { t: 'shop', mode: 'sell' });
+}
+function openShop(p, npc) {
+  const c = p.c;
+  if (npc.role === 'sell') { p.shop = null; return send(p, { t: 'shop', mode: 'sell', name: npc.n }); }
+  const S = SHOPS[npc.shop]; p.shop = npc.shop;
+  const disc = clsOf(c).shopDiscount || 0;
+  send(p, { t: 'shop', mode: 'buy', name: S.th, items: S.items.map(id => ({ id, n: ITEMS[id].n, price: Math.ceil(ITEMS[id].buy * (1 - disc)) })) });
+}
+function nodeAt(m, id) { return m.nodes.find(n => n.id === id); }
+function useNode(p, nd) {
+  const c = p.c, now = Date.now(); p.nodeCd = p.nodeCd || {};
+  if (Math.max(Math.abs(nd.x - c.x), Math.abs(nd.y - c.y)) > 1.6) return sys(p, 'เดินเข้าไปใกล้กว่านี้');
+  const seen = [...mobs.values()].some(o => o.map === c.map && o.target === p.id && o.hp > 0) || (!stealthed(c) && [...mobs.values()].some(o => o.map === c.map && MOBS[o.type].aggro && Math.hypot(o.x - c.x, o.y - c.y) < 4));
+  const r = Q.nodeUse(p, nd, { seen });
+  if (r && r.msg) return sys(p, r.msg, '#ffb36b');
+  if (r && r.done) { me(p); return; }
+  if (!r && nd.quest) return sys(p, nd.k === 'injured' ? 'ทหารคนนี้บาดเจ็บ... ครูเคลริกอาจต้องการให้เจ้าช่วย' : `${nd.n} — ตอนนี้ยังไม่มีอะไรให้ทำ`, '#b9a98e');
+  const key = c.map + ':' + nd.id; if ((p.nodeCd[key] || 0) > now) return sys(p, `${nd.n} — ยังไม่ฟื้น รออีก ${Math.ceil((p.nodeCd[key] - now) / 1000)} วิ`, '#b9a98e');
+  const item = (r && r.item) || nd.item; if (!item) return;
+  if (!addItem(c, item)) return sys(p, 'กระเป๋าเต็ม');
+  p.nodeCd[key] = now + (nd.respawn || 30) * 1000;
+  send(p, { t: 'nodecd', id: nd.id, ms: (nd.respawn || 30) * 1000 });
+  bcast(c.map, { t: 'fx', k: 'gather', id: p.id, node: nd.id });
+  sys(p, `ได้รับ ${ITEMS[item].n}`, '#c8f7c5');
+  if (r && r.after) r.after(); else Q.onItems(p);
+  dirty = true; me(p);
+}
+function craft(p, rid) {
+  const c = p.c, r = RECIPES[rid]; if (!r) return;
+  if (!p.station || p.station.split(':')[0] !== r.station) return sys(p, 'ต้องสร้างที่โต๊ะช่างที่เหมาะสม');
+  const npc = npcAt(MAPS[c.map], p.station.split(':')[1]); if (!npc || Math.max(Math.abs(npc.x - c.x), Math.abs(npc.y - c.y)) > 4) return sys(p, 'อยู่ไกลโต๊ะช่างเกินไป');
+  for (const [it, n] of r.in) if (countItem(c, it) < n) return sys(p, `วัตถุดิบไม่พอ: ${ITEMS[it].n} ${countItem(c, it)}/${n}`, '#ff8b8b');
+  if (c.zeny < r.zeny) return sys(p, 'Zeny ไม่พอ');
+  for (const [it, n] of r.in) takeItem(c, it, n);
+  if (!addItem(c, r.out[0], r.out[1])) { for (const [it, n] of r.in) addItem(c, it, n); return sys(p, 'กระเป๋าเต็ม'); }
+  c.zeny -= r.zeny; dirty = true;
+  sys(p, `สร้างสำเร็จ: ${ITEMS[r.out[0]].n} x${r.out[1]}`, '#c8f7c5'); bcast(c.map, { t: 'fx', k: 'gather', id: p.id });
+  Q.onCraft(p, rid); Q.onItems(p); me(p);
+}
+// can this character wear the item? '' = yes, otherwise the reason
+function equipBlock(c, it) {
+  if (it.req && c.lv < it.req) return `ต้องการ Lv ${it.req}`;
+  const line = lineOf(c);
+  if (it.cls && !it.cls.some(k => line.includes(k))) return `อาชีพนี้สวมไม่ได้ (${it.cls.map(k => CLASSES[k].th).join(' / ')})`;
+  if (it.id >= 200 && it.slot === 'wpn' && it.wt && !line.some(k => (CLASSES[k].weapons || []).includes(it.wt)) ) return `อาชีพนี้ใช้ ${WEAPON_TYPES[it.wt].th} ไม่ได้`;
+  return '';
 }
 
 // ---------------------------------------------------------------- ws handling
@@ -497,13 +634,25 @@ wss.on('connection', ws => {
 setInterval(() => { for (const p of conns) p.msgs = 0; }, 1000);
 function logout(p) {
   if (!p.c) return;
+  if (p.wave) endWave(p, false);
   db.accounts[p.acct].char = p.c; dirty = true;
   players.delete(p.id);
   bcast(p.c.map, { t: 'fx', k: 'leave', id: p.id });
   for (const mb of mobs.values()) if (mb.target === p.id) mb.target = null;
   p.c = null;
 }
-
+// static game data the client needs once (monster visuals, world map, quest texts, classes, recipes)
+function welcomeData(c) {
+  return {
+    items: ITEMS, rarity: C.RARITY,
+    mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, aggro: !!v.aggro, family: v.family, fam: C.FAMILIES[v.family] ? C.FAMILIES[v.family].th : '', behavior: v.behavior, element: v.element, size: v.size, spr: v.spr, tint: v.tint, scale: v.scale, range: v.range, d: v.d }])),
+    skills: skillDefs(c), melee: MELEE,
+    classes: Object.fromEntries(Object.values(CLASSES).map(k => [k.id, { th: k.th, en: k.en, tier: k.tier, parent: k.parent, reqLv: k.reqLv, status: k.status, role: k.role, d: k.d }])),
+    world: { regions: C.REGIONS, maps: C.MAPS_META, links: C.LINKS },
+    quests: Object.fromEntries(Object.values(QUESTS).map(q => [q.id, { th: q.th, type: q.type, giver: q.giver, stages: q.stages.map(s => ({ k: s.k, d: s.d, n: s.n || 1 })), lv: q.req.lv || 1 }])),
+    recipes: RECIPES,
+  };
+}
 function enterWorld(p, u) {
   const a = db.accounts[u];
   for (const o of players.values()) if (o.acct === u) {
@@ -511,14 +660,14 @@ function enterWorld(p, u) {
     logout(o); // drop the old session now; its socket can take up to 30s to finish closing
     o.ws.close();
   }
-  p.acct = u; p.c = fixChar(a.char); p.knows = new Set(SKILL_IDS.filter(id => ownsSkill(p.c, id)));
-  if (p.c.hp <= 0) { p.c.hp = Math.floor(p.c.maxhp / 2); p.c.map = 'solkara'; p.c.x = 21; p.c.y = 20; }
+  p.acct = u; p.c = fixChar(a.char); p.knows = new Set(skillsFor(p.c).filter(id => ownsSkill(p.c, id)));
+  if (p.c.hp <= 0) { p.c.hp = Math.floor(p.c.maxhp / 2); p.c.map = p.c.save.map; p.c.x = p.c.save.x; p.c.y = p.c.save.y; }
   players.set(p.id, p);
-  send(p, { t: 'welcome', id: p.id, items: ITEMS, mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, aggro: !!v.aggro }])),
-    skills: Object.fromEntries(SKILL_IDS.map(id => { const { n, th, type, range, sp, cd, lv, d } = SKILLS[id]; return [id, { n, th, type, range, sp, cd, lv, d }]; })), melee: MELEE });
+  send(p, Object.assign({ t: 'welcome', id: p.id }, welcomeData(p.c)));
   warp(p, p.c.map, p.c.x, p.c.y);
   bcastAll({ t: 'sys', m: `${p.c.name} เข้าสู่โลก Elyndra`, col: '#9ad0ff' });
-  if (p.c.q.step === 0 && p.c.q.k === 0) sys(p, 'คุยกับ ไอริส ที่ลานกลางเมืองเพื่อรับภารกิจแรก', '#ffd34d');
+  if (p.c.qs.a.mq1 && p.c.qs.a.mq1.s === 0) sys(p, 'คุยกับ ผู้ใหญ่บ้านมาเรน (บ้านทางเหนือของลานหมู่บ้าน) เพื่อเริ่มการผจญภัย', '#ffd34d');
+  else if (p.c.q.step === 0 && p.c.q.k === 0 && p.c.map === 'solkara') sys(p, 'คุยกับ ไอริส ที่ลานกลางเมืองเพื่อรับภารกิจแรก', '#ffd34d');
 }
 
 function handle(p, m) {
@@ -534,7 +683,7 @@ function handle(p, m) {
         if (!/^[A-Za-z0-9ก-๙ _]{2,14}$/.test(name)) return send(p, { t: 'err', m: 'ชื่อตัวละคร 2-14 ตัวอักษร (ไทย/อังกฤษ/ตัวเลข)' });
         if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
         const salt = crypto.randomBytes(12).toString('hex');
-        const look = { hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(7, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 };
+        const look = { hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(8, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 };
         p.authBusy = true;
         hashPw(pw, salt, (e, hash) => {
           p.authBusy = false;
@@ -569,7 +718,7 @@ function handle(p, m) {
   switch (m.t) {
     case 'move': {
       const x = m.x | 0, y = m.y | 0;
-      p.target = null; p.pick = null; p.npcGo = null; p.pendingSkill = false;
+      p.target = null; p.pick = null; p.npcGo = null; p.nodeGo = null; p.pendingSkill = false;
       const pa = findPath(map, c.x, c.y, x, y);
       p.path = pa;
       break;
@@ -580,9 +729,9 @@ function handle(p, m) {
       const mob = mobs.get(m.id);
       if (!mob || mob.map !== c.map) { if (m.n) failMsg(p, 'attack', 'target'); break; }
       if (p.target !== mob.id) p.pendingSkill = false;
-      p.pick = null; p.npcGo = null;
+      p.pick = null; p.npcGo = null; p.nodeGo = null;
       if (m.n) {
-        const why = hitBlock(c, mob, MELEE); if (why) { p.target = null; failMsg(p, 'attack', why); break; }
+        const why = hitBlock(c, mob, c.range); if (why) { p.target = null; failMsg(p, 'attack', why); break; }
         p.target = mob.id; p.noChase = true; p.path = null;
         if (Date.now() >= p.nextAtk) { p.nextAtk = Date.now() + c.aspd; playerAttack(p, mob); }
       } else { p.target = mob.id; p.noChase = false; }
@@ -599,14 +748,26 @@ function handle(p, m) {
     }
     case 'pick': { const d = drops.get(m.id); if (d && d.map === c.map) { p.pick = d.id; p.target = null; p.path = findPath(map, c.x, c.y, d.x, d.y) || []; } break; }
     case 'npc': {
-      const npc = map.npcs.find(n => n.id === m.id); if (!npc) return;
+      const npc = npcAt(map, m.id); if (!npc) return;
       if (Math.max(Math.abs(npc.x - c.x), Math.abs(npc.y - c.y)) <= 3) return npcTalk(p, npc.id);
       // walk next to npc
       let best = null; for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1], [1, 1], [-1, 1]]) { const pa = findPath(map, c.x, c.y, npc.x + dx, npc.y + dy); if (pa && (!best || pa.length < best.length)) best = pa; }
-      p.path = best; p.target = null; p.npcGo = npc.id;
+      p.path = best; p.target = null; p.npcGo = npc.id; p.nodeGo = null;
       break;
     }
-    case 'npcAct': { const [act, arg] = String(m.a || '').split(':'); npcTalk(p, String(m.id), act, arg); break; }
+    case 'npcAct': { const [act, arg, arg2] = String(m.a || '').split(':'); npcTalk(p, String(m.id), act, arg, arg2); break; }
+    case 'node': {
+      const nd = nodeAt(map, String(m.id)); if (!nd) return;
+      if (Math.max(Math.abs(nd.x - c.x), Math.abs(nd.y - c.y)) <= 1.5) return useNode(p, nd);
+      let best = null; for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1], [0, 0]]) { const pa = findPath(map, c.x, c.y, nd.x + dx, nd.y + dy); if (pa && (!best || pa.length < best.length)) best = pa; }
+      p.path = best; p.target = null; p.nodeGo = nd.id; p.npcGo = null;
+      break;
+    }
+    case 'quest': { // log actions: track / abandon
+      const id = String(m.id || '');
+      if (m.a === 'track') Q.track(p, id); else if (m.a === 'abandon' && Q.abandon(p, id)) sys(p, 'ยกเลิกเควสแล้ว');
+      me(p); break;
+    }
     case 'chat': {
       const msg = String(m.m || '').slice(0, 120).trim(); if (!msg) return;
       if (Date.now() - p.lastChat < 700) return sys(p, 'พิมพ์เร็วเกินไป รอสักครู่แล้วส่งใหม่', '#ff8b8b');
@@ -631,34 +792,61 @@ function handle(p, m) {
     case 'use': {
       const s = c.inv[m.i | 0]; if (!s || (m.id != null && s.id !== m.id)) return; const it = ITEMS[s.id];
       if (it.ty === 'use') {
+        if (it.req && c.lv < it.req) return sys(p, `ต้องการ Lv ${it.req}`);
+        if (it.recall) { delSlot(c, m.i | 0); dirty = true; sys(p, 'คัมภีร์เรืองแสง... กลับสู่จุดเซฟ'); return warp(p, c.save.map, c.save.x, c.save.y); }
         const hp0 = c.hp, sp0 = c.sp;
         if (it.heal) c.hp = Math.min(c.maxhp, c.hp + it.heal);
         if (it.sp) c.sp = Math.min(c.maxsp, c.sp + it.sp);
         delSlot(c, m.i | 0); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: c.hp - hp0, sp: c.sp - sp0 }); me(p);
       } else if (it.ty === 'eq') {
-        const old = c.eq[it.slot]; c.eq[it.slot] = s.id; c.inv.splice(m.i | 0, 1); if (old) addItem(c, old); me(p); dirty = true;
-      }
+        const why = equipBlock(c, it); if (why) { sys(p, `สวม ${it.n} ไม่ได้: ${why}`, '#ff8b8b'); return send(p, { t: 'eqfail', id: it.id, r: why }); }
+        const sl = it.slot === 'acc' ? (!c.eq.acc1 ? 'acc1' : !c.eq.acc2 ? 'acc2' : 'acc1') : it.slot;
+        const old = c.eq[sl]; c.eq[sl] = s.id; c.inv.splice(m.i | 0, 1); if (old) addItem(c, old); me(p); dirty = true;
+      } else if (it.ty === 'quest') sys(p, `${it.n}: ${it.d || 'ไอเทมเควส'}`, '#b9a98e');
       break;
     }
     case 'unequip': { const sl = String(m.s); if (!EQ_SLOTS.includes(sl)) return; if (c.eq[sl] && c.inv.length < 40) { addItem(c, c.eq[sl]); delete c.eq[sl]; me(p); dirty = true; } break; }
-    case 'drop': { const i = m.i | 0; if (c.inv[i] && (m.id == null || c.inv[i].id === m.id)) { delSlot(c, i, c.inv[i].q); me(p); } break; }
-    case 'stat': { const k = String(m.s); if (STATS.includes(k) && c.pts > 0 && c.st[k] < 99) { c.pts--; c.st[k]++; me(p); dirty = true; } break; }
+    case 'drop': { const i = m.i | 0; if (c.inv[i] && (m.id == null || c.inv[i].id === m.id)) { delSlot(c, i, c.inv[i].q); me(p); Q.onItems(p); } break; }
+    case 'stat': { const k = String(m.s); if (STATS.includes(k) && c.pts > 0 && c.st[k] < LV.STAT_CAP) { c.pts--; c.st[k]++; me(p); dirty = true; } break; }
     case 'buy': {
-      if (!map.town) return; const id = m.id | 0, q = Math.max(1, Math.min(99, m.q | 0));
-      if (!SHOP.includes(id)) return; const cost = ITEMS[id].buy * q;
+      const id = m.id | 0, q = Math.max(1, Math.min(99, m.q | 0));
+      // shop opened from an NPC: its own list; old clients (no shop opened): the original list, in town
+      const list = p.shop ? SHOPS[p.shop].items : (map.town ? SHOP : null);
+      if (!list || !list.includes(id)) return;
+      const cost = Math.ceil(ITEMS[id].buy * (1 - (p.shop ? clsOf(c).shopDiscount || 0 : 0))) * q;
       if (c.zeny < cost) return sys(p, 'Zeny ไม่พอ');
       if (!addItem(c, id, q)) return sys(p, 'กระเป๋าเต็ม');
       c.zeny -= cost; me(p); dirty = true; sys(p, `ซื้อ ${ITEMS[id].n} x${q} (${cost} Zeny)`);
+      Q.onItems(p);
       break;
     }
     case 'sell': {
       if (!map.town) return; const i = m.i | 0, s = c.inv[i]; if (!s || (m.id != null && s.id !== m.id)) return; const q = Math.max(1, Math.min(s.q, m.q | 0 || s.q));
+      if (ITEMS[s.id].ty === 'quest') return sys(p, 'ไอเทมเควสขายไม่ได้');
       const gain = ITEMS[s.id].sell * q; delSlot(c, i, q); c.zeny += gain; me(p); dirty = true; sys(p, `ขายได้ ${gain} Zeny`);
       break;
     }
+    case 'store': { // storage: a=put|take, i = slot index, q = amount
+      if (!p.station || !p.station.startsWith('storage:')) return;
+      const npc = npcAt(map, p.station.split(':')[1]); if (!npc || Math.max(Math.abs(npc.x - c.x), Math.abs(npc.y - c.y)) > 4) return;
+      const from = m.a === 'put' ? c.inv : c.store, i = m.i | 0, s = from[i]; if (!s || (m.id != null && s.id !== m.id)) return;
+      const q = Math.max(1, Math.min(s.q, m.q | 0 || s.q));
+      if (m.a === 'put') { if (ITEMS[s.id].ty === 'quest') return sys(p, 'ไอเทมเควสฝากไม่ได้'); const t = ITEMS[s.id].ty !== 'eq' && c.store.find(x => x.id === s.id); if (!t && c.store.length >= 100) return sys(p, 'คลังเต็ม'); delSlot(c, i, q); if (t) t.q += q; else c.store.push({ id: s.id, q }); }
+      else { if (!addItem(c, s.id, q)) return sys(p, 'กระเป๋าเต็ม'); s.q -= q; if (s.q <= 0) c.store.splice(i, 1); Q.onItems(p); }
+      dirty = true; me(p); send(p, { t: 'storage', items: c.store, max: 100 });
+      break;
+    }
+    case 'bank': {
+      if (!p.station || !p.station.startsWith('bank:')) return;
+      const z = Math.max(0, Math.floor(+m.z || 0)); if (!z) return;
+      if (m.a === 'dep') { if (c.zeny < z) return; c.zeny -= z; c.bank += z; } else if (m.a === 'wd') { if (c.bank < z) return; c.bank -= z; c.zeny += z; } else return;
+      dirty = true; me(p); send(p, { t: 'bankui', bank: c.bank, zeny: c.zeny });
+      break;
+    }
+    case 'craft': craft(p, String(m.r || '')); break;
     case 'respawn': {
       if (!p.dead) return; p.dead = false; derive(c); c.hp = Math.floor(c.maxhp / 2); c.sp = Math.floor(c.maxsp / 2);
-      warp(p, 'solkara', 21, 20); break;
+      warp(p, c.save.map, c.save.x, c.save.y); break;
     }
   }
 }
@@ -672,9 +860,40 @@ function stepToward(e, spd, dt) {
   e.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 3 : 2) : (dy > 0 ? 0 : 1);
   return true;
 }
+// portal requirements: { lv } / { quest } / { locked } (planned maps)
+function portalBlock(c, pt) {
+  const r = pt.req; if (!r) return '';
+  if (r.locked) return `${pt.label || 'เส้นทางนี้'} — พื้นที่นี้ยังไม่เปิด`;
+  if (r.lv && c.lv < r.lv) return `ต้องการ Lv ${r.lv} ขึ้นไปเพื่อเข้า ${MAPS[pt.to] ? MAPS[pt.to].name : pt.to}`;
+  if (r.quest && !Q.done(c, r.quest)) return `ต้องทำเควส "${QUESTS[r.quest].th}" ให้สำเร็จก่อน`;
+  return '';
+}
+// boss actions: phases (stronger/faster), area slam with a warning circle, summoning helpers, charge
+function bossTick(mob, d, tgt, now) {
+  const r = mob.hp / mob.maxhp;
+  for (let i = mob.phase; i < (d.phases || []).length; i++) if (r <= d.phases[i].at) {
+    const ph = d.phases[i]; mob.phase = i + 1; mob.atkMul = ph.atk || 1; mob.spdMul = ph.spd || 1;
+    bcast(mob.map, { t: 'sys', m: `[BOSS] ${ph.msg}`, col: '#ff7a7a' }); bcast(mob.map, { t: 'fx', k: 'phase', id: mob.id });
+    if (d.minions) for (let k = 0; k < 2; k++) { const [x, y] = randFree(MAPS[mob.map], [Math.round(mob.x) - 4, Math.round(mob.y) - 4, Math.round(mob.x) + 4, Math.round(mob.y) + 4], true); spawnMob(mob.map, d.minions, x, y, { minion: mob.id, target: tgt.id, noLoot: 1 }); }
+  }
+  if (now < mob.skillAt) return;
+  mob.skillAt = now + (mob.phase >= 2 ? 6500 : 9000);
+  const sk = d.skills.filter(s => s !== 'summon'); if (!sk.length) return;
+  const pick = sk[Math.floor(Math.random() * sk.length)];
+  if (pick === 'charge' && Math.hypot(tgt.c.x - mob.x, tgt.c.y - mob.y) > 3) { mob.x = tgt.c.x + (mob.x > tgt.c.x ? 1 : -1); mob.y = tgt.c.y; if (!walkable(MAPS[mob.map], Math.round(mob.x), Math.round(mob.y))) { mob.x = tgt.c.x; mob.y = tgt.c.y; } mob.path = null; bcast(mob.map, { t: 'fx', k: 'charge', id: mob.id }); return; }
+  // area slam: warn first, hit everyone still inside 0.9s later
+  const ax = tgt.c.x, ay = tgt.c.y, R = 2.6;
+  bcast(mob.map, { t: 'fx', k: 'aoe', id: mob.id, x: ax, y: ay, r: R, ms: 900 });
+  setTimeout(() => {
+    if (!mobs.has(mob.id)) return;
+    for (const p of players.values()) if (!p.dead && p.c.map === mob.map && Math.hypot(p.c.x - ax, p.c.y - ay) <= R) hurtPlayer(p, Math.max(1, Math.round(d.atk[1] * 1.4 * (mob.atkMul || 1) - p.c.def)), mob.id);
+  }, 900);
+}
+const snapCache = new Map();
 let last = Date.now();
 setInterval(() => {
   const now = Date.now(), dt = Math.min(0.25, (now - last) / 1000); last = now;
+  const busy = new Set(); for (const p of players.values()) busy.add(p.c.map);
   // players
   for (const p of players.values()) {
     const c = p.c; if (p.dead) continue;
@@ -684,7 +903,7 @@ setInterval(() => {
       const mob = mobs.get(p.target);
       if (!mob || mob.map !== c.map) { p.target = null; p.pendingSkill = false; }
       else {
-        const d = reach(c, mob), inReach = d <= MELEE && los(MAPS[c.map], c.x, c.y, mob.x, mob.y);
+        const d = reach(c, mob), inReach = d <= c.range && los(MAPS[c.map], c.x, c.y, mob.x, mob.y);
         if (inReach) {
           pe.path = null;
           if (p.pendingSkill) { p.pendingSkill = false; castSkill(p, 'bash', mob.id); }
@@ -699,24 +918,36 @@ setInterval(() => {
         }
       }
     }
+    const tile0 = Math.round(c.x) + ',' + Math.round(c.y);
     stepToward(pe, 4.6 + c.st.agi * 0.02, dt);
     c.x = pe.x; c.y = pe.y; p.path = pe.path; if (pe.dir != null) c.dir = pe.dir;
-    // arrived at npc
+    if (tile0 !== Math.round(c.x) + ',' + Math.round(c.y)) Q.onMove(p);
+    // arrived at npc / node
     if (p.npcGo && (!p.path || !p.path.length)) { const id = p.npcGo; p.npcGo = null; npcTalk(p, id); }
+    if (p.nodeGo && (!p.path || !p.path.length)) { const nd = nodeAt(MAPS[c.map], p.nodeGo); p.nodeGo = null; if (nd) useNode(p, nd); }
     // pick up
     if (p.pick && (!p.path || !p.path.length)) {
       const d = drops.get(p.pick); p.pick = null;
       if (d && Math.max(Math.abs(d.x - c.x), Math.abs(d.y - c.y)) <= 1.5) {
         if (d.owner && d.owner !== p.id && now < d.until) sys(p, 'ไอเทมนี้ยังเป็นของคนอื่นอยู่');
-        else if (addItem(c, d.item)) { drops.delete(d.id); bcast(c.map, { t: 'fx', k: 'pick', id: d.id }); sys(p, `ได้รับ ${ITEMS[d.item].n}`, '#c8f7c5'); me(p); dirty = true; }
+        else if (addItem(c, d.item)) { drops.delete(d.id); bcast(c.map, { t: 'fx', k: 'pick', id: d.id }); sys(p, `ได้รับ ${ITEMS[d.item].n}`, '#c8f7c5'); Q.onItems(p); me(p); dirty = true; }
         else sys(p, 'กระเป๋าเต็ม');
       }
     }
     // portal
     if (!p.path || !p.path.length) {
       const map = MAPS[c.map]; const pt = map.portals.find(o => o.x === Math.round(c.x) && o.y === Math.round(c.y));
-      if (pt) warp(p, pt.to, pt.tx, pt.ty);
+      if (pt) {
+        const why = portalBlock(c, pt);
+        if (!why) warp(p, pt.to, pt.tx, pt.ty);
+        else if ((p.portalMsg || 0) < now) {
+          p.portalMsg = now + 1500; sys(p, why, '#ffb36b');
+          const back = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [pt.x + dx, pt.y + dy]).find(([x, y]) => walkable(map, x, y) && get(map, x, y) !== 8);
+          if (back) p.path = [back];
+        }
+      }
     }
+    if (p.wave) waveTick(p, now);
     // regen
     if (!p.regenAt || now > p.regenAt) {
       p.regenAt = now + (MAPS[c.map].town ? 2000 : 6000);
@@ -725,52 +956,91 @@ setInterval(() => {
       c.sp = Math.min(c.maxsp, c.sp + Math.max(1, Math.floor(c.maxsp * 0.04)));
       if (c.hp + c.sp !== before) me(p);
     }
+    if (p.meDue) { p.meDue = false; me(p); }
   }
-  // mobs
+  // mobs (maps nobody is on are frozen: they just heal back up)
   for (const mob of mobs.values()) {
     const d = MOBS[mob.type];
+    if (!busy.has(mob.map)) { mob.target = null; mob.path = null; mob.hp = mob.maxhp; continue; }
+    if (d.dummy) { if (mob.hp < mob.maxhp && now - (mob.hitAt || 0) > 8000) mob.hp = mob.maxhp; continue; }
     let tgt = mob.target ? players.get(mob.target) : null;
     if (!tgt) mob.target = null; // target logged out: let the next attacker re-aggro it
-    if (tgt && (tgt.dead || tgt.c.map !== mob.map || Math.hypot(tgt.c.x - mob.x, tgt.c.y - mob.y) > 14)) { mob.target = null; tgt = null; }
-    if (!tgt && d.aggro) {
-      for (const p of players.values()) if (!p.dead && p.c.map === mob.map && Math.hypot(p.c.x - mob.x, p.c.y - mob.y) < 5) { mob.target = p.id; tgt = p; break; }
+    const leash = d.boss ? 16 : 14;
+    if (tgt && (tgt.dead || tgt.c.map !== mob.map || Math.hypot(tgt.c.x - mob.x, tgt.c.y - mob.y) > leash || (stealthed(tgt.c) && !d.boss))) { mob.target = null; tgt = null; }
+    if (!tgt && d.aggro && !(mob.fleeUntil > now)) {
+      // beginner protection: Lv1-5 players are never attacked first; town safe zones are safe
+      for (const p of players.values()) if (!p.dead && p.c.map === mob.map && p.c.lv > 5 && !stealthed(p.c) && !(inSafe(MAPS[mob.map], p.c.x, p.c.y) && !mob.wave) && Math.hypot(p.c.x - mob.x, p.c.y - mob.y) < d.aggro) { mob.target = p.id; tgt = p; if (d.assist) callHelp(mob, p); break; }
     }
+    if (mob.wave && !tgt) { const o = players.get(mob.wave); if (o && !o.dead && o.c.map === mob.map) { mob.target = o.id; tgt = o; } }
+    // healer: patch up hurt friends nearby
+    if (d.heals && now > (mob.healAt || 0)) {
+      mob.healAt = now + 3500;
+      const f = [...mobs.values()].find(o => o.map === mob.map && o.hp < o.maxhp * 0.7 && Math.hypot(o.x - mob.x, o.y - mob.y) <= 4 && !MOBS[o.type].dummy);
+      if (f) { const v = Math.round(f.maxhp * 0.15); f.hp = Math.min(f.maxhp, f.hp + v); bcast(mob.map, { t: 'fx', k: 'mheal', from: mob.id, to: f.id, v }); }
+    }
+    // coward: runs away when badly hurt
+    if (tgt && d.fleeAt && mob.hp < mob.maxhp * d.fleeAt && !(mob.fleeUntil > now)) {
+      mob.fleeUntil = now + 3500; const dx = mob.x - tgt.c.x, dy = mob.y - tgt.c.y, l = Math.hypot(dx, dy) || 1, M = MAPS[mob.map];
+      const tx = Math.round(mob.x + dx / l * 6), ty = Math.round(mob.y + dy / l * 6);
+      mob.path = walkable(M, tx, ty) ? findPath(M, mob.x, mob.y, tx, ty, 200) : null;
+    }
+    const slow = mob.slowUntil > now ? 0.5 : 1, spdMul = (mob.spdMul || 1) * slow;
+    if (mob.fleeUntil > now) { stepToward(mob, d.spd * 1.3 * slow, dt); continue; }
     if (tgt) {
-      const dist = Math.max(Math.abs(tgt.c.x - mob.x), Math.abs(tgt.c.y - mob.y));
-      if (dist <= 1.5) { mob.path = null; if (now >= mob.nextAtk) { mobAttack(mob, tgt); mob.nextAtk = now + (d.boss ? 1300 : 1600); } }
-      else if (!mob.path || !mob.path.length || (mob.repath || 0) < now) { mob.path = findPath(MAPS[mob.map], mob.x, mob.y, Math.round(tgt.c.x), Math.round(tgt.c.y), 250); if (mob.path) mob.path.pop(); mob.repath = now + 700; }
+      const dist = Math.max(Math.abs(tgt.c.x - mob.x), Math.abs(tgt.c.y - mob.y)), range = d.range || 1.5;
+      const ranged = range > 2;
+      if (d.boss) bossTick(mob, d, tgt, now);
+      if (dist <= range && (!ranged || los(MAPS[mob.map], mob.x, mob.y, tgt.c.x, tgt.c.y))) {
+        mob.path = null;
+        if (now >= mob.nextAtk) {
+          if (ranged) bcast(mob.map, { t: 'fx', k: 'mshot', from: mob.id, to: tgt.id, magic: d.magic ? 1 : 0 });
+          mobAttack(mob, tgt, !!d.magic); mob.nextAtk = now + d.aspd;
+        }
+      } else if (!mob.path || !mob.path.length || (mob.repath || 0) < now) { mob.path = findPath(MAPS[mob.map], mob.x, mob.y, Math.round(tgt.c.x), Math.round(tgt.c.y), 250); if (mob.path) mob.path.pop(); mob.repath = now + 700; }
     } else if (now > mob.nextWander) {
       mob.nextWander = now + 3000 + Math.random() * 5000;
       const m = MAPS[mob.map];
       const tx = Math.round(mob.hx + (Math.random() * 10 - 5)), ty = Math.round(mob.hy + (Math.random() * 10 - 5));
       // a mob dragged far away by a chase gets a bigger search budget so it can walk back home
       const far = Math.max(Math.abs(mob.x - mob.hx), Math.abs(mob.y - mob.hy)) > 10;
-      if (walkable(m, tx, ty) && get(m, tx, ty) !== 8) mob.path = findPath(m, mob.x, mob.y, tx, ty, far ? 600 : 150);
+      if (walkable(m, tx, ty) && get(m, tx, ty) !== 8 && (!inSafe(m, tx, ty) || m.town)) mob.path = findPath(m, mob.x, mob.y, tx, ty, far ? 600 : 150);
       if (mob.hp < mob.maxhp) mob.hp = Math.min(mob.maxhp, mob.hp + Math.ceil(mob.maxhp * 0.05));
-      if (!tgt) mob.dmg.clear();
+      if (!tgt) { mob.dmg.clear(); mob.phase = 0; mob.atkMul = 1; mob.spdMul = 1; }
     }
-    stepToward(mob, tgt ? d.spd * 1.25 : d.spd * 0.6, dt);
+    stepToward(mob, (tgt ? d.spd * 1.25 : d.spd * 0.6) * spdMul, dt);
   }
   // boss respawn
-  for (const id in MAPS) {
-    const bs = MAPS[id].bossSpawn; if (!bs) continue;
-    const alive = [...mobs.values()].some(m => m.map === id && m.type === bs.type);
-    if (!alive && (bossTimer[id] || 0) < now) {
-      bossTimer[id] = Infinity;
-      spawnMob(id, bs.type, bs.x, bs.y);
-      bcastAll({ t: 'sys', m: `[BOSS] ${MOBS[bs.type].n} ปรากฏตัวที่ ${MAPS[id].name}!`, col: '#ff7a7a' });
+  for (const id in MAPS) for (const bs of MAPS[id].bosses) {
+    const k = id + ':' + bs.mob;
+    const alive = [...mobs.values()].some(m => m.map === id && m.type === bs.mob && !m.minion);
+    if (!alive && (bossTimer[k] || 0) < now) {
+      bossTimer[k] = Infinity;
+      spawnMob(id, bs.mob, bs.x, bs.y);
+      bcastAll({ t: 'sys', m: `[BOSS] ${MOBS[bs.mob].n} ปรากฏตัวที่ ${MAPS[id].name}!`, col: '#ff7a7a' });
     }
   }
   // drops expire
   for (const d of drops.values()) if (now > d.expire) { drops.delete(d.id); bcast(d.map, { t: 'fx', k: 'pick', id: d.id }); }
-  // snapshot per map
+  // snapshots: only the player's map, and only entities near them (area of interest). Players standing in the
+  // same 8x8 block share one serialized snapshot.
   const per = {};
-  for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.head || 0, p.dead ? 1 : 0]); }
+  for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.chead || p.c.eq.head || 0, p.dead ? 1 : 0, p.c.cls]); }
   for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp, mob.target || 0]); }
   for (const d of drops.values()) { const s = per[d.map]; if (s) s.d.push([d.id, d.item, d.x, d.y]); }
-  for (const k in per) per[k] = JSON.stringify({ t: 's', ...per[k] }); // serialize once per map, not once per player
-  for (const p of players.values()) { const s = per[p.c.map]; if (s && p.ws.readyState === 1) p.ws.send(s); }
+  snapCache.clear();
+  for (const p of players.values()) {
+    if (p.ws.readyState !== 1) continue;
+    const s = per[p.c.map], bx = Math.floor(p.c.x / 8), by = Math.floor(p.c.y / 8), key = p.c.map + ':' + bx + ':' + by;
+    let out = snapCache.get(key);
+    if (!out) {
+      const x0 = bx * 8 - AOI, x1 = bx * 8 + 8 + AOI, y0 = by * 8 - AOI, y1 = by * 8 + 8 + AOI, near = e => e[2] >= x0 && e[2] <= x1 && e[3] >= y0 && e[3] <= y1;
+      out = JSON.stringify({ t: 's', p: s.p.filter(near), m: s.m.filter(near), d: s.d.filter(near) });
+      snapCache.set(key, out);
+    }
+    p.ws.send(out);
+  }
 }, TICK);
+const AOI = 30; // tiles of view around the player's 8x8 block
 
 function syncChars() { for (const p of players.values()) db.accounts[p.acct].char = p.c; if (players.size) dirty = true; }
 function shutdown() { syncChars(); dirty = true; saveDb(); process.exit(0); }

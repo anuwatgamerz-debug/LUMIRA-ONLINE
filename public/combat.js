@@ -11,9 +11,14 @@ let lastHit = 0, lastMyHitT = 0;      // mob I hit most recently (target priorit
 // you can see and tap would be dropped the moment it's selected
 const TARGET_RANGE = 10, TARGET_KEEP = 26;
 const SKICON = { bash: 'skill', heal: 'sk_heal', bolt: 'sk_bolt', focus: 'sk_focus', cleave: 'sk_cleave', twin: 'sk_twin' }; // pixel fallback
-const SKART = { bash: 'sk_bash', heal: 'sk_heal', bolt: 'sk_bolt', focus: 'sk_focus', cleave: 'sk_cleave', twin: 'sk_twin' }; // art orbs (ui_icons atlas)
+const SKART = { bash: 'sk_bash', heal: 'sk_heal', bolt: 'sk_bolt', focus: 'sk_focus', cleave: 'sk_cleave', twin: 'sk_twin', // art orbs (ui_icons atlas)
+  v_wall: 'sk_focus', v_strike: 'sk_bash', v_charge: 'sk_twin', r_pierce: 'sk_bolt', r_volley: 'sk_twin', r_step: 'sk_focus', a_ember: 'sk_bolt', a_frost: 'orb_ice', a_nova: 'sk_cleave',
+  c_mend: 'sk_heal', c_smite: 'sk_bolt', c_bless: 'sk_focus', g_back: 'sk_bash', g_venom: 'sk_twin', g_veil: 'orb_ice', t_hammer: 'sk_bash', t_bomb: 'sk_cleave', t_repair: 'sk_heal' };
+// class skills reuse the six orbs, recoloured per class so they read apart at a glance
+const SKHUE = { vanguard: 'hue-rotate(200deg) saturate(1.3)', ranger: 'hue-rotate(80deg)', arcanist: 'hue-rotate(250deg) saturate(1.4)', cleric: 'hue-rotate(30deg) brightness(1.15)', rogue: 'hue-rotate(290deg) saturate(.8) brightness(.9)', artisan: 'hue-rotate(150deg) saturate(1.2)' };
 // draw a skill's icon on an element: art orb when the atlas is loaded, pixel icon otherwise
 function skillIcon(el, sid) {
+  el.style.filter = (SK[sid] && SKHUE[SK[sid].cls]) || '';
   if (HUD.sprite(el, SKART[sid])) return true;
   el.style.backgroundSize = el.style.backgroundPosition = ''; el.style.backgroundImage = `url(${HUD.iconURL(SKICON[sid] || 'skill')})`; return false;
 }
@@ -81,7 +86,7 @@ function updTarget() {
   const m = myEnt(), d = m ? cheb(m, e) : 0;
   const st = [info.boss ? 'บอส' : info.aggro ? 'ดุร้าย' : 'ไม่ก้าวร้าว'];
   if (e.tg === myId) st.unshift('<span class="hot">กำลังโจมตีคุณ</span>');
-  st.push(d <= MELEE_R ? 'ในระยะโจมตี' : `<span class="far">ห่าง ${Math.round(d)} ช่อง</span>`);
+  st.push(d <= ((me && me.rng) || MELEE_R) ? 'ในระยะโจมตี' : `<span class="far">ห่าง ${Math.round(d)} ช่อง</span>`);
   $('tgSt').innerHTML = st.join(' · ');
   if (tgPic !== selected && drawMobPic(e.type)) tgPic = selected;
 }
@@ -98,7 +103,7 @@ function doAttack() {
     setTarget(l[0]); e = ents.get(selected);
   }
   const m = myEnt(); if (!m) return;
-  if (cheb(m, e) > MELEE_R + 0.15) { toast('อยู่นอกระยะโจมตี (Out of range)'); shake(b); return; }
+  if (cheb(m, e) > ((me && me.rng) || MELEE_R) + 0.15) { toast('อยู่นอกระยะโจมตี (Out of range)'); shake(b); return; }
   press(b); send({ t: 'attack', id: selected, n: 1 });
 }
 onPress($('bAtk'), doAttack);
@@ -201,7 +206,7 @@ function renderSkills() {
     d.draggable = !!lv; d.addEventListener('dragstart', e => e.dataTransfer.setData('text/skill', sid));
     const ic = document.createElement('i'); ic.className = 'pi'; skillIcon(ic, sid); d.appendChild(ic);
     const slot = me.hot.indexOf(sid);
-    d.insertAdjacentHTML('beforeend', `<div class="grow"><b>${esc(sk.th)}</b> <small>${esc(sk.n)}</small> ${lv ? `<small class="num" style="color:#ffe39a">Lv${lv}</small>` : `<small style="color:#ff8b8b">ปลดล็อก Lv ${sk.lv}</small>`}<br><small style="color:var(--dim)">${esc(sk.d)}<br>${SK_TYPE[sk.type]}${sk.range ? ` · ระยะ ${sk.range < 2 ? 'ประชิด' : sk.range + ' ช่อง'}` : ''} · SP ${sk.sp} · คูลดาวน์ ${sk.cd / 1000} วิ${slot >= 0 ? ` · อยู่ช่อง ${slot + 1}` : ''}</small></div>`);
+    d.insertAdjacentHTML('beforeend', `<div class="grow"><b>${esc(sk.th)}</b> <small>${esc(sk.n)}</small>${sk.cls && CLSDEF[sk.cls] ? `<span class="tag class">${CLSDEF[sk.cls].th}</span>` : ''} ${lv ? `<small class="num" style="color:#ffe39a">Lv${lv}</small>` : `<small style="color:#ff8b8b">ปลดล็อก Lv ${sk.lv}</small>`}<br><small style="color:var(--dim)">${esc(sk.d)}<br>${SK_TYPE[sk.type]}${sk.range ? ` · ระยะ ${sk.range < 2 ? 'ประชิด' : sk.range + ' ช่อง'}` : ''} · SP ${sk.sp} · คูลดาวน์ ${sk.cd / 1000} วิ${slot >= 0 ? ` · อยู่ช่อง ${slot + 1}` : ''}</small></div>`);
     d.onclick = () => { if (!lv) { toast(`ปลดล็อกที่ Lv ${sk.lv}`); return; } if (assignSlot >= 0) assignSkill(sid, assignSlot); else { assignPick = assignPick === sid ? null : sid; renderSkills(); } };
     l.appendChild(d);
     if (assignPick === sid) { // "set as slot" picker

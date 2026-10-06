@@ -31,7 +31,7 @@ input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;bord
 #login label{font-size:13px;color:var(--dim);display:block;margin:8px 0 3px}
 #login .tabs{display:flex;gap:6px;margin-bottom:6px}#login .tabs button{flex:1;background:#1a2042}#login .tabs button.on{background:linear-gradient(180deg,#5a4bb0,#3b2f85)}
 #preview{display:block;margin:8px auto 4px;width:144px;height:144px;image-rendering:pixelated;background:radial-gradient(ellipse at 50% 78%,#6fb04f 0 38%,#3f7a33 39% 62%,#0000 63%);border-radius:8px}
-.sel{display:flex;gap:6px;align-items:center;margin-top:6px}.sel button{padding:4px 12px}.sel span{flex:1;text-align:center;font-size:15px}
+.sel{display:flex;gap:6px;align-items:center;margin-top:6px}.sel button{padding:4px 12px}.sel span{flex:1;text-align:center;font-size:15px}.sel small{width:44px;color:var(--dim);font-size:12px}
 #err{color:#ff8b8b;min-height:20px;font-size:13px;text-align:center;margin-top:8px}
 #credit{position:fixed;right:8px;bottom:6px;font-size:10px;z-index:21}#credit a{color:#ffe39acc}
 /* ---------------- HUD: everything below is sized in rem; html font-size = 10px * --ui (set by hud.js) */
@@ -267,6 +267,13 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 .chead .bar{width:16rem}
 #dead{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:1.6rem 2rem;text-align:center;display:none;font-size:1.5rem}
 #bmc{width:100%;image-rendering:pixelated;display:block}
+.tabs2{display:flex;gap:.4rem;margin-bottom:.6rem}.tabs2 button{flex:1;padding:.4rem}.tabs2 button.on{border-color:var(--gold);color:var(--gold)}
+#wmw{position:relative;width:100%;aspect-ratio:16/11;background:#0b1024;border:2px solid #3b4680;border-radius:4px;overflow:hidden}#wmc{width:100%;height:100%;display:block}
+.r0{color:#d8d2c0}.r1{color:#7dd87d}.r2{color:#6fb7ff}.r3{color:#c58bff}.r4{color:#ffb347}
+.slot.r1{border-color:#3f8a3f}.slot.r2{border-color:#2f6fbf}.slot.r3{border-color:#7a4fbf}.slot.r4{border-color:#bf7a1f}
+.tag{display:inline-block;font-size:.9rem;padding:0 .4rem;border-radius:.3rem;background:#2a3466;color:#cfd6f5;margin-left:.3rem}.tag.main{background:#6b4a14;color:#ffe39a}.tag.class{background:#4a2a72;color:#e2cbff}.tag.daily{background:#1d4a5a;color:#bfeeff}
+.qcard{display:block!important}.qcard .qd{color:#d8d2c0;margin:.2rem 0}.qcard .qa{display:flex;gap:.4rem;margin-top:.4rem}.qcard.tr{border-color:var(--gold)}
+.li .req{color:#ff8b8b}.li small.st{color:var(--dim)}
 /* chat window: anchored to the top so the on-screen keyboard doesn't cover the input */
 #wChat{top:calc(var(--st) + .4rem);transform:translateX(-50%);width:min(52rem,calc(100vw - var(--sl) - var(--sr)))}
 .tabs2{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
@@ -300,8 +307,11 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
     <div id="regbox" style="display:none">
       <label>ชื่อตัวละคร</label><input id="cn" maxlength="14">
       <canvas id="preview" width="96" height="96"></canvas>
-      <div class="sel"><button data-k="cc" data-d="-1">◀</button><span id="v_cc">อัศวิน</span><button data-k="cc" data-d="1">▶</button></div>
-      <div class="sel"><button data-k="sex" data-d="-1">◀</button><span id="v_sex">ชาย</span><button data-k="sex" data-d="1">▶</button></div>
+      <div class="note" style="text-align:center;margin-top:4px">ทุกคนเริ่มเป็น นักผจญภัย Lv1 — เลือกอาชีพได้ที่ Lv 10</div>
+      <div class="sel"><small>ชุด</small><button data-k="cc" data-d="-1">◀</button><span id="v_cc">ชุดอัศวิน</span><button data-k="cc" data-d="1">▶</button></div>
+      <div class="sel"><small>รูปร่าง</small><button data-k="sex" data-d="-1">◀</button><span id="v_sex">ชาย</span><button data-k="sex" data-d="1">▶</button></div>
+      <div class="sel"><small>ทรงผม</small><button data-k="hair" data-d="-1">◀</button><span id="v_hair">ทรงเดิม</span><button data-k="hair" data-d="1">▶</button></div>
+      <div class="sel"><small>สีผม</small><button data-k="hc" data-d="-1">◀</button><span id="v_hc">ธรรมชาติ</span><button data-k="hc" data-d="1">▶</button></div>
     </div>
     <button id="go" style="width:100%;margin-top:14px;padding:10px;font-size:16px;background:linear-gradient(180deg,#c8913a,#8a5a1c);border-color:var(--gold)">เข้าเกม</button>
     <div id="err"></div>
@@ -361,7 +371,12 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
   <div id="wParty" class="win frame"><h3><span>ปาร์ตี้</span><button class="x">✕</button></h3><div class="note">ระบบปาร์ตี้ยังไม่เปิดให้บริการ<br>เมื่อเปิดแล้วจะสามารถชวนเพื่อน แบ่ง EXP และเห็นตำแหน่งสมาชิกบนแผนที่ได้</div></div>
   <div id="wGuild" class="win frame"><h3><span>กิลด์</span><button class="x">✕</button></h3><div class="note">ระบบกิลด์ยังไม่เปิดให้บริการ<br>เมื่อเปิดแล้วจะสามารถสร้าง/เข้าร่วมกิลด์ และคุยในช่องแชทกิลด์ได้</div></div>
   <div id="wShop" class="win frame"><h3><span id="shopt">ร้านค้า</span><button class="x">✕</button></h3><div class="list" id="shoplist"></div></div>
-  <div id="wMap" class="win frame"><h3><span id="bmn">แผนที่</span><button class="x">✕</button></h3><canvas id="bmc"></canvas></div>
+  <div id="wMap" class="win frame"><h3><span id="bmn">แผนที่</span><button class="x">✕</button></h3>
+    <div class="tabs2" id="maptabs"><button data-t="local" class="on">แผนที่นี้</button><button data-t="world">แผนที่โลก</button></div>
+    <div id="maplocal"><canvas id="bmc"></canvas><div class="note" id="mapinfo"></div></div>
+    <div id="mapworld" style="display:none"><div id="wmw"><canvas id="wmc"></canvas></div><div id="wminfo" class="li" style="display:block;margin-top:.6rem">แตะเมืองหรือแผนที่เพื่อดูข้อมูล</div></div>
+  </div>
+  <div id="wSvc" class="win frame"><h3><span id="svct">บริการ</span><button class="x">✕</button></h3><div id="svcbody"></div></div>
   <div id="wChat" class="win frame"><h3><span>แชท</span><button class="x">✕</button></h3>
     <div class="tabs2" id="chtabs"><button data-ch="all" class="on">ทั้งหมด</button><button data-ch="sys">ระบบ</button><button data-ch="local">ท้องถิ่น</button><button data-ch="world">โลก</button><button data-ch="party">ปาร์ตี้</button><button data-ch="guild">กิลด์</button><button data-ch="whisper">กระซิบ</button></div>
     <div id="chlist"></div>
@@ -381,6 +396,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 </div>
 <script src="hud.js"></script>
 <script src="game.js"></script>
+<script src="world.js"></script>
 <script src="combat.js"></script>
 </body>
 </html>

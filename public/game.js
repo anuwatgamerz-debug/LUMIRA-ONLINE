@@ -21,7 +21,8 @@ addEventListener('resize', resize); resize();
 let META = { lpc: {}, px: {} };
 const IMG = {};
 function img(n) {
-  let i = IMG[n]; if (!i) { i = IMG[n] = new Image(); i.src = 'assets/' + n + '.png'; }
+  let i = IMG[n]; if (i && i.getContext) return i; // generated sheet (recolour / procedural)
+  if (!i) { i = IMG[n] = new Image(); i.src = 'assets/' + n + '.png'; }
   return i.complete && i.naturalWidth ? i : null;
 }
 (function loadMeta() { fetch('assets/meta.json').then(r => r.json()).then(m => { META = m; }).catch(() => setTimeout(loadMeta, 2000)); })();
@@ -34,7 +35,7 @@ const SRV2ROW = [2, 0, 1, 3];
 function row4(dx, dy) { return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 3 : 1) : (dy > 0 ? 2 : 0); }
 
 // draw sprite with feet at art coords (x,y). returns false if not loaded
-function drawChar(name, anim, tt, row, x, y, alpha = 1) {
+function drawChar(name, anim, tt, row, x, y, alpha = 1, g = ctx) {
   const L = META.lpc[name];
   if (L) {
     const im = img(name); if (!im) return false;
@@ -50,9 +51,9 @@ function drawChar(name, anim, tt, row, x, y, alpha = 1) {
     else f = Math.min(n - 1, Math.floor(tt * (n / 0.45)));
     const rr = a[2] === 1 ? 0 : row;
     const ox = Math.round(x - c / 2), oy = Math.round(y - (c - 64) / 2 - 60);
-    if (alpha < 1) ctx.globalAlpha = alpha;
-    ctx.drawImage(im, f * c, (a[0] + rr) * c, c, c, ox, oy, c, c);
-    ctx.globalAlpha = 1; return true;
+    if (alpha < 1) g.globalAlpha = alpha;
+    g.drawImage(im, f * c, (a[0] + rr) * c, c, c, ox, oy, c, c);
+    g.globalAlpha = 1; return true;
   }
   const P = META.px[name];
   if (P) {
@@ -60,9 +61,9 @@ function drawChar(name, anim, tt, row, x, y, alpha = 1) {
     let key = anim === 'stand' ? 'idle' : anim === 'hurt' ? 'die' : anim;
     const a = P.anims[key] || P.anims.idle; const [c0, n, fps, loop] = a;
     let f = Math.floor(tt * fps); f = loop ? ((f % n) + n) % n : Math.min(n - 1, Math.max(0, f));
-    if (alpha < 1) ctx.globalAlpha = alpha;
-    ctx.drawImage(im, (c0 + f) * P.fw, row * P.fh, P.fw, P.fh, Math.round(x - P.ax), Math.round(y - P.ay), P.fw, P.fh);
-    ctx.globalAlpha = 1; return true;
+    if (alpha < 1) g.globalAlpha = alpha;
+    g.drawImage(im, (c0 + f) * P.fw, row * P.fh, P.fw, P.fh, Math.round(x - P.ax), Math.round(y - P.ay), P.fw, P.fh);
+    g.globalAlpha = 1; return true;
   }
   return false;
 }
@@ -88,12 +89,13 @@ const PAL = {
 };
 let ground = null, props = [], portals = [], waterPx = [], miniC = null;
 function classOf(v, m) {
-  const woods = m.id === 'woods';
+  const E = envOf(m);
   switch (v) {
-    case 1: return GRASS; case 5: return woods ? DGRASS : GRASS; case 11: return m.id === 'plains' ? SAND : GRASS;
-    case 4: case 8: return DIRT; case 9: case 3: return m.town ? DIRT : (woods ? GRASS : SAND);
+    case 1: return GRASS; case 5: return E.treeDark ? DGRASS : GRASS; case 11: return E.flowerSand ? SAND : E.base === CAVE ? CAVE : GRASS;
+    case 4: case 8: return DIRT; case 9: case 3: return m.town ? DIRT : E.base;
+    case 6: return E.cave ? ROCKW : E.base;
     case 10: return PLAZA; case 2: case 12: return WATER;
-    default: return woods ? GRASS : SAND;
+    default: return E.base;
   }
 }
 function genGround(m) {
@@ -102,7 +104,7 @@ function genGround(m) {
   for (let i = 0; i < w * h; i++) cls[i] = classOf(m.t[i], m);
   const at = (x, y) => cls[Math.max(0, Math.min(h - 1, y)) * w + Math.max(0, Math.min(w - 1, x))];
   const out = new Uint8Array(W * H); // class per pixel
-  const order = [GRASS, DGRASS, DIRT, WATER];
+  const order = [GRASS, DGRASS, DIRT, WATER, ROCKW];
   for (let py = 0; py < H; py++) {
     const fy = (py + 0.5) / TP - 0.5, ty = Math.floor(fy), yf = fy - ty;
     for (let px = 0; px < W; px++) {
@@ -111,7 +113,7 @@ function genGround(m) {
       const own = at(Math.floor(px / TP), Math.floor(py / TP));
       if (c00 === c10 && c00 === c01 && c00 === c11) { out[py * W + px] = c00; continue; }
       if (own === PLAZA) { out[py * W + px] = PLAZA; continue; }
-      let res = m.id === 'woods' ? GRASS : SAND; let n = -1;
+      let res = envOf(m).base; let n = -1;
       for (const k of order) {
         const v = (c00 === k) * (1 - xf) * (1 - yf) + (c10 === k) * xf * (1 - yf) + (c01 === k) * (1 - xf) * yf + (c11 === k) * xf * yf;
         if (v <= 0) continue;
@@ -140,6 +142,10 @@ function genGround(m) {
       if (get(x, y - 1) !== WATER || get(x - 1, y) !== WATER || get(x + 1, y) !== WATER || get(x, y + 1) !== WATER) col = [214, 238, 255];
       else if (get(x, y - 2) !== WATER) col = [120, 180, 230];
       else if (r < 0.0015) waterPx.push(x, y);
+    } else if (c === ROCKW) { // cave wall: dark rock, lit top edge, shadowed foot
+      const n = vnoise(x / 6, y / 6); const p = PAL[ROCKW]; col = p[n < 0.3 ? 3 : n < 0.55 ? 0 : n < 0.8 ? 1 : 2];
+      if (get(x, y + 1) !== ROCKW && get(x, y + 1) !== 255) col = [24, 20, 26]; else if (get(x, y - 1) !== ROCKW && get(x, y - 1) !== 255) col = [96, 88, 104];
+      else if (r < 0.03) col = [70, 64, 78];
     } else {
       const p = PAL[c]; const n = vnoise(x / 9 + c * 30, y / 9);
       col = p[n < 0.3 ? 3 : n < 0.55 ? 0 : n < 0.8 ? 1 : 2];
@@ -179,8 +185,8 @@ function genGround(m) {
   for (const b of m.props || []) { g.fillStyle = 'rgba(20,16,10,0.25)'; g.fillRect(b.x * TP + 4, (b.y + b.h) * TP - 4, b.w * TP + 6, 8); }
   // minimap
   miniC = mkCanvas(w, h); const mg = miniC.getContext('2d'); const mi = mg.createImageData(w, h);
-  const MC = { [SAND]: [214, 186, 128], [GRASS]: [88, 160, 70], [DGRASS]: [50, 120, 50], [DIRT]: [170, 130, 84], [PLAZA]: [190, 182, 166], [WATER]: [60, 134, 201] };
-  for (let i = 0; i < w * h; i++) { let c = MC[cls[i]]; const v = m.t[i]; if (v === 5) c = [30, 90, 40]; if (v === 6) c = [130, 130, 130]; if (v === 7) c = [60, 140, 70]; if (v === 9 || v === 3) c = [150, 80, 50]; if (v === 8) c = [150, 220, 255]; mi.data.set([...c, 255], i * 4); }
+  const MC = { [SAND]: [214, 186, 128], [GRASS]: [88, 160, 70], [DGRASS]: [50, 120, 50], [DIRT]: [170, 130, 84], [PLAZA]: [190, 182, 166], [WATER]: [60, 134, 201], [CAVE]: [96, 84, 72], [ROCKW]: [34, 30, 36] };
+  for (let i = 0; i < w * h; i++) { let c = MC[cls[i]]; const v = m.t[i]; if (v === 5) c = [30, 90, 40]; if (v === 6 && !envOf(m).cave) c = [130, 130, 130]; if (v === 7) c = [60, 140, 70]; if (v === 9 || v === 3) c = [150, 80, 50]; if (v === 8) c = [150, 220, 255]; mi.data.set([...c, 255], i * 4); }
   mg.putImageData(mi, 0, 0);
 }
 function bakeMap(m) {
@@ -191,13 +197,13 @@ function bakeMap(m) {
     const v = t(x, y), r = hash(x, y), jx = Math.round((hash(x + 3, y) - 0.5) * 8), jy = Math.round((hash(x, y + 3) - 0.5) * 6);
     const cx = x * TP + 16 + jx, cy = y * TP + 26 + jy;
     if (v === 5) props.push({ n: r < 0.45 ? 'p_tree_single_A' : r < 0.9 ? 'p_tree_single_B' : 'p_trees_A_small', x: cx, y: cy, sh: 14 });
-    else if (v === 6) props.push({ n: 'p_rock_single_' + 'ABCDE'[Math.floor(r * 5)], x: cx, y: cy - 4, sh: 10 });
+    else if (v === 6 && !envOf(m).cave) props.push({ n: 'p_rock_single_' + 'ABCDE'[Math.floor(r * 5)], x: cx, y: cy - 4, sh: 10 });
     else if (v === 7) props.push({ n: 'p_cactus', x: cx, y: cy - 2, sh: 8 });
     else if (v === 3 && (x === 0 || y === 0 || x === w - 1 || y === h - 1)) props.push({ n: (x === 0 || x === w - 1) ? 'p_wallv' : 'p_wallh', x: x * TP + 16, y: y * TP + 20 });
     else if (v === 8) portals.push({ x: x * TP + 16, y: y * TP + 16 });
   }
   for (const b of m.props || []) props.push({ n: `b_${b.k}_${b.w}x${b.h}`, x: (b.x + b.w / 2) * TP, y: (b.y + b.h / 2) * TP, sort: (b.y + b.h) * TP - 2 });
-  if (m.id === 'solkara') for (const [n, x, y] of [['p_flag_red', 15.3, 11.4], ['p_flag_red', 27.7, 11.4], ['p_flag_yellow', 15.3, 21.7], ['p_flag_yellow', 27.7, 21.7], ['p_barrel', 11.4, 9.4], ['p_crate_A_big', 11.8, 9.8], ['p_barrel', 34.4, 10.3], ['p_sack', 10.5, 28.4], ['p_crate_B_small', 10.4, 27.8], ['p_weaponrack', 40.2, 9.7], ['p_wheelbarrow', 29.0, 28.6], ['p_tent', 13.8, 19.4], ['p_bucket_water', 18.7, 18.7], ['p_resource_lumber', 39.5, 27.5], ['p_well', 33.5, 13.6]]) props.push({ n, x: x * TP, y: y * TP });
+  for (const [n, x, y] of m.deco || []) props.push({ n, x: x * TP, y: y * TP }); // decorations listed by the map (content/maps)
   for (const p of props) img(p.n);
 }
 
@@ -237,6 +243,7 @@ addEventListener('uiskin', () => { HUD.atlasCell('items', '1'); }); // start loa
 
 // ------------------------------------------------------------ state
 let ws, myId = 0, map = null, ITEMS = {}, MOBN = {}, me = null;
+let QDEF = {}, CLSDEF = {}, WORLD = null, RECIPES = {}, RARITY = []; // game data from 'welcome'
 const ents = new Map(); const fx = []; const bubbles = new Map(); let clickMark = null; let selected = 0; const ghosts = [];
 let cam = { x: 0, y: 0 }; let auto = false;
 function connect(msg) {
@@ -255,8 +262,9 @@ const now = () => performance.now() / 1000;
 function onMsg(m) {
   switch (m.t) {
     case 'err': $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
-    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) img('m_' + k); SK = m.skills || {}; MELEE_R = m.melee || 1.6; break;
-    case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) img(NPC_SPR[n.look]); break;
+    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6;
+      QDEF = m.quests || {}; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
+    case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
     case 'me': me = m.c; updHud(); break;
     case 's': snap(m); break;
     case 'fx': onFx(m); break;
@@ -267,6 +275,12 @@ function onMsg(m) {
     case 'shop': openShop(m); break;
     case 'cd': onCd(m); break;
     case 'castfail': onCastFail(m); break;
+    case 'skills': SK = m.skills || SK; if (me) renderHotbar(); break;
+    case 'storage': openStorage(m); break;
+    case 'bankui': openBank(m); break;
+    case 'craftui': openCraft(m); break;
+    case 'nodecd': nodeCd[m.id] = performance.now() + m.ms; break;
+    case 'eqfail': toast(m.r); break;
   }
 }
 function snap(m) {
@@ -306,6 +320,7 @@ function onFx(m) {
   if (m.k === 'hit') {
     const e = ents.get(m.to); const a = ents.get(m.from);
     if (a) { a.atkT = now(); if (e) face(a, e); }
+    if (a && e && a.kind === 'p' && a.wpn && ITEMS[a.wpn] && ITEMS[a.wpn].wt === 'bow' && Math.hypot(a.x - e.x, a.y - e.y) > 1.8) fx.push(fxNew({ k: 'proj', from: m.from, to: m.to, x: a.x, y: a.y, t, col: '#e8d9a8' }));
     if (m.from === myId) { lastHit = m.to; lastMyHitT = t; }
     if (!e) return;
     e.hitT = now();
@@ -314,10 +329,16 @@ function onFx(m) {
   } else if (m.k === 'cast') {
     const a = ents.get(m.id), e = ents.get(m.to), sk = SK[m.s];
     if (a) { a.atkT = a.castT = now(); if (e) face(a, e); fx.push(fxNew({ k: 'sname', id: m.id, v: sk ? sk.th : m.s, t })); }
-    if (a && e && m.s === 'bolt') fx.push(fxNew({ k: 'proj', from: m.id, to: m.to, x: a.x, y: a.y, t }));
-    if (a && m.s === 'cleave') fx.push(fxNew({ k: 'ring', id: m.id, t }));
+    const kind = sk && sk.fx || (m.s === 'bolt' ? 'bolt' : m.s === 'cleave' ? 'ring' : '');
+    if (a && e && (kind === 'bolt' || kind === 'arrow')) fx.push(fxNew({ k: 'proj', from: m.id, to: m.to, x: a.x, y: a.y, t, col: kind === 'arrow' ? '#e8d9a8' : sk && sk.element === 'fire' ? '#ff9f43' : sk && sk.element === 'holy' ? '#fff3a0' : null }));
+    if (a && kind === 'ring') fx.push(fxNew({ k: 'ring', id: m.id, t }));
   } else if (m.k === 'die') { const e = ents.get(m.id); if (e) { if (ghosts.length > 60) ghosts.shift(); ghosts.push({ ...e, dieT: now() }); ents.delete(m.id); if (selected === m.id) selected = 0; } }
-  else if (m.k === 'lvup') fx.push(fxNew({ k: 'lvup', id: m.id, t }));
+  else if (m.k === 'lvup') fx.push(fxNew({ k: 'lvup', id: m.id, t, cls: m.cls }));
+  else if (m.k === 'mshot') fx.push(fxNew({ k: 'proj', from: m.from, to: m.to, x: 0, y: 0, t, col: m.magic ? '#c49bff' : '#d8c8a8' }));
+  else if (m.k === 'mheal') { fx.push(fxNew({ k: 'heal', id: m.to, t })); const e = ents.get(m.to); if (e && m.v) addNum(e, m.to, '+' + m.v, '#7dff8a', false); }
+  else if (m.k === 'buff' || m.k === 'gather') fx.push(fxNew({ k: 'heal', id: m.id, t, buff: 1 }));
+  else if (m.k === 'phase') fx.push(fxNew({ k: 'ring', id: m.id, t, col: '#ff4d4d' }));
+  else if (m.k === 'aoe') fx.push(fxNew({ k: 'aoe', x: m.x, y: m.y, r: m.r, ms: m.ms, t }));
   else if (m.k === 'heal') {
     fx.push(fxNew({ k: 'heal', id: m.id, t }));
     const e = ents.get(m.id);
@@ -330,6 +351,8 @@ function onFx(m) {
 // ------------------------------------------------------------ hud
 // quest tracker: expanded = title + objective + progress, collapsed = icon + short title + progress
 function questTrack() {
+  const t = me.qs && me.qs.t, a = t && me.qs.a[t], qd = t && QDEF[t];
+  if (a && qd) return { title: qd.th, obj: a.d, prog: `${Math.min(a.k, a.n)}/${a.n}`, done: false, hint: '', type: qd.type };
   const s = me.q.step;
   if (!QT[s]) return { title: 'ภารกิจหลัก', obj: 'จบบททดสอบแล้ว!', prog: '✔', done: true };
   const [obj, where] = QT[s].split('\n'), done = me.q.k >= QN[s];
@@ -338,20 +361,20 @@ function questTrack() {
 function updQuestTrack() {
   const t = questTrack(), q = $('quest');
   q.classList.toggle('col', !!HUD.S.qCol);
-  $('qtitle').textContent = t.title; $('qprog').textContent = t.prog; $('qtog').textContent = HUD.S.qCol ? '▸' : '▾';
+  $('qtitle').textContent = t.title; $('qprog').textContent = t.prog; q.dataset.type = t.type || ''; $('qtog').textContent = HUD.S.qCol ? '▸' : '▾';
   $('qt').innerHTML = `<div class="qobj">${t.obj} <span class="num qk">${t.prog}</span></div>${t.hint ? `<div class="qdone">${t.hint}</div>` : ''}`;
 }
 const QN = [10, 8, 10, 1];
 const QT = ['ปราบ เจลลอป\n(ทุ่งทรายสีทอง)', 'ปราบ ปูทราย\n(ทุ่งทรายสีทอง)', 'ปราบ ลีฟลิง\n(ป่าโอเอซิส)', 'ปราบ ราชาเจลลอป\n(บอส ทุ่งทราย)'];
 function updHud() {
-  $('hName').textContent = me.name; $('lvb').textContent = 'Lv ' + me.lv; $('hJob').textContent = CLS_TH[(me.look && me.look.cc | 0) % 5] || '';
+  $('hName').textContent = me.name; $('lvb').textContent = 'Lv ' + me.lv; $('hJob').textContent = (CLSDEF[me.cls] && CLSDEF[me.cls].th) || 'นักผจญภัย';
   $('hpb').style.width = (me.hp / me.maxhp * 100) + '%'; $('hpt').textContent = `${me.hp} / ${me.maxhp}`;
   $('spb').style.width = (me.sp / me.maxsp * 100) + '%'; $('spt').textContent = `${me.sp} / ${me.maxsp}`;
   $('xpb').style.width = (me.exp / me.next * 100) + '%'; $('hX').textContent = (me.exp / me.next * 100).toFixed(1) + '%';
   $('hpP').textContent = Math.round(me.hp / me.maxhp * 100) + '%'; $('spP').textContent = Math.round(me.sp / me.maxsp * 100) + '%';
   if ($('hX2')) $('hX2').textContent = $('hX').textContent;
   const z = me.zeny.toLocaleString(); if ($('hZ').textContent !== z) { $('hZ').textContent = z; HUD.fitBar(); } // wider gold can push buttons out of the bar
-  $('xpt').textContent = `${me.exp.toLocaleString()} / ${me.next.toLocaleString()}`;
+  $('xpt').textContent = me.lv >= (me.maxlv || 150) ? 'MAX LEVEL' : `${me.exp.toLocaleString()} / ${me.next.toLocaleString()}`;
   updQuestTrack();
   if (me.hp > 0) $('dead').style.display = 'none';
   updPotion(); renderHotbar();
@@ -402,18 +425,23 @@ function fitText(el, max = 1, min = 0.55) {
 addEventListener('uiskin', () => { skinMinimap(); fitText($('mmn')); }); if (HUD.UI.man) skinMinimap();
 // NPC badge over the head by role (Iris: "!" while a quest is running, "✓" when it can be turned in)
 const NPC_BADGE = { iris: 'npc_quest', merchant: 'npc_shop', sage: 'npc_shop', nurse: 'npc_heal', warper: 'npc_portal' };
+const ROLE_BADGE = { shop: 'npc_shop', sell: 'npc_shop', heal: 'npc_heal', teleport: 'npc_portal', gate: 'npc_portal', smith: 'npc_smith', craft: 'npc_smith', board: 'npc_quest', master: 'npc_party', inn: 'npc_talk', storage: 'npc_talk', bank: 'npc_talk' };
 function drawNpcBadge(n, x, y) {
-  let k = NPC_BADGE[n.look]; if (n.look === 'iris' && me && QN[me.q.step] != null && me.q.k >= QN[me.q.step]) k = 'npc_done';
+  const mk = me && me.npcq && me.npcq[n.id];
+  let k = mk === 'turnin' ? 'npc_done' : mk === 'avail' ? 'npc_quest' : ROLE_BADGE[n.role] || NPC_BADGE[n.look];
+  if (n.look === 'iris' && me && QN[me.q.step] != null && me.q.k >= QN[me.q.step]) k = 'npc_done';
+  if (!k) return;
   const art = k && HUD.atlasCell('icons', k); if (!art) return drawExcl(x, y);
   ctx.imageSmoothingEnabled = true; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 12), Math.round(y - 4), 24, 24); ctx.imageSmoothingEnabled = false;
 }
 let portraitT = 0;
+const portC = mkCanvas(64, 64);
 function drawPortrait() {
   const n = heroOf(me.look), L = META.lpc[n], im = img(n), g = $('portrait').getContext('2d');
-  if (!L || !im) { if (!portraitT) portraitT = setTimeout(() => { portraitT = 0; drawPortrait(); }, 400); return; }
-  g.imageSmoothingEnabled = false; g.clearRect(0, 0, 32, 32);
-  const c = L.cell, a = L.anims.walk, o = (c - 64) / 2;
-  g.drawImage(im, o + 16, (a[0] + 2) * c + o + 6, 32, 32, 0, 2, 32, 32);
+  if (!L || !im || !anchorsFor(me.look.sex)) { if (!portraitT) portraitT = setTimeout(() => { portraitT = 0; drawPortrait(); }, 400); return; }
+  const pg = portC.getContext('2d'); pg.imageSmoothingEnabled = false; pg.clearRect(0, 0, 64, 64);
+  drawHero(me.look, 'stand', 0, 2, 32, 60, 1, me.eq.chead || me.eq.head || 0, pg);
+  g.imageSmoothingEnabled = false; g.clearRect(0, 0, 32, 32); g.drawImage(portC, 16, 4, 32, 32, 0, 1, 32, 32);
 }
 // ------------------------------------------------------------ chat (compact 4-line log + full window with channels)
 const chatLog = []; let chTab = 'all';
@@ -465,11 +493,11 @@ let shopMode = '', shopItems = [];
 function openShop(m) {
   closeWins(); shopMode = m.mode; shopItems = m.items || [];
   if (m.mode === 'buy') {
-    $('shopt').textContent = 'ร้านค้าซาฮีร์'; const l = $('shoplist'); l.innerHTML = '';
+    $('shopt').textContent = m.name || 'ร้านค้า'; const l = $('shoplist'); l.innerHTML = '';
     for (const it of shopItems) {
       const d = document.createElement('div'); d.className = 'li'; d.appendChild(iconCanvas(it.id));
-      const info = ITEMS[it.id]; const st = info.atk ? `ATK +${info.atk}` : info.def ? `DEF +${info.def}` : info.heal ? `HP +${info.heal}` : info.sp ? `SP +${info.sp}` : '';
-      d.insertAdjacentHTML('beforeend', `<div class="grow">${it.n}<br><small style="color:var(--dim)">${st}</small></div><span class="num" style="color:var(--gold)">${it.price}z</span>`);
+      const info = ITEMS[it.id]; const st = statOf(info) + reqOf(info);
+      d.insertAdjacentHTML('beforeend', `<div class="grow"><span class="r${info.rar | 0}">${esc(it.n)}</span><br><small class="st">${st}</small></div><span class="num" style="color:var(--gold)">${it.price}z</span>`);
       const b1 = document.createElement('button'); b1.textContent = 'ซื้อ'; b1.onclick = () => send({ t: 'buy', id: it.id, q: 1 }); d.appendChild(b1);
       if (info.ty === 'use') { const b2 = document.createElement('button'); b2.textContent = 'x10'; b2.onclick = () => send({ t: 'buy', id: it.id, q: 10 }); d.appendChild(b2); }
       l.appendChild(d);
@@ -481,23 +509,23 @@ function renderSell() {
   $('shopt').textContent = 'รับซื้อของ (ขายของในกระเป๋า)'; const l = $('shoplist'); l.innerHTML = '';
   me.inv.forEach((s, i) => {
     const it = ITEMS[s.id]; const d = document.createElement('div'); d.className = 'li'; d.appendChild(iconCanvas(s.id));
-    d.insertAdjacentHTML('beforeend', `<div class="grow">${it.n} x${s.q}</div><span class="num" style="color:var(--gold)">${it.sell}z</span>`);
-    const b = document.createElement('button'); b.textContent = s.q > 1 ? 'ขายหมด' : 'ขาย'; b.onclick = () => send({ t: 'sell', i, id: s.id, q: s.q }); d.appendChild(b); l.appendChild(d);
+    d.insertAdjacentHTML('beforeend', `<div class="grow"><span class="r${it.rar | 0}">${esc(it.n)}</span> x${s.q}</div><span class="num" style="color:var(--gold)">${it.ty === 'quest' ? '—' : it.sell + 'z'}</span>`);
+    if (it.ty !== 'quest') { const b = document.createElement('button'); b.textContent = s.q > 1 ? 'ขายหมด' : 'ขาย'; b.onclick = () => send({ t: 'sell', i, id: s.id, q: s.q }); d.appendChild(b); } l.appendChild(d);
   });
   if (!me.inv.length) l.textContent = 'กระเป๋าว่าง';
 }
 function renderBag() {
   const eg = $('eqgrid'); eg.innerHTML = '';
-  for (const [k, lab] of [['wpn', 'อาวุธ'], ['arm', 'เสื้อ'], ['head', 'หมวก']]) {
-    const d = document.createElement('div'); d.className = 'slot eq'; const id = me.eq[k];
+  for (const [k, lab] of EQS) {
+    const d = document.createElement('div'); d.className = 'slot eq'; const id = me.eq[k]; if (id) d.classList.add('r' + (ITEMS[id].rar | 0));
     if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else slotHint(d, k, lab);
     eg.appendChild(d);
   }
   const g = $('invgrid'); g.innerHTML = '';
   me.inv.forEach((s, i) => {
-    const it = ITEMS[s.id]; const d = document.createElement('div'); d.className = 'slot'; d.appendChild(iconCanvas(s.id)); d.append(it.n);
+    const it = ITEMS[s.id]; const d = document.createElement('div'); d.className = 'slot r' + (it.rar | 0); d.appendChild(iconCanvas(s.id)); d.append(it.n);
     if (s.q > 1) d.insertAdjacentHTML('beforeend', `<span class="q num">${s.q}</span>`);
-    d.onclick = () => { if (it.ty === 'etc') log(`${it.n} - ขายได้ ${it.sell} Zeny ที่ปราชญ์ในเมือง`, '#b9a98e'); else send({ t: 'use', i, id: s.id }); };
+    d.onclick = () => { if (it.ty === 'etc') log(`${it.n} - ${it.d ? it.d + ' · ' : ''}ขายได้ ${it.sell} Zeny ที่ร้านรับซื้อในเมือง`, '#b9a98e'); else if (it.ty === 'quest') log(`${it.n} - ${it.d || 'ไอเทมเควส'}`, '#e8d9a8'); else send({ t: 'use', i, id: s.id }); };
     g.appendChild(d);
   });
 }
@@ -505,23 +533,25 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const pct = (a, b) => Math.max(0, Math.min(100, a / b * 100));
 function renderStat() {
   const N = { str: 'STR พลัง', agi: 'AGI ว่องไว', vit: 'VIT อึด', int: 'INT ปัญญา', dex: 'DEX แม่นยำ', luk: 'LUK โชค' };
-  let h = `<div class="chead"><canvas id="cport" width="32" height="32"></canvas><div><div style="font-size:1.6rem;font-weight:500">${esc(me.name)}</div><div style="color:var(--dim)">${CLS_TH[(me.look && me.look.cc | 0) % 5] || ''} · Lv ${me.lv}</div>`
+  let h = `<div class="chead"><canvas id="cport" width="32" height="32"></canvas><div><div style="font-size:1.6rem;font-weight:500">${esc(me.name)}</div><div style="color:var(--dim)">${(CLSDEF[me.cls] && CLSDEF[me.cls].th) || ''} · Lv ${me.lv} · Job Lv ${me.jlv || 1}${me.jnext ? ` (${Math.floor((me.jexp || 0) / me.jnext * 100)}%)` : ' MAX'}</div>`
     + `<div class="bar hp"><i style="width:${pct(me.hp, me.maxhp)}%"></i><b class="num">HP ${me.hp} / ${me.maxhp}</b></div><div class="bar sp"><i style="width:${pct(me.sp, me.maxsp)}%"></i><b class="num">SP ${me.sp} / ${me.maxsp}</b></div></div></div>`;
   h += `<div style="margin-bottom:8px">แต้มเหลือ: <b class="num" style="color:var(--gold)">${me.pts}</b></div><div class="stats">`;
   for (const k in N) h += `<div class="s"><span>${N[k]}</span><span class="num">${me.st[k]} <button data-s="${k}" ${me.pts ? '' : 'disabled'}>+</button></span></div>`;
-  h += `</div><div class="stats" style="margin-top:10px;color:var(--dim)"><div>ATK ${me.atk}</div><div>DEF ${me.def}</div><div>HIT ${me.hit}</div><div>FLEE ${me.flee}</div><div>CRIT ${me.crit}%</div><div>ความเร็วตี ${(1000 / me.aspd).toFixed(2)}/วิ</div></div>`;
+  h += `</div><div class="stats" style="margin-top:10px;color:var(--dim)"><div>ATK ${me.atk}</div><div>DEF ${me.def}</div><div>HIT ${me.hit}</div><div>FLEE ${me.flee}</div><div>CRIT ${me.crit}%</div><div>ความเร็วตี ${(1000 / me.aspd).toFixed(2)}/วิ</div><div>MATK ${me.matk || 0}</div><div>MDEF ${me.mdef || 0}</div><div>ระยะตี ${me.rng || 1.6}</div><div>ธนาคาร ${(me.bank || 0).toLocaleString()}z</div></div>`;
   $('statbody').innerHTML = h;
   $('statbody').querySelectorAll('button[data-s]').forEach(b => b.onclick = () => send({ t: 'stat', s: b.dataset.s }));
   const cp = $('cport').getContext('2d'); cp.imageSmoothingEnabled = false; cp.drawImage($('portrait'), 0, 0);
 }
-const EQS = [['wpn', 'อาวุธ'], ['head', 'หมวก'], ['arm', 'เสื้อ']];
-const statOf = it => it.atk ? `ATK +${it.atk}` : it.def ? `DEF +${it.def}` : it.heal ? `HP +${it.heal}` : it.sp ? `SP +${it.sp}` : '';
+const EQS = [['wpn', 'อาวุธ'], ['head', 'หมวก'], ['arm', 'เสื้อ'], ['acc1', 'เครื่องประดับ'], ['acc2', 'เครื่องประดับ'], ['chead', 'คอสตูมหัว']];
+const ST_LAB = [['atk', 'ATK'], ['matk', 'MATK'], ['def', 'DEF'], ['mdef', 'MDEF'], ['hp', 'MaxHP'], ['sp', 'MaxSP'], ['str', 'STR'], ['agi', 'AGI'], ['vit', 'VIT'], ['int', 'INT'], ['dex', 'DEX'], ['luk', 'LUK']];
+const statOf = it => it.ty === 'use' ? [it.heal ? `HP +${it.heal}` : '', it.sp ? `SP +${it.sp}` : '', it.recall ? 'กลับจุดเซฟ' : ''].filter(Boolean).join(' ') : it.cosmetic ? 'คอสตูม (เปลี่ยนรูปลักษณ์เท่านั้น)' : ST_LAB.filter(([k]) => it[k]).map(([k, l]) => `${l} +${it[k]}`).join(' ') + (it.range ? ` · ระยะ ${it.range}` : '');
+const reqOf = it => { if (!me) return ''; const bad = it.req > me.lv; const cl = it.cls ? ' · ' + it.cls.map(k => (CLSDEF[k] && CLSDEF[k].th) || k).join('/') : ''; return (it.req > 1 || cl) ? ` <span class="${bad ? 'req' : ''}">· Lv ${it.req}+${cl}</span>` : ''; };
 function renderEquip() {
-  const b = $('equipbody'); b.innerHTML = `<div class="note" style="margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด) · ATK ${me.atk} · DEF ${me.def}</div>`;
+  const b = $('equipbody'); b.innerHTML = `<div class="note" style="margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด) · ATK ${me.atk} · MATK ${me.matk || 0} · DEF ${me.def} · MDEF ${me.mdef || 0}</div>`;
   const eg = document.createElement('div'); eg.className = 'grid';
   for (const [k, lab] of EQS) {
-    const d = document.createElement('div'); d.className = 'slot eq'; const id = me.eq[k];
-    if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else slotHint(d, k, lab + ' (ว่าง)');
+    const d = document.createElement('div'); d.className = 'slot eq'; const id = me.eq[k]; if (id) d.classList.add('r' + (ITEMS[id].rar | 0));
+    if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else slotHint(d, k === 'chead' ? 'head' : k.startsWith('acc') ? 'acc' : k, lab + ' (ว่าง)');
     eg.appendChild(d);
   }
   b.appendChild(eg);
@@ -530,19 +560,30 @@ function renderEquip() {
   me.inv.forEach((s, i) => {
     const it = ITEMS[s.id]; if (it.ty !== 'eq') return;
     const d = document.createElement('div'); d.className = 'li'; d.appendChild(iconCanvas(s.id));
-    d.insertAdjacentHTML('beforeend', `<div class="grow">${esc(it.n)}<br><small style="color:var(--dim)">${(EQS.find(e => e[0] === it.slot) || [, ''])[1]} · ${statOf(it)}</small></div>`);
+    d.insertAdjacentHTML('beforeend', `<div class="grow"><span class="r${it.rar | 0}">${esc(it.n)}</span> <small class="r${it.rar | 0}">${(RARITY[it.rar | 0] || {}).th || ''}</small><br><small class="st">${(EQS.find(e => e[0] === it.slot || (it.slot === 'acc' && e[0] === 'acc1')) || [, ''])[1]} · ${statOf(it)}${reqOf(it)}</small></div>`);
     const btn = document.createElement('button'); btn.textContent = 'สวม'; btn.onclick = () => send({ t: 'use', i, id: s.id }); d.appendChild(btn); l.appendChild(d);
   });
   if (!l.children.length) l.innerHTML = '<div class="note">ไม่มีอุปกรณ์ในกระเป๋า</div>';
   b.appendChild(l);
 }
+const QTYPE = { main: ['เนื้อเรื่องหลัก', 'main'], class: ['เปลี่ยนอาชีพ', 'class'], daily: ['ประจำวัน', 'daily'], delivery: ['ส่งของ', ''], collection: ['สะสม', ''], hunting: ['ล่า', ''], exploration: ['สำรวจ', ''], side: ['รอง', ''] };
 function renderQuest() {
   const s = me.q.step; let h = '';
+  const act = Object.entries((me.qs && me.qs.a) || {}).sort(([a], [b]) => (QDEF[a].type === 'main' ? 0 : 1) - (QDEF[b].type === 'main' ? 0 : 1));
+  for (const [id, a] of act) {
+    const qd = QDEF[id], ty = QTYPE[qd.type] || ['', ''];
+    h += `<div class="li qcard${me.qs.t === id ? ' tr' : ''}"><b style="color:var(--gold)">${esc(qd.th)}</b><span class="tag ${ty[1]}">${ty[0]}</span><div class="qd">${esc(a.d)} <span class="num qk">${Math.min(a.k, a.n)}/${a.n}</span></div><small class="st">ขั้นที่ ${a.s + 1}/${qd.stages.length}</small>`
+      + `<div class="qa">${me.qs.t === id ? '<small style="color:var(--gold)">★ กำลังติดตาม</small>' : `<button data-tr="${id}">ติดตาม</button>`}${qd.type !== 'main' ? `<button class="ghost" data-ab="${id}">ยกเลิก</button>` : ''}</div></div>`;
+  }
+  if (!act.length) h += '<div class="note">ไม่มีเควสที่กำลังทำ — คุยกับ NPC ที่มีเครื่องหมาย ❗ หรือกระดานประกาศ</div>';
+  h += '<div class="note" style="margin:10px 0 4px;color:var(--gold)">บททดสอบของไอริส (โซลคารา)</div>';
   if (QT[s]) h += `<div class="li" style="display:block"><b style="color:var(--gold)">ภารกิจหลัก ${s + 1}/${QT.length}</b><br>${QT[s].replace('\n', '<br>')}<br>ความคืบหน้า <span class="num qk">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ สำเร็จ — กลับไปหาไอริสเพื่อรับรางวัล</span>' : ''}</div>`;
   else h += '<div class="li">ผ่านภารกิจหลักทั้งหมดแล้ว! รอบทต่อไปเร็วๆ นี้</div>';
   for (let i = 0; i < s && i < QT.length; i++) h += `<div class="note">✔ ${QT[i].replace('\n', ' ')}</div>`;
-  h += '<div class="note" style="margin-top:10px">รับ/ส่งภารกิจกับ ไอริส ที่ลานกลางเมืองโซลคารา</div>';
+  const done = (me.qs && me.qs.d) || []; if (done.length) h += `<div class="note" style="margin-top:10px">สำเร็จแล้ว: ${done.map(id => QDEF[id] ? esc(QDEF[id].th) : id).join(' · ')}</div>`;
   $('questbody').innerHTML = h;
+  $('questbody').querySelectorAll('[data-tr]').forEach(b => b.onclick = () => send({ t: 'quest', a: 'track', id: b.dataset.tr }));
+  $('questbody').querySelectorAll('[data-ab]').forEach(b => b.onclick = () => { if (confirm('ยกเลิกเควสนี้?')) send({ t: 'quest', a: 'abandon', id: b.dataset.ab }); });
 }
 function renderSettings() {
   document.querySelectorAll('#wSet .seg[data-k]').forEach(sg => sg.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(HUD.S[sg.dataset.k]) === b.dataset.v)));
@@ -568,7 +609,7 @@ function renderMore() {
 const toggleWin = (w, f) => () => { const v = $(w).style.display === 'block'; closeWins(); if (!v) { f && f(); $(w).style.display = 'block'; } };
 $('bBag').onclick = toggleWin('wBag', renderBag);
 $('pport').onclick = toggleWin('wStat', renderStat);
-$('bMap').onclick = $('mm').onclick = toggleWin('wMap', renderBigMap);
+$('bMap').onclick = $('mm').onclick = toggleWin('wMap', () => renderBigMap()); // renderBigMap lives in world.js
 $('bEquip').onclick = toggleWin('wEquip', renderEquip);
 $('bQuest').onclick = toggleWin('wQuest', renderQuest); $('quest').onclick = e => { if (!e._fold) $('bQuest').onclick(); };
 // chevron folds the tracker; a folded tracker unfolds on any tap; the rest opens the quest window
@@ -594,12 +635,6 @@ $('ci').onkeydown = $('wto').onkeydown = e => {
   if (e.key === 'Tab') { e.preventDefault(); if ($('wto').style.display === 'block') (e.target === $('ci') ? $('wto') : $('ci')).focus(); }
   e.stopPropagation();
 };
-function renderBigMap() {
-  if (!miniC) return; const c = $('bmc'); c.width = map.w * 4; c.height = map.h * 4; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(miniC, 0, 0, c.width, c.height);
-  for (const n of map.npcs) { g.fillStyle = '#ffd34d'; g.fillRect(n.x * 4, n.y * 4, 4, 4); }
-  for (const p of map.portals) { g.fillStyle = '#9fe7ff'; g.fillRect(p.x * 4 - 2, p.y * 4 - 2, 8, 8); }
-  const e = ents.get(myId); if (e) { g.fillStyle = '#fff'; g.fillRect(e.x * 4 - 2, e.y * 4 - 2, 8, 8); g.fillStyle = '#e5484d'; g.fillRect(e.x * 4, e.y * 4, 4, 4); }
-}
 
 // ------------------------------------------------------------ input
 const toArt = (cx, cy) => [(cx * DPR) / Z, (cy * DPR) / Z]; // css -> art screen
@@ -615,7 +650,8 @@ function pickAt(clientX, clientY, npcs = true) {
     if (wx > sx - wid && wx < sx + wid && wy > sy - hgt && wy < sy + 8) { const s = Math.hypot(wx - sx, wy - (sy - hgt / 2)) + (kind === 'd' ? 16 : 0); if (s < bs) { bs = s; best = [id, kind]; } }
   };
   // hit boxes a little larger than the sprites so monsters are easy to tap; the closest centre wins
-  for (const [id, en] of ents) { if (id === myId || en.kind === 'p') continue; if (en.kind === 'd') test(id, en, 'd', 22, 14); else test(id, en, 'm', en.type === 'kingjel' ? 78 : 50, en.type === 'kingjel' ? 46 : 26); }
+  for (const [id, en] of ents) { if (id === myId || en.kind === 'p') continue; if (en.kind === 'd') test(id, en, 'd', 22, 14); else { const sc = en.type === 'kingjel' ? 1.55 : Math.max(1, mobScale(en.type)); test(id, en, 'm', Math.round(50 * sc), Math.round(26 * Math.min(sc, 1.8))); } }
+  if (npcs) for (const nd of map.nodes || []) test(nd.id, nd, 'o', 30, 16);
   if (npcs) for (const n of map.npcs) test(n.id, n, 'n', 52, 18);
   return { best, wx, wy };
 }
@@ -628,6 +664,7 @@ cv.addEventListener('pointerdown', e => {
     const [id, kind] = best;
     if (kind === 'm') { if (id === selected && me.hp > 0) send({ t: 'attack', id }); else setTarget(id); }
     else if (kind === 'd') send({ t: 'pick', id });
+    else if (kind === 'o') send({ t: 'node', id });
     else send({ t: 'npc', id });
     return;
   }
@@ -729,7 +766,7 @@ function frame(t) {
   }
   const mine = ents.get(myId);
   if (mine) { const tx = (mine.x + 0.5) * TP, ty = (mine.y + 0.5) * TP; cam.x += (tx - cam.x) * Math.min(1, dt * 9); cam.y += (ty - cam.y) * Math.min(1, dt * 9); }
-  ctx.fillStyle = map.id === 'woods' ? '#24461f' : '#a88850'; ctx.fillRect(0, 0, DW, DH);
+  ctx.fillStyle = envOf(map).bg; ctx.fillRect(0, 0, DW, DH);
   ctx.setTransform(Z, 0, 0, Z, 0, 0); ctx.imageSmoothingEnabled = false;
   const [ox, oy] = viewOrigin();
   ctx.drawImage(ground, ox, oy);
@@ -745,8 +782,9 @@ function frame(t) {
   for (const p of props) if (p.x > vx0 - 140 && p.x < vx1 + 140 && p.y > vy0 && p.y < vy1 + 60) list.push({ y: p.sort ?? p.y, f: () => { if (p.sh) shadow(p.x, p.y, p.sh); drawProp(p.n, p.x, p.y); } });
   for (const n of map.npcs) {
     const x = (n.x + 0.5) * TP, y = (n.y + 0.5) * TP + 12;
-    list.push({ y, f: () => { shadow(x, y, 9); drawChar(NPC_SPR[n.look], 'stand', 0, 2, x, y); const b = Math.round(Math.sin(tn * 4) * 2); drawNpcBadge(n, x, y - 60 + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
+    list.push({ y, f: () => { shadow(x, y, 9); drawNpc(n, x, y, tn); const b = Math.round(Math.sin(tn * 4) * 2); drawNpcBadge(n, x, y - 60 + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
   }
+  drawNodes(list, vx0, vy0, vx1, vy1, tn, t);
   for (const [id, e] of ents) {
     const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 12;
     if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
@@ -754,22 +792,22 @@ function frame(t) {
         if (art) { ctx.imageSmoothingEnabled = true; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 10), Math.round(y - 25 + bob), 20, 20); ctx.imageSmoothingEnabled = false; }
         else ctx.drawImage(icon16(e.item), Math.round(x - 8), Math.round(y - 22 + bob)); if (Math.floor(tn * 2 + id) % 4 === 0) { ctx.fillStyle = '#fff'; ctx.fillRect(Math.round(x + 4), Math.round(y - 22 + bob), 1, 1); } } });
     else if (e.kind === 'm') list.push({ y, f: () => {
-      const nm = 'm_' + e.type, big = e.type === 'kingjel';
+      const nm = mobSprite(e.type) || 'm_' + e.type, sc = mobScale(e.type), big = e.type === 'kingjel' || mobBig(e.type);
       if (id === selected) drawTargetMarker(x, y, big ? 30 : 14, tn, e.tg === myId || !!(MOBN[e.type] && MOBN[e.type].aggro));
-      shadow(x, y, big ? 28 : 11);
+      shadow(x, y, big ? Math.round(11 * Math.max(sc, 2.5)) : Math.round(11 * sc));
       const [an, at] = entAnim(e, nm, tn);
       const fl = e.hurtT && tn - e.hurtT < 0.1;
       if (fl) ctx.filter = 'brightness(2.2)';
-      drawChar(nm, an, at, e.row ?? 2, x, y);
+      if (sc !== 1) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); drawChar(nm, an, at, e.row ?? 2, 0, 0); ctx.restore(); } else drawChar(nm, an, at, e.row ?? 2, x, y);
       if (fl) ctx.filter = 'none';
-      const info = MOBN[e.type]; const hh = big ? 92 : (META.lpc[nm] ? 56 : 34);
-      if (id === selected || e.tg === myId || (e.hitT && tn - e.hitT < 4)) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d'); // in combat / targeted only
+      const info = MOBN[e.type]; const hh = Math.round((e.type === 'kingjel' ? 92 : (META.lpc[nm] ? 56 : 34)) * (e.type === 'kingjel' ? 1 : sc));
+      if (id === selected || e.tg === myId || (e.hitT && tn - e.hitT < 4) || (info && info.boss)) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d'); // in combat / targeted / bosses
       if (info && HUD.S.names) labels.push([x, y + 6, `${info.n}`, info.boss ? '#ff8b8b' : '#ffffff', info.boss ? 'boss' : 'mob', info.lv]);
     } });
     else if (e.kind === 'p') list.push({ y, f: () => {
       const nm = heroOf(e.look); shadow(x, y, 10);
       const [an, at] = entAnim(e, nm, tn);
-      drawChar(nm, an, at, e.row ?? 2, x, y, 1);
+      drawHero(e.look, an, at, e.row ?? 2, x, y, 1, e.head);
       hpBar(x, y + 4, e.hp / e.maxhp, 24, '#58d65a');
       if (HUD.S.names || id === myId) labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : '#c8f7c5', 'pc']);
       const b = bubbles.get(id); if (b && b.until > t) labels.push([x, y - 60, b.m, '#2a1f3a', 'bubble']);
@@ -778,8 +816,9 @@ function frame(t) {
   for (let i = ghosts.length - 1; i >= 0; i--) {
     const g = ghosts[i], age = tn - g.dieT; if (age > 1.4) { ghosts.splice(i, 1); continue; }
     const x = (g.x + 0.5) * TP, y = (g.y + 0.5) * TP + 12;
-    list.push({ y: y - 1, f: () => drawChar('m_' + g.type, 'hurt', age, g.row ?? 2, x, y, Math.min(1, (1.4 - age) / 0.5)) });
+    list.push({ y: y - 1, f: () => { const sc = mobScale(g.type), nm = mobSprite(g.type) || 'm_' + g.type; if (sc !== 1) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); drawChar(nm, 'hurt', age, g.row ?? 2, 0, 0, Math.min(1, (1.4 - age) / 0.5)); ctx.restore(); } else drawChar(nm, 'hurt', age, g.row ?? 2, x, y, Math.min(1, (1.4 - age) / 0.5)); } });
   }
+  for (const f of fx) if (f.k === 'aoe') drawAoe(f, t - f.t); // boss slam warnings lie on the ground, under everyone
   list.sort((a, b) => a.y - b.y);
   for (const o of list) o.f();
   // fx in art space
@@ -797,9 +836,9 @@ function frame(t) {
       const dur = f.k === 'lvup' ? 1800 : 800; if (age > dur) { fxFree(i); continue; }
       const e = ents.get(f.id); if (!e) continue; const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 12;
       if (f.k === 'lvup') drawMagicCircle(x, y - 2, tn, 0.6, '#ffd34d');
-      for (let j = 0; j < 14; j++) { const ph = (age / dur + j / 14) % 1; ctx.globalAlpha = 1 - ph; ctx.fillStyle = f.k === 'lvup' ? (j % 2 ? '#ffd34d' : '#fff6b0') : (j % 2 ? '#7bd67b' : '#d6ffd6'); ctx.fillRect(Math.round(x + Math.sin(j * 2.3 + age / 200) * 12), Math.round(y - ph * 56), 2, 2); }
+      for (let j = 0; j < 14; j++) { const ph = (age / dur + j / 14) % 1; ctx.globalAlpha = 1 - ph; ctx.fillStyle = f.k === 'lvup' ? (j % 2 ? '#ffd34d' : '#fff6b0') : f.buff ? (j % 2 ? '#7fd4ff' : '#e6f8ff') : (j % 2 ? '#7bd67b' : '#d6ffd6'); ctx.fillRect(Math.round(x + Math.sin(j * 2.3 + age / 200) * 12), Math.round(y - ph * 56), 2, 2); }
       ctx.globalAlpha = 1;
-      if (f.k === 'lvup') labels.push([x, y - 70, 'LEVEL UP!', '#ffd34d', 'big']);
+      if (f.k === 'lvup') labels.push([x, y - 70, f.cls ? 'CLASS CHANGE!' : 'LEVEL UP!', '#ffd34d', 'big']);
     } else if (f.k === 'sname') { // skill name over the caster
       if (age > 900) { fxFree(i); continue; }
       const e = ents.get(f.id); if (e) labels.push([(e.x + 0.5) * TP, (e.y + 0.5) * TP - 62 - age / 60, f.v, '#ffe39a', 'sname']);
@@ -807,17 +846,27 @@ function frame(t) {
       if (age > 260) { fxFree(i); continue; }
       const a = ents.get(f.from), b = ents.get(f.to); if (!a || !b) continue; const p = age / 260;
       const x = ((a.x + (b.x - a.x) * p) + 0.5) * TP, y = ((a.y + (b.y - a.y) * p) + 0.5) * TP - 10;
-      ctx.fillStyle = '#a8d0ff'; ctx.fillRect(Math.round(x) - 3, Math.round(y) - 2, 6, 4); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+      ctx.fillStyle = f.col || '#a8d0ff'; ctx.fillRect(Math.round(x) - 3, Math.round(y) - 2, 6, 4); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+    } else if (f.k === 'aoe') { // drawn under the characters (see drawAoe); only expires here
+      if (age > f.ms + 250) { fxFree(i); continue; }
+    } else if (f.k === 'aoe_') {
+      const x = (f.x + 0.5) * TP, y = (f.y + 0.5) * TP + 8, R = f.r * TP, p = Math.min(1, age / f.ms);
+      ctx.globalAlpha = age > f.ms ? 0.7 : 0.35; ctx.fillStyle = '#ff3b3b';
+      for (let yy = -R * 0.5; yy <= R * 0.5; yy++) { const w = R * Math.sqrt(Math.max(0, 1 - (yy / (R * 0.5)) ** 2)); ctx.fillRect(Math.round(x - w), Math.round(y + yy), Math.round(w * 2), 1); }
+      ctx.globalAlpha = 0.8; ctx.fillStyle = '#ffd34d';
+      for (let j = 0; j < 40; j++) { const a = j / 40 * 6.283; ctx.fillRect(Math.round(x + Math.cos(a) * R * p), Math.round(y + Math.sin(a) * R * 0.5 * p), 2, 1); }
+      ctx.globalAlpha = 1;
     } else if (f.k === 'ring') { // cleave sweep around the caster
       if (age > 300) { fxFree(i); continue; }
       const e = ents.get(f.id); if (!e) continue; const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 6, r = 14 + age / 300 * 30;
-      ctx.globalAlpha = 1 - age / 300; ctx.fillStyle = '#ffd34d';
+      ctx.globalAlpha = 1 - age / 300; ctx.fillStyle = f.col || '#ffd34d';
       for (let j = 0; j < 24; j++) { const a = j / 24 * 6.283 + age / 80; ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r * 0.5), 2, 2); }
       ctx.globalAlpha = 1;
     }
   }
   // ---- overlay text at device resolution
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  drawLight(t);
   const S = DPR, A2D = (x, y) => [(x + ox) * Z, (y + oy) * Z];
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
   for (const [x, y, txt, col, kind, lv] of labels) {
@@ -886,7 +935,8 @@ function drawMinimap() {
   g.drawImage(miniC, Math.round(W / 2 - cx), Math.round(H / 2 - cy), map.w * s, map.h * s);
   const P = (x, y, col, sz = 3) => { g.fillStyle = col; g.fillRect(Math.round(W / 2 + (x - e.x) * s - sz / 2), Math.round(H / 2 + (y - e.y) * s - sz / 2), sz, sz); };
   for (const p of map.portals) P(p.x, p.y, '#9fe7ff', 5);
-  for (const n of map.npcs) P(n.x, n.y, '#ffd34d', 3);
+  for (const n of map.npcs) P(n.x, n.y, me.npcq && me.npcq[n.id] === 'turnin' ? '#7dff8a' : '#ffd34d', 3);
+  for (const nd of map.nodes || []) if (nodeWanted(nd)) P(nd.x, nd.y, '#b07bff', 3);
   for (const en of ents.values()) if (en.kind === 'm') P(en.x, en.y, MOBN[en.type] && MOBN[en.type].boss ? '#ff3b3b' : '#ff8b8b', 2); else if (en.kind === 'p' && en !== e) P(en.x, en.y, '#7dff8a', 3);
   P(e.x, e.y, '#ffffff', 5); P(e.x, e.y, '#3d8bf0', 3);
   $('mmxy2').textContent = `${Math.round(e.x)},${Math.round(e.y)}`;
@@ -915,20 +965,18 @@ let mode = 'login';
 const look = { sex: 0, hair: 0, hc: 0, cc: 0 };
 function setMode(m) { mode = m; $('tLogin').classList.toggle('on', m === 'login'); $('tReg').classList.toggle('on', m === 'reg'); $('regbox').style.display = m === 'reg' ? 'block' : 'none'; $('go').textContent = m === 'reg' ? 'สร้างตัวละครและเข้าเกม' : 'เข้าเกม'; $('err').textContent = ''; }
 $('tLogin').onclick = () => setMode('login'); $('tReg').onclick = () => setMode('reg');
+const OUTFIT_TH = ['ชุดอัศวิน', 'ชุดจอมเวท', 'ชุดนักธนู', 'ชุดฮู้ดเงา', 'ชุดนักรบป่า'];
 document.querySelectorAll('.sel button').forEach(b => b.onclick = () => {
-  const k = b.dataset.k, L = k === 'cc' ? 5 : 2; look[k] = (look[k] + +b.dataset.d + L) % L;
-  $('v_cc').textContent = CLS_TH[look.cc]; $('v_sex').textContent = look.sex ? 'หญิง' : 'ชาย';
+  const k = b.dataset.k, L = { cc: 5, sex: 2, hair: 6, hc: 9 }[k]; look[k] = (look[k] + +b.dataset.d + L) % L;
+  $('v_cc').textContent = OUTFIT_TH[look.cc]; $('v_sex').textContent = look.sex ? 'หญิง' : 'ชาย'; $('v_hair').textContent = HAIR_STYLE_TH[look.hair]; $('v_hc').textContent = HAIR_TH[look.hc];
 });
 (function prev() {
   requestAnimationFrame(prev); if (mode !== 'reg') return;
   const c = $('preview'), g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 96, 96);
-  const n = heroOf(look), L = META.lpc[n], im = img(n); if (!L || !im) return;
+  const n = heroOf(look), L = META.lpc[n], im = img(n); img('h_knight_' + (look.sex ? 'f' : 'm')); if (!L || !im) return;
   const tn = performance.now() / 1000, ph = Math.floor(tn / 2) % 6;
-  const row = [2, 3, 0, 1, 2, 2][ph]; const atk = ph === 5;
-  const a = atk ? L.anims[L.atk] : L.anims.walk; const f = atk ? Math.floor((tn % 2) * 5) % a[1] : 1 + Math.floor(tn * 9) % 8;
-  const cc = L.cell, o = (cc - 64) / 2;
-  const sz = Math.min(cc, 96), so = (cc - sz) / 2;
-  g.drawImage(im, f * cc + so, (a[0] + (a[2] === 1 ? 0 : row)) * cc + so + (o - (96 - 64) / 2 > 0 ? 0 : 0), sz, sz, (96 - sz) / 2, (96 - sz) / 2 + 4, sz, sz);
+  const row = [2, 3, 0, 1, 2, 2][ph], atk = ph === 5;
+  drawHero(look, atk ? 'atk' : 'walk', atk ? (tn % 2) * 0.45 : tn, row, 48, 92, 1, 0, g);
 })();
 setMode('login');
 try { $('u').value = localStorage.getItem('lmo_u') || ''; } catch (e) { }
