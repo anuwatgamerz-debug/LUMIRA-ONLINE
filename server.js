@@ -1046,6 +1046,10 @@ function syncChars() { for (const p of players.values()) db.accounts[p.acct].cha
 function shutdown() { syncChars(); dirty = true; saveDb(); process.exit(0); }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+// remote-safe restart: creating the file RESTART-REQUEST next to server.js saves every player and exits;
+// RUN-SERVER.bat / the scheduled task starts the server again (used for updates without a desktop session)
+const RESTART_FLAG = path.join(__dirname, 'RESTART-REQUEST');
+setInterval(() => { if (!fs.existsSync(RESTART_FLAG)) return; try { fs.unlinkSync(RESTART_FLAG); } catch (e) { } console.log('[admin] restart requested - saving and exiting'); shutdown(); }, 3000);
 // last resort: keep player progress before the process dies (START-LUMIRA-ONLINE.bat restarts it)
 process.on('uncaughtException', e => { console.error('[fatal]', e); try { syncChars(); dirty = true; saveDb(); } catch (e2) { } process.exit(1); });
 setInterval(syncChars, 30000);
