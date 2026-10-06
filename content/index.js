@@ -19,7 +19,7 @@ function buildMaps() {
   for (const meta of Object.values(MAPS_META)) {
     if (meta.status !== 'open') continue;
     const m = require('./maps/' + meta.id)(G);
-    Object.assign(m, { region: meta.region, kind: meta.kind, lv: meta.lv, env: meta.env, music: meta.music, town: meta.town ? 1 : 0 });
+    Object.assign(m, { region: meta.region, kind: meta.kind, lv: meta.lv, env: meta.env, music: meta.music, bgm: meta.bgm, ambient: meta.ambient, town: meta.town ? 1 : 0 });
     m.spawns = (m.spawns || []).map(s => Array.isArray(s) ? { mob: s[0], n: s[1], zone: s.slice(2), legacy: 1 } : s);
     if (m.bossSpawn) m.bosses.push({ mob: m.bossSpawn.type, x: m.bossSpawn.x, y: m.bossSpawn.y, every: m.bossSpawn.every });
     m.npcs = NPCS.filter(n => n.map === m.id).map(n => Object.assign({}, n, { label: n.label || n.n }));

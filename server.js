@@ -211,7 +211,7 @@ function me(p) {
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
 function mapInfo(m) {
-  return { id: m.id, name: m.name, w: m.w, h: m.h, t: m.t, portals: m.portals, props: m.props, deco: m.deco, town: !!m.town, env: m.env, region: m.region, lv: m.lv, music: m.music, safe: m.safe,
+  return { id: m.id, name: m.name, w: m.w, h: m.h, t: m.t, portals: m.portals, props: m.props, deco: m.deco, town: !!m.town, env: m.env, region: m.region, lv: m.lv, music: m.music, bgm: m.bgm, ambient: m.ambient, safe: m.safe,
     npcs: m.npcs.map(({ id, n, x, y, look, label, role, cls }) => ({ id, n, x, y, look, label, role, cls })), nodes: m.nodes.map(({ id, k, n, x, y }) => ({ id, k, n, x, y })) };
 }
 function warp(p, mapId, x, y) {
@@ -264,7 +264,7 @@ function changeClass(p, id) {
   bcastAll({ t: 'sys', m: `🎉 ${c.name} ได้เปลี่ยนอาชีพเป็น ${K.th} (${K.en})!`, col: '#ffd34d' });
   send(p, { t: 'skills', skills: skillDefs(c) });
 }
-const skillDefs = c => Object.fromEntries(skillsFor(c).map(id => { const { n, th, type, range, sp, cd, lv, d, cls, fx } = SKILLS[id]; return [id, { n, th, type, range, sp, cd, lv, d, cls, fx }]; }));
+const skillDefs = c => Object.fromEntries(skillsFor(c).map(id => { const { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound } = SKILLS[id]; return [id, { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound }]; }));
 
 // ---------------------------------------------------------------- combat
 function gainExp(p, e) {
@@ -645,7 +645,7 @@ function logout(p) {
 function welcomeData(c) {
   return {
     items: ITEMS, rarity: C.RARITY,
-    mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, aggro: !!v.aggro, family: v.family, fam: C.FAMILIES[v.family] ? C.FAMILIES[v.family].th : '', behavior: v.behavior, element: v.element, size: v.size, spr: v.spr, tint: v.tint, scale: v.scale, range: v.range, d: v.d }])),
+    mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, aggro: !!v.aggro, family: v.family, fam: C.FAMILIES[v.family] ? C.FAMILIES[v.family].th : '', behavior: v.behavior, element: v.element, size: v.size, spr: v.spr, tint: v.tint, scale: v.scale, range: v.range, d: v.d, bgm: v.bgm, spawnSound: v.spawnSound, idleSound: v.idleSound, attackSound: v.attackSound, hitSound: v.hitSound, deathSound: v.deathSound }])),
     skills: skillDefs(c), melee: MELEE,
     classes: Object.fromEntries(Object.values(CLASSES).map(k => [k.id, { th: k.th, en: k.en, tier: k.tier, parent: k.parent, reqLv: k.reqLv, status: k.status, role: k.role, d: k.d }])),
     world: { regions: C.REGIONS, maps: C.MAPS_META, links: C.LINKS },
@@ -930,7 +930,7 @@ setInterval(() => {
       const d = drops.get(p.pick); p.pick = null;
       if (d && Math.max(Math.abs(d.x - c.x), Math.abs(d.y - c.y)) <= 1.5) {
         if (d.owner && d.owner !== p.id && now < d.until) sys(p, 'ไอเทมนี้ยังเป็นของคนอื่นอยู่');
-        else if (addItem(c, d.item)) { drops.delete(d.id); bcast(c.map, { t: 'fx', k: 'pick', id: d.id }); sys(p, `ได้รับ ${ITEMS[d.item].n}`, '#c8f7c5'); Q.onItems(p); me(p); dirty = true; }
+        else if (addItem(c, d.item)) { drops.delete(d.id); bcast(c.map, { t: 'fx', k: 'pick', id: d.id, by: p.id, item: d.item }); sys(p, `ได้รับ ${ITEMS[d.item].n}`, '#c8f7c5'); Q.onItems(p); me(p); dirty = true; }
         else sys(p, 'กระเป๋าเต็ม');
       }
     }

@@ -63,6 +63,24 @@ async function run(srv, R) {
   ok(['sword', 'greatsword', 'dagger', 'bow', 'staff', 'mace', 'spear', 'wand', 'device'].every(w => items.some(i => i.wt === w)) && ['light', 'medium', 'heavy', 'robe'].every(a => items.some(i => i.at === a)) && ['ring', 'necklace', 'bracelet', 'charm'].every(a => items.some(i => i.ak === a)), 'equipment covers all weapon / armor / accessory types');
   ok([0, 1, 2, 3].every(r => items.some(i => i.ty === 'eq' && i.rar === r)) && !items.some(i => i.rar === 4 && i.buy), 'rarity Common..Epic in play, Legendary never sold in shops');
   ok(Object.values(C.SHOPS).every(s => s.items.every(id => C.ITEMS[id].buy && (C.ITEMS[id].rar || 0) <= 1)) && items.every(i => !i.buy || i.sell <= i.buy / 2), 'economy: shops sell Common/Uncommon only, nothing sells back above half price');
+  // ---------------------------------------------------------------- audio registry (data side)
+  {
+    const AR = require(path.join(H.ROOT, 'public', 'audio-registry.js')), SYN = require(path.join(H.ROOT, 'public', 'audio-synth.js'));
+    const all = AR.all(), has = id => !!all[id];
+    ok(Object.values(C.MAPS_META).every(m => AR.MUSIC[m.bgm] && AR.AMBIENT[m.ambient]), 'audio: every map (open and planned) names a registered bgm + ambient');
+    ok(C.REGIONS.every(r => ['town', 'field', 'dungeon'].every(t => r.id === 'heartland' || AR.MUSIC[`bgm_${r.id}_${t}`])), 'audio: each region has its own town / field / dungeon music');
+    ok(Object.values(C.MOBS).every(m => ['idle', 'attack', 'hit', 'death'].every(k => has(m[k + 'Sound'] || `mon_${m.family}_${k}`))), 'audio: every monster resolves idle/attack/hit/death sounds (own or family set)');
+    ok(Object.values(C.MOBS).filter(m => m.boss).every(m => AR.MUSIC[m.bgm] && has(m.spawnSound) && has(m.deathSound)), 'audio: bosses have their own music + spawn/death sounds');
+    ok(Object.values(C.SKILLS).every(s => has(s.castSound) && (!s.hitSound || has(s.hitSound))), 'audio: every skill links registered cast/hit sounds');
+    ok(Object.keys(C.WEAPON_TYPES).every(w => AR.LINKS.weapon[w] && AR.LINKS.weapon[w].every(has)), 'audio: every weapon type has swing + hit sounds');
+    const need = ['ui_click', 'ui_open', 'ui_close', 'ui_confirm', 'ui_cancel', 'ui_error', 'ui_tab', 'ui_hover', 'inventory_open', 'equip', 'unequip', 'buy', 'sell', 'coin', 'quest_available', 'quest_accept', 'quest_progress', 'quest_complete', 'quest_reward', 'level_up', 'class_change',
+      'pickup_normal', 'pickup_coin', 'pickup_rare', 'pickup_epic', 'pickup_legendary', 'hit_normal', 'hit_critical', 'miss', 'block', 'heal', 'damage_taken', 'player_death', 'portal_idle', 'portal_enter', 'footstep_grass', 'footstep_stone', 'footstep_wood', 'footstep_sand', 'footstep_snow', 'footstep_water'];
+    ok(need.every(has), 'audio: registry has every required UI / quest / loot / combat / player / world sound', need.filter(x => !has(x)).join(','));
+    const bad = []; let worst = 0; for (const d of Object.values(AR.SFX)) { const o = SYN.render(d.synth); let pk = 0; for (const v of o) { if (!isFinite(v)) { bad.push(d.id); break; } pk = Math.max(pk, Math.abs(v)); } if (pk < 0.01 || pk > 1) bad.push(d.id); worst = Math.max(worst, o.length / SYN.SR); }
+    ok(!bad.length && worst <= 2.6, `audio: all ${Object.keys(AR.SFX).length} placeholder SFX render (audible, no clipping, longest ${worst.toFixed(1)}s)`, bad.join(','));
+    ok(Object.values(all).every(d => ['placeholder', 'final'].includes(d.status) && d.dir && (d.synth || d.theme || d.layers || d.file)), 'audio: every entry has a status, a folder and a playable source (file or placeholder)');
+    ok(Object.values(AR.SFX).every(d => d.prio >= 0 && d.prio <= 3 && d.cd >= 0), 'audio: every SFX has a priority (0-3) and a cooldown');
+  }
   // ---------------------------------------------------------------- level cap / EXP curve
   const E = C.LV.expNext, d1 = E(11) - E(10), d2 = E(31) - E(30), d3 = E(121) - E(120);
   ok(E(1) === 28 && E(150) === 0 && C.LV.MAX_LEVEL === 150, 'level cap 150 (Lv1 needs 28 EXP as before, nothing past 150)');

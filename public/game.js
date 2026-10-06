@@ -258,16 +258,19 @@ function connect(msg) {
   };
 }
 const send = o => ws && ws.readyState === 1 && ws.send(JSON.stringify(o));
+// sound hooks (audio-events.js). Wrapped: audio can never break the game.
+const snd = (f, ...a) => { try { if (window.SND && SND[f]) SND[f](...a); } catch (e) { } };
 const now = () => performance.now() / 1000;
 function onMsg(m) {
+  snd('msg', m);
   switch (m.t) {
     case 'err': $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
     case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6;
       QDEF = m.quests || {}; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
-    case 'map': map = m.map; ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
-    case 'me': me = m.c; updHud(); break;
+    case 'map': { const first = !map; map = m.map; snd('map', map, first); } ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
+    case 'me': { const prev = me; me = m.c; updHud(); snd('me', prev, me); break; }
     case 's': snap(m); break;
-    case 'fx': onFx(m); break;
+    case 'fx': snd('fx', m); onFx(m); break; // sound first: a 'die' removes the entity
     case 'sys': log(m.m, m.col || '#ffe9a8'); break;
     case 'chat': onChat(m); break;
     case 'dlg': openDlg(m); break;
@@ -892,6 +895,7 @@ function frame(t) {
   ctx.textBaseline = 'alphabetic';
   drawMinimap();
   combatFrame();
+  snd('frame', t);
 }
 function drawExcl(x, y) { x = Math.round(x); y = Math.round(y); ctx.fillStyle = '#3a2410'; ctx.fillRect(x - 3, y - 1, 6, 12); ctx.fillRect(x - 3, y + 12, 6, 5); ctx.fillStyle = '#ffd34d'; ctx.fillRect(x - 2, y, 4, 10); ctx.fillRect(x - 2, y + 13, 4, 3); ctx.fillStyle = '#fff6b0'; ctx.fillRect(x - 2, y, 1, 8); }
 function hpBar(x, y, r, w, col) { x = Math.round(x - w / 2); y = Math.round(y); ctx.fillStyle = '#10131f'; ctx.fillRect(x - 1, y - 1, w + 2, 5); ctx.fillStyle = '#3a1620'; ctx.fillRect(x, y, w, 3); ctx.fillStyle = col; ctx.fillRect(x, y, Math.max(0, Math.round(w * r)), 3); ctx.fillStyle = '#ffffff55'; ctx.fillRect(x, y, Math.max(0, Math.round(w * r)), 1); }

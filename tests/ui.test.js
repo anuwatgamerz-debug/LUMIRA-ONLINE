@@ -49,6 +49,8 @@ async function register(b, opts, srv, tag) {
   const name = tag + (Date.now() % 1e4);
   await pg.fill('#u', 'r' + name.toLowerCase()); await pg.fill('#p', 'pass1234'); await pg.fill('#cn', name); await pg.click('#go');
   await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block', null, { timeout: 8000 });
+  // the first map bake can take a moment on a busy machine: wait until the minimap shows the real position
+  await pg.waitForFunction(() => typeof ents !== 'undefined' && ents.has(myId) && /^\d+,\d+$/.test(document.getElementById('mmxy2').textContent) && document.getElementById('mmxy2').textContent !== '0,0', null, { timeout: 8000 }).catch(() => { });
   await pg.waitForTimeout(1000); pg.name = name; return pg;
 }
 // page-side helpers (game.js / combat.js globals are reachable from evaluate)
@@ -420,13 +422,80 @@ async function phaseA(b, srv, R) {
   await pg.context().close();
 }
 
+// audio system: unlock on first gesture, map music switching, boss override + resume, limits, missing files, settings
+async function audioTests(b, srv, R) {
+  const ctx = await b.newContext({ ...PHONE }); await ctx.addInitScript(SPY);
+  const pg = await ctx.newPage(); pg.errs = []; pg.on('pageerror', e => pg.errs.push(e.message)); await pg.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
+  await pg.goto(srv.http + '/');
+  const S = () => pg.evaluate(() => AUDIO.state());
+  let st = await S();
+  R.ok(st.supported && !st.unlocked && st.ctx === 'none', 'AUDIO no AudioContext / no sound before the first user gesture (no autoplay error)', JSON.stringify(st));
+  const d = await pg.evaluate(() => AUDIO.settings());
+  R.ok(d.master === 80 && d.music === 60 && d.sfx === 80 && d.ambient === 50 && !d.muted, 'AUDIO default volumes: master 80 / music 60 / sfx 80 / ambient 50');
+  await pg.click('#tReg'); const name = 'Snd' + (Date.now() % 1e4);
+  await pg.fill('#u', 'r' + name.toLowerCase()); await pg.fill('#p', 'pass1234'); await pg.fill('#cn', name); await pg.tap('#go');
+  await waitFor(pg, () => document.getElementById('hud').style.display === 'block'); await pg.waitForTimeout(1500);
+  st = await S();
+  R.ok(st.unlocked && st.ctx === 'running' && st.playing === 'bgm_lumira_village' && st.ambient === 'amb_village', 'AUDIO unlocks on the first tap, then village music + ambient start', JSON.stringify({ u: st.unlocked, c: st.ctx, p: st.playing, a: st.ambient }));
+  const t0 = st.track, n0 = st.tracks;
+  await pg.evaluate(() => AUDIO.playBGM('bgm_lumira_village')); await pg.waitForTimeout(300); st = await S();
+  R.ok(st.track === t0 && st.tracks === n0, 'AUDIO same BGM again does not restart the track');
+  // real map change through the east portal
+  await pg.evaluate(() => send({ t: 'move', x: 49, y: 20 }));
+  const changed = await waitFor(pg, () => map && map.id === 'beginner_meadow', null, 12000); await pg.waitForTimeout(1600); st = await S();
+  R.ok(changed && st.playing === 'bgm_beginner_meadow' && st.ambient === 'amb_meadow' && st.played.portal_enter >= 1, 'AUDIO map change crossfades to the new map music + ambient (portal sound plays)', JSON.stringify({ p: st.playing, a: st.ambient, pe: st.played.portal_enter }));
+  const mapTrack = st.track;
+  await pg.evaluate(() => AUDIO.bossEnter('bgm_boss_thornwood')); await pg.waitForTimeout(1500); st = await S();
+  R.ok(st.playing === 'bgm_boss_thornwood' && st.parked.includes('bgm_beginner_meadow'), 'AUDIO boss encounter overrides the map music (map track kept, paused)', JSON.stringify({ p: st.playing, parked: st.parked }));
+  await pg.evaluate(() => AUDIO.bossLeave()); await pg.waitForTimeout(2000); st = await S();
+  R.ok(st.playing === 'bgm_beginner_meadow' && st.track === mapTrack && !st.overrides.length, 'AUDIO after the boss the map music resumes (same track, not restarted)', JSON.stringify({ p: st.playing, t: st.track, mt: mapTrack }));
+  // limits
+  const lim = await pg.evaluate(() => {
+    const d0 = AUDIO.state().dropped.cooldown; for (let i = 0; i < 50; i++) AUDIO.playSFX('hit_critical');
+    const ids = Object.keys(AUDIO_REG.SFX).filter(id => !AUDIO_REG.SFX[id].loop); let peak = 0; for (const id of ids) { AUDIO.playSFX(id); peak = Math.max(peak, AUDIO.state().voices); }
+    let mon = 0; for (const f of AUDIO_REG.FAMILIES) AUDIO.playSFX(`mon_${f}_death`, { x: 0, y: 0 });
+    return { cd: AUDIO.state().dropped.cooldown - d0, peak, max: AUDIO.LIMIT.sfx };
+  });
+  R.ok(lim.cd >= 49 && lim.peak <= lim.max, `AUDIO SFX rate limits: 50 rapid repeats -> ${50 - lim.cd} played; ${lim.peak} voices at most (limit ${lim.max})`);
+  // missing files fall back to the placeholder
+  const miss = await pg.evaluate(async () => {
+    AUDIO_REG.SFX.test_missing = Object.assign({}, AUDIO_REG.SFX.ui_click, { id: 'test_missing', file: 'sfx/ui/does_not_exist.mp3', cd: 0 });
+    AUDIO_REG.MUSIC.test_bgm = Object.assign({}, AUDIO_REG.MUSIC.bgm_greenwood, { id: 'test_bgm', file: 'music/town/does_not_exist.mp3' });
+    AUDIO.preload(['test_missing']); AUDIO.playBGM('test_bgm'); await new Promise(r => setTimeout(r, 1800));
+    const ok = AUDIO.playSFX('test_missing'), s = AUDIO.state(); AUDIO.playBGM(map.bgm); return { ok, missing: s.missing, playing: s.playing };
+  });
+  R.ok(miss.ok && miss.missing.includes('test_missing') && miss.missing.includes('test_bgm') && miss.playing === 'test_bgm', 'AUDIO missing audio files fall back to the placeholder (no error, still plays)', JSON.stringify(miss));
+  // settings window: sliders + mute, saved and restored after reload
+  await pg.evaluate(() => { document.getElementById('bSet').click(); });
+  await pg.waitForTimeout(200);
+  await pg.evaluate(() => { const set = (k, v) => { const r = document.querySelector(`#sndset input[data-k=${k}]`); r.value = v; r.dispatchEvent(new Event('input')); }; set('master', 55); set('music', 30); set('sfx', 70); set('ambient', 20); });
+  await pg.tap('#sndmute'); await pg.waitForTimeout(200);
+  const s1 = await pg.evaluate(() => AUDIO.settings());
+  R.ok(s1.master === 55 && s1.music === 30 && s1.sfx === 70 && s1.ambient === 20 && s1.muted, 'AUDIO settings sliders + mute change the volumes');
+  await pg.reload(); await pg.waitForTimeout(500);
+  const s2 = await pg.evaluate(() => { document.getElementById('hud').style.display = 'block'; document.getElementById('bSet').click(); return { s: AUDIO.settings(), ui: document.querySelector('#sndset input[data-k=music]').value, mute: document.getElementById('sndmute').textContent }; });
+  R.ok(s2.s.master === 55 && s2.s.music === 30 && s2.s.sfx === 70 && s2.s.ambient === 20 && s2.s.muted && s2.ui === '30' && /เปิดเสียง/.test(s2.mute), 'AUDIO volume / mute settings persist across reload', JSON.stringify(s2));
+  await pg.evaluate(() => { AUDIO.unmute(); for (const k of ['master', 'music', 'sfx', 'ambient']) AUDIO['set' + { master: 'Master', music: 'Music', sfx: 'SFX', ambient: 'Ambient' }[k] + 'Volume'](AUDIO.defaults()[k]); });
+  R.ok(!pg.errs.length, 'AUDIO no page errors', JSON.stringify(pg.errs));
+  await ctx.close();
+  // background tab: suspend / resume without duplicating music
+  const p2 = await register(b, PHONE, srv, 'Bg'); await p2.tap('#mm'); await p2.waitForTimeout(800);
+  const bg = await p2.evaluate(async () => {
+    const before = AUDIO.state(); const hide = v => { Object.defineProperty(document, 'hidden', { value: v, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); };
+    hide(true); await new Promise(r => setTimeout(r, 400)); const mid = AUDIO.state(); hide(false); await new Promise(r => setTimeout(r, 600)); const after = AUDIO.state();
+    return { b: [before.ctx, before.track, before.tracks], m: mid.ctx, a: [after.ctx, after.track, after.tracks] };
+  });
+  R.ok(bg.m === 'suspended' && bg.a[0] === 'running' && bg.a[1] === bg.b[1] && bg.a[2] === bg.b[2], 'AUDIO background tab suspends audio; returning resumes the same music (no second copy)', JSON.stringify(bg));
+  await p2.context().close();
+}
+
 async function run(srv, R) {
   const pw = loadPlaywright();
   if (!pw) { R.skipped('browser suite', 'Playwright not installed (npm i -D playwright)'); return; }
   const b = await pw.chromium.launch();
   try {
     const only = process.env.UI_ONLY; // e.g. UI_ONLY=phase2Mobile to repeat one section
-    const S = [['responsive (Phase 1 + 2 layout)', responsive], ['Phase 1 HUD / joystick / chat', phase1], ['Phase 2 mobile touch', phase2Mobile], ['Phase 2 desktop keyboard/mouse', phase2Desktop], ['Phase 2 SP / potion / death states', phase2States], ['Phase A final mobile polish', phaseA]];
+    const S = [['responsive (Phase 1 + 2 layout)', responsive], ['Phase 1 HUD / joystick / chat', phase1], ['Phase 2 mobile touch', phase2Mobile], ['Phase 2 desktop keyboard/mouse', phase2Desktop], ['Phase 2 SP / potion / death states', phase2States], ['Phase A final mobile polish', phaseA], ['Audio system', audioTests]];
     for (const [name, fn] of S) if (!only || only === fn.name) { console.log('-- ' + name); await fn(b, srv, R); }
   } finally { await b.close(); }
 }

@@ -36,5 +36,7 @@ const SKILLS = {
   t_bomb:   { cls: 'artisan', n: 'Flask Bomb', th: 'ระเบิดขวดยา', type: 'area', range: 2.4, sp: 20, cd: 7000, lv: 12, mult: 1.6, fx: 'ring', d: 'ระเบิดรอบตัว 2.4 ช่อง ×1.6' },
   t_repair: { cls: 'artisan', n: 'Field Repair', th: 'ซ่อมสนาม', type: 'self', sp: 14, cd: 15000, lv: 14, heal: { pct: 0.15, int: 2 }, buff: { id: 'repair', ms: 15000, def: 0.3, th: 'ซ่อมสนาม' }, d: 'ฟื้น HP 15% และ DEF +30% 15 วิ' },
 };
-for (const id in SKILLS) SKILLS[id].id = id;
+// sound ids (public/audio-registry.js) per skill: castSound when used, hitSound when it lands
+const SOUNDS = { bash: ['skill_slash_cast', 'skill_slash_hit'], heal: ['skill_heal_cast'], bolt: ['skill_lightning_cast', 'skill_lightning_hit'], focus: ['skill_buff_cast'], cleave: ['skill_slash_cast', 'skill_bomb_hit'], twin: ['skill_slash_cast', 'skill_slash_hit'], v_wall: ['skill_buff_cast'], v_strike: ['skill_slash_cast', 'skill_slash_hit'], v_charge: ['skill_teleport', 'skill_slash_hit'], r_pierce: ['bow_shoot', 'arrow_hit'], r_volley: ['bow_shoot', 'arrow_hit'], r_step: ['skill_wind_cast'], a_ember: ['skill_fire_cast', 'skill_fire_hit'], a_frost: ['skill_ice_cast', 'skill_ice_hit'], a_nova: ['skill_fire_cast', 'skill_bomb_hit'], c_mend: ['skill_heal_cast'], c_smite: ['skill_holy_cast', 'skill_holy_hit'], c_bless: ['skill_holy_cast'], g_back: ['dagger_swing', 'skill_slash_hit'], g_venom: ['dagger_swing', 'skill_poison_hit'], g_veil: ['skill_stealth'], t_hammer: ['mace_swing', 'heavy_hit'], t_bomb: ['skill_fire_cast', 'skill_bomb_hit'], t_repair: ['skill_buff_cast'] };
+for (const id in SKILLS) { SKILLS[id].id = id; if (SOUNDS[id]) { SKILLS[id].castSound = SOUNDS[id][0]; if (SOUNDS[id][1]) SKILLS[id].hitSound = SOUNDS[id][1]; } }
 module.exports = { SKILLS };

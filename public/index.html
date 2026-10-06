@@ -267,6 +267,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 .chead .bar{width:16rem}
 #dead{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:1.6rem 2rem;text-align:center;display:none;font-size:1.5rem}
 #bmc{width:100%;image-rendering:pixelated;display:block}
+.opt.vol input{flex:1;max-width:16rem;accent-color:#c8913a;height:2.2rem}.opt.vol output{width:3.6rem;text-align:right;color:var(--gold);font-size:1.15rem}#sndmute.on{border-color:#ff8b8b;color:#ff8b8b}
 .tabs2{display:flex;gap:.4rem;margin-bottom:.6rem}.tabs2 button{flex:1;padding:.4rem}.tabs2 button.on{border-color:var(--gold);color:var(--gold)}
 #wmw{position:relative;width:100%;aspect-ratio:16/11;background:#0b1024;border:2px solid #3b4680;border-radius:4px;overflow:hidden}#wmc{width:100%;height:100%;display:block}
 .r0{color:#d8d2c0}.r1{color:#7dd87d}.r2{color:#6fb7ff}.r3{color:#c58bff}.r4{color:#ffb347}
@@ -390,13 +391,24 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
     <div class="opt"><span>แสดงชื่อผู้เล่น/มอน</span><div class="seg" data-k="names"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
     <div class="opt"><span>แสดง FPS</span><div class="seg" data-k="fps"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
     <div class="opt"><span>เต็มจอ</span><div class="seg"><button id="bFull">สลับเต็มจอ</button></div></div>
+    <div id="sndset"><div class="note" style="margin:10px 0 4px;color:var(--gold)">เสียง</div>
+      <div class="opt vol"><span>เสียงรวม</span><input type="range" min="0" max="100" step="1" data-k="master"><output></output></div>
+      <div class="opt vol"><span>เพลง</span><input type="range" min="0" max="100" step="1" data-k="music"><output></output></div>
+      <div class="opt vol"><span>เอฟเฟกต์</span><input type="range" min="0" max="100" step="1" data-k="sfx"><output></output></div>
+      <div class="opt vol"><span>บรรยากาศ</span><input type="range" min="0" max="100" step="1" data-k="ambient"><output></output></div>
+      <div class="opt"><span></span><div class="seg"><button id="sndmute">ปิดเสียงทั้งหมด</button></div></div>
+      <div class="note" id="sndnote"></div></div>
     <div class="note" style="margin-top:8px">คีย์บอร์ด: WASD/ลูกศร เดิน · Tab เลือกเป้า · Space โจมตี · 1-6 สกิล · R ยา · F เก็บของ/คุย · C ตัวละคร · I กระเป๋า · K สกิล · M แผนที่ · Enter แชท · Esc ปิดหน้าต่าง/ยกเลิกเป้า</div>
   </div>
   <div id="wMore" class="win frame"><h3><span>เมนู</span><button class="x">✕</button></h3><div class="mgrid" id="moregrid"></div></div>
 </div>
+<script src="audio-registry.js"></script>
+<script src="audio-synth.js"></script>
+<script src="audio.js"></script>
 <script src="hud.js"></script>
 <script src="game.js"></script>
 <script src="world.js"></script>
 <script src="combat.js"></script>
+<script src="audio-events.js"></script>
 </body>
 </html>

@@ -45,6 +45,8 @@ function m(id, n, lv, family, behavior, o = {}) {
     respawn: o.respawn || (behavior === 'boss' ? 900 : 12), skills: o.skills || [], drops: o.drops || null,
     spr: o.spr, tint: o.tint, scale: o.scale || 1, z: o.z || Math.max(2, Math.round(lv / 2)), beginner: !!o.beginner, d: o.d || '',
     phases: o.phases, minions: o.minions, region: o.region,
+    // audio (optional): without these the client uses the family's sound set (mon_<family>_*)
+    bgm: o.bgm, spawnSound: o.spawnSound, idleSound: o.idleSound, attackSound: o.attackSound, hitSound: o.hitSound, deathSound: o.deathSound,
   };
   d.jexp = o.jexp != null ? o.jexp : Math.max(1, Math.round(d.exp * 0.6));
   MOBS[id] = d; return d;
@@ -57,7 +59,7 @@ legacy('leafling', { n: 'ลีฟลิง', lv: 6, hp: 130, atk: [8, 12], def:
 legacy('cactimp',  { n: 'อิมป์กระบองเพชร', lv: 8, hp: 170, atk: [11, 15], def: 3, flee: 10, exp: 36, spd: 2.6, aggro: 1, drops: [[12, .5], [40, .03]], z: 6, family: 'desert', element: 'earth' });
 legacy('dunewolf', { n: 'อัศวินกระดูก', lv: 11, hp: 280, atk: [15, 21], def: 4, flee: 14, exp: 66, spd: 3.6, aggro: 1, drops: [[13, .45], [21, .04]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
 legacy('mosshog',  { n: 'จอมเวทกระดูก', lv: 13, hp: 360, atk: [18, 24], def: 6, flee: 12, exp: 85, spd: 3.0, aggro: 1, drops: [[15, .45], [31, .03]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
-legacy('kingjel',  { n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk: [26, 36], def: 8, flee: 15, exp: 700, spd: 2.0, aggro: 1, boss: 1, behavior: 'boss', drops: [[41, .35], [23, .15], [2, 1]], z: 14, family: 'slime', size: 'l', respawn: 600 });
+legacy('kingjel',  { n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk: [26, 36], def: 8, flee: 15, exp: 700, spd: 2.0, aggro: 1, boss: 1, behavior: 'boss', drops: [[41, .35], [23, .15], [2, 1]], z: 14, family: 'slime', size: 'l', respawn: 600, bgm: 'bgm_boss_common', spawnSound: 'boss_spawn', deathSound: 'boss_death' });
 
 // ---- Region 1: Elyndra Heartland (Lv1-30)
 // Beginner Meadow (Lv1-8): passive only, beginner protection
@@ -98,12 +100,12 @@ m('target',    'เป้าซ้อมยิง', 1, 'machine', 'dummy', { spr
 m('banditlook', 'โจรเฝ้าค่าย', 14, 'goblin', 'aggressive', { spr: 'h_hood_m', tint: [0, 0.6, -14], aggro: 4, d: 'โจรในค่ายกลางป่า ระวังอย่าให้เห็น' });
 // bosses
 m('thornwood', 'เอลเดอร์ ธอร์นวูด', 18, 'plant', 'boss', {
-  spr: 'm_leafling', tint: [-40, 0.7, -22], scale: 2.4, respawn: 900, skills: ['root_slam', 'summon'], minions: 'bramblekin',
+  spr: 'm_leafling', tint: [-40, 0.7, -22], scale: 2.4, respawn: 900, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', skills: ['root_slam', 'summon'], minions: 'bramblekin',
   phases: [{ at: 0.6, atk: 1.25, msg: 'รากไม้ทั่วป่าสั่นสะเทือน!' }, { at: 0.3, atk: 1.5, spd: 1.3, msg: 'ธอร์นวูดคลุ้มคลั่ง!' }],
   d: 'ต้นไม้โบราณที่ถูกพลังเสื่อมจากเศษรูนกลืนกิน',
 });
 m('ironjaw', 'ไอรอนจอว์ ทรราชเหมือง', 30, 'machine', 'boss', {
-  spr: 'm_dunewolf', tint: [200, 0.35, -8], scale: 1.9, respawn: 1200, skills: ['quake', 'summon', 'charge'], minions: 'rustbot', hpMul: 1.15,
+  spr: 'm_dunewolf', tint: [200, 0.35, -8], scale: 1.9, respawn: 1200, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', skills: ['quake', 'summon', 'charge'], minions: 'rustbot', hpMul: 1.15,
   phases: [{ at: 0.65, atk: 1.2, msg: 'ไอรอนจอว์ส่งเสียงคำราม! เฟืองหมุนเร็วขึ้น' }, { at: 0.3, atk: 1.55, spd: 1.35, msg: 'ไอรอนจอว์เข้าสู่โหมดคลั่ง!' }],
   d: 'หัวหน้าคนงานที่หลอมรวมกับเครื่องจักรขุดแร่และผลึกวอยด์',
 });

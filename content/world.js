@@ -64,7 +64,16 @@ const M = [
   ['abyss_gate', 'ประตูอเวจี', 'void', 'dungeon', 144, 150, 56, 56, 'cave', 'abyss', [98, 92], 'planned'],
 ];
 const MAPS_META = {};
-for (const [id, name, region, kind, l0, l1, w, h, env, music, pos, status] of M) MAPS_META[id] = { id, name, region, kind, lv: [l0, l1], w, h, env, music, pos, status, town: /village|capital|city|port/.test(kind) };
+// audio profile: every map names its music (bgm) and ambient bed; ids live in public/audio-registry.js.
+// Maps without their own theme use their region's town / field / dungeon theme.
+const BGM = { lumira: 'bgm_lumira_village', solkara: 'bgm_elyndra_capital', beginner_meadow: 'bgm_beginner_meadow', greenwood: 'bgm_greenwood', moonlit_creek: 'bgm_moonlit_creek', old_mine: 'bgm_old_mine', plains: 'bgm_golden_fields', woods: 'bgm_oasis_woods' };
+const AMBIENT_BY_ENV = { village: 'amb_village', town_sand: 'amb_town', meadow: 'amb_meadow', forest: 'amb_forest', forest_deep: 'amb_forest', night_creek: 'amb_night_creek', cave: 'amb_cave', desert: 'amb_desert', snow: 'amb_snow' };
+const AMBIENT = { azure_port: 'amb_ocean', coastal_road: 'amb_ocean', coral_beach: 'amb_ocean', pirate_cove: 'amb_ocean', fire_cavern: 'amb_volcano', volcanic_road: 'amb_volcano', astralis: 'amb_magic', rune_valley: 'amb_magic', floating_ruins: 'amb_magic', mana_rift: 'amb_magic', void_plains: 'amb_void', dark_citadel: 'amb_void', broken_realm: 'amb_void', abyss_gate: 'amb_void', last_haven: 'amb_void', ruined_fortress: 'amb_dungeon', sunken_temple: 'amb_dungeon', ancient_pyramid: 'amb_dungeon', lost_ruins: 'amb_dungeon', frozen_citadel: 'amb_snow', crystal_cave: 'amb_cave', mage_tower: 'amb_magic', ancient_tree: 'amb_forest' };
+for (const [id, name, region, kind, l0, l1, w, h, env, music, pos, status] of M) {
+  const town = /village|capital|city|port/.test(kind), type = town ? 'town' : kind === 'dungeon' ? 'dungeon' : 'field';
+  const bgm = BGM[id] || (region === 'heartland' ? (type === 'field' ? 'bgm_heartland_field' : type === 'dungeon' ? 'bgm_old_mine' : 'bgm_elyndra_capital') : `bgm_${region}_${type}`);
+  MAPS_META[id] = { id, name, region, kind, lv: [l0, l1], w, h, env, music, bgm, ambient: AMBIENT[id] || AMBIENT_BY_ENV[env] || 'amb_meadow', pos, status, town };
+}
 // road links between maps (both ways). Open maps place the portal tiles in their builders; links to planned
 // maps show up as locked portals and on the world map.
 const LINKS = [
