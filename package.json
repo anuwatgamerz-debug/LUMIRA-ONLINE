@@ -8,7 +8,8 @@
     "test": "node tests/run.js",
     "test:server": "node tests/run.js server",
     "test:ui": "node tests/run.js ui",
-    "test:world": "node tests/run.js world"
+    "test:world": "node tests/run.js world",
+    "test:art": "node tests/run.js art"
   },
   "keywords": [],
   "author": "",

@@ -22,7 +22,7 @@
     if (!first) A.playSFX('portal_enter');
     const em = m.portals.map(p => ({ id: 'portal_idle', x: p.x, y: p.y }));
     for (const n of m.npcs) if (n.role === 'smith') em.push({ id: 'smith_hammer', x: n.x, y: n.y, every: 1700 });
-    for (const [nm, x, y] of m.deco || []) if (nm === 'p_tent' && !m.town) em.push({ id: 'campfire', x, y });
+    for (const [nm, x, y] of m.deco || []) if ((nm === 'p_tent' || nm === 'prop_tent_01' || nm === 'prop_campfire_01') && !m.town) em.push({ id: 'campfire', x, y });
     A.setEmitters(em);
     boss = null; A.bossLeave(); A.eventEnd();
     questAvailT = performance.now() + 900;

@@ -70,6 +70,44 @@ npc('moonlit_creek', 'hermit', 'ฤษีโอเรน', 'quest', 4, 22, 'sage
 npc('old_mine', 'bram', 'แบรม ผู้รอดชีวิต', 'quest', 5, 3, H(4, 0, 2, 0, 'miner'), { label: '[ผู้รอดชีวิต] แบรม' });
 npc('old_mine', 'supply', 'เสบียงหน้าเหมือง', 'shop', 2, 5, 'merchant', { label: '[เสบียง] ร้านหน้าเหมือง', shop: 'mine' });
 
+// visual look of every NPC (art bible: same base as players, clothes show the job; class masters wear their
+// class at its best). sex 0/1, hair style 0-5, hc hair colour 0-8, outfit = npc_outfit_* layer, or arm/cls for
+// adventurer-style gear, wpn = weapon type, shield, back item, head = headgear visual, scale (children).
+const M = (o) => o;
+const VIS = {
+  'lumira:elder': M({ sex: 0, hair: 0, hc: 4, outfit: 'elder', head: '' }), 'lumira:inn': M({ sex: 1, hair: 5, hc: 2, outfit: 'innkeeper' }),
+  'lumira:heal': M({ sex: 1, hair: 3, hc: 3, outfit: 'healer', head: 'circlet' }), 'lumira:weapon': M({ sex: 0, hair: 1, hc: 1, outfit: 'merchant', wpn: 'sword' }),
+  'lumira:smith': M({ sex: 1, hair: 2, hc: 5, outfit: 'blacksmith', wpn: 'mace' }), 'lumira:shop': M({ sex: 0, hair: 0, hc: 2, outfit: 'merchant' }),
+  'lumira:armor': M({ sex: 1, hair: 3, hc: 1, outfit: 'merchant', shield: 'round' }), 'lumira:sell': M({ sex: 0, hair: 0, hc: 0, outfit: 'merchant', head: 'traveler' }),
+  'lumira:storage': M({ sex: 0, hair: 0, hc: 3, outfit: 'storage', head: 'cap' }), 'lumira:board': 'board',
+  'lumira:m_vanguard': M({ sex: 0, hair: 0, hc: 1, arm: 'plate', cls: 'vanguard', back: 'cape_blue', wpn: 'sword', shield: 'kite', head: 'knight' }),
+  'lumira:m_ranger': M({ sex: 0, hair: 2, hc: 6, arm: 'leather', cls: 'ranger', wpn: 'bow', head: 'hood_green', back: 'ranger' }),
+  'lumira:warp': M({ sex: 1, hair: 3, hc: 7, outfit: 'mage', head: 'witch', wpn: 'wand' }), 'lumira:craft': M({ sex: 1, hair: 5, hc: 4, outfit: 'citizen', cls: 'artisan' }),
+  'lumira:guide': M({ sex: 0, hair: 0, hc: 4, outfit: 'scholar', head: 'wizard', wpn: 'staff' }), 'lumira:farmer': M({ sex: 0, hair: 0, hc: 2, outfit: 'farmer', head: 'straw', wpn: 'axe' }),
+  'lumira:kid': M({ sex: 1, hair: 4, hc: 3, outfit: 'citizen', scale: 0.8 }),
+  'solkara:iris': M({ sex: 1, hair: 2, hc: 5, outfit: 'traveler' }), 'solkara:shop': M({ sex: 0, hair: 0, hc: 1, outfit: 'merchant' }),
+  'solkara:heal': M({ sex: 1, hair: 5, hc: 2, outfit: 'healer' }), 'solkara:warp': M({ sex: 1, hair: 3, hc: 6, outfit: 'mage', head: 'witch', wpn: 'wand' }),
+  'solkara:sell': M({ sex: 0, hair: 0, hc: 4, outfit: 'elder', head: 'traveler' }), 'solkara:smith': M({ sex: 0, hair: 1, hc: 1, outfit: 'blacksmith', wpn: 'mace' }),
+  'solkara:weapon': M({ sex: 0, hair: 0, hc: 2, outfit: 'guard', head: 'iron', wpn: 'spear' }), 'solkara:armor': M({ sex: 1, hair: 3, hc: 6, outfit: 'merchant', shield: 'kite' }),
+  'solkara:potion': M({ sex: 0, hair: 0, hc: 5, outfit: 'healer' }), 'solkara:board': 'board', 'solkara:archivist': M({ sex: 1, hair: 5, hc: 3, outfit: 'scholar' }),
+  'solkara:captain': M({ sex: 0, hair: 0, hc: 1, outfit: 'guard', head: 'knight', wpn: 'sword', shield: 'kite', back: 'cape_blue' }),
+  'solkara:bard': M({ sex: 0, hair: 2, hc: 6, outfit: 'bard', head: 'feather' }), 'solkara:guild': M({ sex: 1, hair: 2, hc: 1, outfit: 'guard', head: 'iron', wpn: 'spear' }),
+  'solkara:m_cleric': M({ sex: 1, hair: 3, hc: 4, arm: 'robe_ivory', cls: 'cleric', back: 'cape_gold', wpn: 'mace', head: 'circlet' }),
+  'solkara:bank': M({ sex: 0, hair: 0, hc: 0, outfit: 'noble', head: 'traveler' }), 'solkara:arena': M({ sex: 0, hair: 1, hc: 1, outfit: 'guard', head: 'iron', wpn: 'greatsword' }),
+  'solkara:m_arcanist': M({ sex: 0, hair: 3, hc: 4, arm: 'robe_violet', cls: 'arcanist', back: 'cape_violet', wpn: 'staff', head: 'wizard' }),
+  'solkara:scholar': M({ sex: 1, hair: 3, hc: 7, outfit: 'scholar' }), 'solkara:m_rogue': M({ sex: 0, hair: 0, hc: 1, arm: 'leather', cls: 'rogue', back: 'cape_violet', wpn: 'dagger', head: 'mask_shadow' }),
+  'solkara:auction': M({ sex: 0, hair: 0, hc: 2, outfit: 'merchant', head: 'cap' }), 'solkara:m_artisan': M({ sex: 0, hair: 1, hc: 5, arm: 'tunic_brown', cls: 'artisan', back: 'cape_red', wpn: 'device', head: 'miner' }),
+  'solkara:craft': M({ sex: 1, hair: 2, hc: 5, outfit: 'citizen', cls: 'artisan' }), 'solkara:inn': M({ sex: 0, hair: 0, hc: 2, outfit: 'innkeeper' }),
+  'solkara:storage': M({ sex: 1, hair: 5, hc: 1, outfit: 'storage', head: 'cap' }), 'solkara:special': M({ sex: 1, hair: 4, hc: 7, outfit: 'merchant', head: 'witch' }),
+  'solkara:gate': M({ sex: 0, hair: 0, hc: 1, outfit: 'guard', head: 'knight', wpn: 'spear' }), 'solkara:event': M({ sex: 1, hair: 4, hc: 3, outfit: 'bard', head: 'party' }),
+  'solkara:noble': M({ sex: 0, hair: 0, hc: 6, outfit: 'noble', head: 'traveler' }),
+  'beginner_meadow:shepherd': M({ sex: 0, hair: 0, hc: 2, outfit: 'farmer', head: 'straw', wpn: 'staff' }),
+  'greenwood:scout': M({ sex: 1, hair: 2, hc: 6, outfit: 'traveler', head: 'hood_green', wpn: 'bow' }), 'greenwood:watch': M({ sex: 0, hair: 0, hc: 2, outfit: 'guard', head: 'leather', wpn: 'spear' }),
+  'greenwood:trader': M({ sex: 1, hair: 5, hc: 1, outfit: 'merchant' }), 'greenwood:heal': M({ sex: 0, hair: 0, hc: 4, outfit: 'healer' }),
+  'moonlit_creek:hermit': M({ sex: 0, hair: 3, hc: 4, outfit: 'elder', wpn: 'staff' }),
+  'old_mine:bram': M({ sex: 0, hair: 0, hc: 1, outfit: 'miner', head: 'miner', wpn: 'pickaxe' }), 'old_mine:supply': M({ sex: 0, hair: 0, hc: 2, outfit: 'merchant', head: 'miner' }),
+};
+for (const n of N) { const v = VIS[n.map + ':' + n.id]; if (v) n.look = v === 'board' ? 'board' : Object.assign({ sex: 0, hair: 0, hc: 0, cc: 0 }, v); }
 // interactive spots that are people (Cleric trial): injured guards beside the arena
 const INJURED = [['solkara', 'inj1', 48, 33], ['solkara', 'inj2', 57, 33], ['solkara', 'inj3', 61, 22]];
 module.exports = { NPCS: N, INJURED };

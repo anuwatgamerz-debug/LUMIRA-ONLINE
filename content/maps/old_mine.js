@@ -15,7 +15,7 @@ module.exports = G => {
   for (let x = 0; x < m.w; x++) { set(m, x, 0, 6); set(m, x, m.h - 1, 6); } for (let y = 0; y < m.h; y++) { set(m, 0, y, 6); set(m, m.w - 1, y, 6); }
   rect(m, 2, 1, 4, 3, 0);
   portal(m, 3, 0, 'moonlit_creek', 61, 46);
-  m.deco = [['p_resource_lumber', 7.5, 4.2], ['p_wheelbarrow', 9.6, 8.4], ['p_crate_A_big', 25.4, 6.3], ['p_barrel', 21.4, 10.2], ['p_sack', 33.5, 28.3], ['p_crate_B_small', 13.4, 28.4], ['p_barrel', 41.4, 43.3], ['p_wheelbarrow', 47.3, 49.6]];
+  m.deco = [['prop_lumber_01', 7.5, 4.2], ['prop_wheelbarrow_01', 9.6, 8.4], ['prop_crate_01', 25.4, 6.3], ['prop_barrel_01', 21.4, 10.2], ['prop_sack_01', 33.5, 28.3], ['prop_crate_01', 13.4, 28.4], ['prop_barrel_01', 41.4, 43.3], ['prop_wheelbarrow_01', 47.3, 49.6]];
   m.spawns = [
     { mob: 'cavebat', n: 8, zone: [16, 2, 52, 18] }, { mob: 'minegoblin', n: 6, zone: [2, 18, 22, 34] },
     { mob: 'crystalcrawler', n: 6, zone: [24, 18, 42, 34] }, { mob: 'rustbot', n: 5, zone: [42, 22, 54, 38] },

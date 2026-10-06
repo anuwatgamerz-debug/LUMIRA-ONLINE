@@ -1024,7 +1024,7 @@ setInterval(() => {
   // snapshots: only the player's map, and only entities near them (area of interest). Players standing in the
   // same 8x8 block share one serialized snapshot.
   const per = {};
-  for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.chead || p.c.eq.head || 0, p.dead ? 1 : 0, p.c.cls]); }
+  for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.chead || p.c.eq.head || 0, p.dead ? 1 : 0, p.c.cls, p.c.eq.arm || 0]); }
   for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp, mob.target || 0]); }
   for (const d of drops.values()) { const s = per[d.map]; if (s) s.d.push([d.id, d.item, d.x, d.y]); }
   snapCache.clear();

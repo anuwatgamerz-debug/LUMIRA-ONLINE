@@ -236,7 +236,9 @@ function hgCanvas(vis, row) {
   return (hgCache[k] = c);
 }
 // one hero, all layers: base (with hair colour) -> hair style -> headgear. look: {cc, sex, hc, hair}; head: item id or vis id
-function drawHero(look, anim, tt, row, x, y, alpha = 1, head = 0, g = ctx) {
+function drawHero(look, anim, tt, row, x, y, alpha = 1, head = 0, g = ctx, gear = null) {
+  // layered LUMIRA characters (paperdoll.js); the older sheet renderer below is the fallback while loading
+  if (drawPaper(look, Object.assign({ head }, gear || {}), anim, tt, row, x, y, alpha, g, (look && look.scale) || 1)) return true;
   const nm = heroSheet(look), vis = typeof head === 'string' ? head : (head && ITEMS[head] && ITEMS[head].vis) || '';
   const cc = CLS[((look && look.cc) | 0) % 5], an = headAnchor(nm, anim, tt, row, look && look.sex);
   const clip = vis && HAT_OUTFIT[cc] && an && anim !== 'hurt';
@@ -255,7 +257,7 @@ function drawHero(look, anim, tt, row, x, y, alpha = 1, head = 0, g = ctx) {
 // ------------------------------------------------------------ NPC looks
 function drawNpc(n, x, y, tn) {
   if (n.look === 'board') return drawBoard(x, y);
-  if (n.look && typeof n.look === 'object') return drawHero(n.look, 'stand', 0, 2, x, y, 1, n.look.head || '');
+  if (n.look && typeof n.look === 'object') return drawHero(n.look, 'idle', tn + ((n.x * 7 + n.y * 3) % 10) / 3, 2, x, y, 1, n.look.head || '', ctx);
   return drawChar(NPC_SPR[n.look], 'stand', 0, 2, x, y);
 }
 function drawBoard(x, y) { // quest board: wooden sign with notes
@@ -268,16 +270,16 @@ function drawBoard(x, y) { // quest board: wooden sign with notes
 
 // ------------------------------------------------------------ map nodes (herbs, ore, shrines, quest spots)
 const NODE_DRAW = {
-  herb: (x, y) => { for (const [a, b] of [[-5, 0], [0, -3], [5, 0], [-2, 2], [3, 2]]) { R(ctx, x + a - 1, y + b - 6, 2, 6, '#3f7a2e'); R(ctx, x + a - 2, y + b - 7, 4, 2, '#5aa346'); } R(ctx, x - 1, y - 12, 3, 3, '#ffffff'); R(ctx, x, y - 11, 1, 1, '#ffd34d'); },
+  herb: (x, y) => { if (drawProp('veg_herb_01', x, y + 2)) { R(ctx, x - 1, y - 14, 3, 3, '#ffffff'); R(ctx, x, y - 13, 1, 1, '#ffd34d'); return; } for (const [a, b] of [[-5, 0], [0, -3], [5, 0], [-2, 2], [3, 2]]) { R(ctx, x + a - 1, y + b - 6, 2, 6, '#3f7a2e'); R(ctx, x + a - 2, y + b - 7, 4, 2, '#5aa346'); } R(ctx, x - 1, y - 12, 3, 3, '#ffffff'); R(ctx, x, y - 11, 1, 1, '#ffd34d'); },
   flower: (x, y, tn) => { const gl = 0.5 + Math.sin(tn * 3) * 0.3; ctx.globalAlpha = gl; disc(ctx, x, y - 8, 7, '#bcd8ff'); ctx.globalAlpha = 1; R(ctx, x - 1, y - 8, 2, 8, '#2f5d34'); for (const [a, b] of [[-3, -12], [3, -12], [0, -15], [0, -10]]) R(ctx, x + a - 1, y + b, 3, 3, '#dfe9ff'); R(ctx, x - 1, y - 12, 2, 2, '#ffe36b'); },
-  ore: (x, y, tn, nd) => { disc(ctx, x, y - 6, 10, '#4a4a55', 7); disc(ctx, x - 1, y - 8, 8, '#6e6e7c', 5); const sp = nd.n.includes('เงิน') ? '#bfe8ff' : '#e8913a'; for (const [a, b] of [[-5, -9], [2, -11], [5, -6], [-1, -5]]) R(ctx, x + a, y + b, 2, 2, sp); if (Math.floor(tn * 2) % 3 === 0) R(ctx, x + 3, y - 12, 1, 1, '#ffffff'); },
-  crystal: (x, y, tn) => { ctx.globalAlpha = 0.35 + Math.sin(tn * 2.5) * 0.15; disc(ctx, x, y - 10, 11, '#7fd4ff'); ctx.globalAlpha = 1; for (const [a, h, w] of [[-5, 12, 4], [0, 18, 5], [5, 10, 4]]) { R(ctx, x + a - w / 2, y - h, w, h, '#3f8fe0'); R(ctx, x + a - w / 2, y - h, 1, h, '#bfe8ff'); R(ctx, x + a - 1, y - h - 2, 2, 2, '#bfe8ff'); } },
+  ore: (x, y, tn, nd) => { const sp = nd.n.includes('เงิน') ? '#bfe8ff' : '#e8913a'; if (drawProp('rock_ore_01', x, y + 2)) { if (nd.n.includes('เงิน')) for (const [a, b] of [[-5, -10], [3, -13], [6, -7]]) R(ctx, x + a, y + b, 2, 2, sp); if (Math.floor(tn * 2) % 3 === 0) R(ctx, x + 3, y - 14, 1, 1, '#ffffff'); return; } disc(ctx, x, y - 6, 10, '#4a4a55', 7); disc(ctx, x - 1, y - 8, 8, '#6e6e7c', 5); for (const [a, b] of [[-5, -9], [2, -11], [5, -6], [-1, -5]]) R(ctx, x + a, y + b, 2, 2, sp); if (Math.floor(tn * 2) % 3 === 0) R(ctx, x + 3, y - 12, 1, 1, '#ffffff'); },
+  crystal: (x, y, tn) => { ctx.globalAlpha = 0.35 + Math.sin(tn * 2.5) * 0.15; disc(ctx, x, y - 10, 11, '#7fd4ff'); ctx.globalAlpha = 1; if (drawProp('rock_crystal_01', x, y + 2)) return; for (const [a, h, w] of [[-5, 12, 4], [0, 18, 5], [5, 10, 4]]) { R(ctx, x + a - w / 2, y - h, w, h, '#3f8fe0'); R(ctx, x + a - w / 2, y - h, 1, h, '#bfe8ff'); R(ctx, x + a - 1, y - h - 2, 2, 2, '#bfe8ff'); } },
   shrine: (x, y, tn) => { R(ctx, x - 6, y - 26, 12, 26, '#8a8a98'); R(ctx, x - 6, y - 26, 2, 26, '#b0b0bc'); R(ctx, x - 8, y - 28, 16, 3, '#6e6e7c'); R(ctx, x - 8, y - 2, 16, 3, '#5b5b66'); ctx.globalAlpha = 0.6 + Math.sin(tn * 2) * 0.3; disc(ctx, x, y - 34, 5, '#dfe9ff'); R(ctx, x - 1, y - 36, 4, 4, '#ffffff'); ctx.globalAlpha = 1; },
   shard: (x, y, tn) => { ctx.globalAlpha = 0.4 + Math.sin(tn * 4) * 0.2; disc(ctx, x, y - 6, 12, '#7fd4ff', 6); ctx.globalAlpha = 1; R(ctx, x - 3, y - 14, 6, 10, '#3f8fe0'); R(ctx, x - 2, y - 16, 4, 2, '#bfe8ff'); R(ctx, x - 1, y - 12, 2, 5, '#ffffff'); },
   root: (x, y, tn) => { ctx.globalAlpha = 0.35 + Math.sin(tn * 3) * 0.2; disc(ctx, x, y - 4, 9, '#b07bff', 4); ctx.globalAlpha = 1; for (const [a, b, w] of [[-9, -3, 7], [-3, -6, 8], [3, -2, 7], [-6, -9, 4]]) R(ctx, x + a, y + b, w, 3, '#3a2a2a'); R(ctx, x - 2, y - 10, 3, 9, '#4a3333'); R(ctx, x - 1, y - 8, 1, 4, '#b07bff'); },
-  stash: (x, y) => { drawProp('p_crate_A_big', x, y); },
-  lumber: (x, y) => { drawProp('p_resource_lumber', x, y); },
-  journal: (x, y) => { drawProp('p_wheelbarrow', x, y); R(ctx, x - 3, y - 18, 7, 5, '#f2efe6'); R(ctx, x - 2, y - 17, 5, 1, '#8a7a60'); },
+  stash: (x, y) => { drawProp('prop_crate_01', x, y + 2) || drawProp('p_crate_A_big', x, y); },
+  lumber: (x, y) => { drawProp('prop_lumber_01', x, y + 2) || drawProp('p_resource_lumber', x, y); },
+  journal: (x, y) => { drawProp('prop_wheelbarrow_01', x, y + 2) || drawProp('p_wheelbarrow', x, y); R(ctx, x - 3, y - 18, 7, 5, '#f2efe6'); R(ctx, x - 2, y - 17, 5, 1, '#8a7a60'); },
   injured: (x, y) => { drawChar('h_knight_m', 'hurt', 9, 0, x, y); },
 };
 const NODE_ICON = { herb: 'สมุนไพร', ore: 'แร่', crystal: 'ผลึก', shrine: 'ศาล', shard: 'รูน', root: 'ราก', stash: 'หีบ', lumber: 'ไม้', journal: 'บันทึก', injured: 'ผู้บาดเจ็บ', flower: 'ดอกไม้' };
@@ -309,7 +311,7 @@ PAL[ROCKW] = ['#2e2a2e', '#36313a', '#2a262a', '#3c3640'].map(hex);
 const ENV = {
   town_sand: { base: SAND, bg: '#a88850' }, desert: { base: SAND, bg: '#a88850', flowerSand: 1 }, village: { base: GRASS, bg: '#3d7a32', wallDirt: 1 },
   meadow: { base: GRASS, bg: '#3d7a32' }, forest: { base: GRASS, bg: '#24461f', treeDark: 1 }, forest_deep: { base: GRASS, bg: '#1c3a1a', treeDark: 1, shade: 'rgba(10,30,10,0.18)' },
-  night_creek: { base: GRASS, bg: '#0e1a2a', treeDark: 1, night: 'rgba(14,20,66,0.52)' }, cave: { base: CAVE, bg: '#141016', cave: 1, night: 'rgba(6,4,10,0.62)' }, snow: { base: SAND, bg: '#d8e4ee' },
+  night_creek: { base: GRASS, bg: '#0e1a2a', treeDark: 1, night: 'rgba(14,20,66,0.52)' }, cave: { base: CAVE, bg: '#141016', cave: 1, night: 'rgba(6,4,10,0.62)' }, snow: { base: SAND, bg: '#d8e4ee', snow: 1 },
 };
 const envOf = m => ENV[m.env] || (m.id === 'woods' ? ENV.forest : m.id === 'plains' ? ENV.desert : m.town ? ENV.town_sand : ENV.desert);
 // light overlay (night / cave): dark everywhere except a soft circle around the player

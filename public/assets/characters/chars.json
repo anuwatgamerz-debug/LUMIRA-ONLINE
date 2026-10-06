@@ -1,0 +1,369 @@
+{
+ "frame": 64,
+ "pivot": [
+  32,
+  58
+ ],
+ "dirs": [
+  "N",
+  "S",
+  "E"
+ ],
+ "mirror": {
+  "W": "E"
+ },
+ "dirs8": "reserved: diagonals use the nearest stored direction",
+ "groups": {
+  "a": {
+   "cols": 9,
+   "index": {
+    "idle": {
+     "N": 0,
+     "S": 4,
+     "E": 8
+    },
+    "walk": {
+     "N": 12,
+     "S": 20,
+     "E": 28
+    },
+    "sit": {
+     "N": 36,
+     "S": 37,
+     "E": 38
+    },
+    "interact": {
+     "N": 39,
+     "S": 41,
+     "E": 43
+    }
+   }
+  },
+  "b": {
+   "cols": 9,
+   "index": {
+    "attack": {
+     "N": 0,
+     "S": 5,
+     "E": 10
+    },
+    "cast": {
+     "N": 15,
+     "S": 19,
+     "E": 23
+    },
+    "hit": {
+     "N": 27,
+     "S": 29,
+     "E": 31
+    },
+    "death": {
+     "N": 33,
+     "S": 37,
+     "E": 41
+    }
+   }
+  }
+ },
+ "anims": {
+  "idle": {
+   "n": 4,
+   "fps": 3,
+   "loop": 1,
+   "group": "a"
+  },
+  "walk": {
+   "n": 8,
+   "fps": 10,
+   "loop": 1,
+   "group": "a"
+  },
+  "attack": {
+   "n": 5,
+   "fps": 12,
+   "loop": 0,
+   "group": "b"
+  },
+  "cast": {
+   "n": 4,
+   "fps": 8,
+   "loop": 0,
+   "group": "b"
+  },
+  "hit": {
+   "n": 2,
+   "fps": 8,
+   "loop": 0,
+   "group": "b"
+  },
+  "death": {
+   "n": 4,
+   "fps": 6,
+   "loop": 0,
+   "group": "b"
+  },
+  "sit": {
+   "n": 1,
+   "fps": 1,
+   "loop": 1,
+   "group": "a"
+  },
+  "interact": {
+   "n": 2,
+   "fps": 5,
+   "loop": 1,
+   "group": "a"
+  },
+  "run": {
+   "n": 8,
+   "fps": 15,
+   "loop": 1,
+   "group": "a",
+   "alias": "walk"
+  }
+ },
+ "height": 42,
+ "head": [
+  12,
+  14
+ ],
+ "layers": {
+  "chr_base_male": "characters/base/chr_base_male",
+  "eq_armor_tunic_blue_male": "equipment/armor/eq_armor_tunic_blue_male",
+  "eq_armor_tunic_brown_male": "equipment/armor/eq_armor_tunic_brown_male",
+  "eq_armor_tunic_green_male": "equipment/armor/eq_armor_tunic_green_male",
+  "eq_armor_tunic_red_male": "equipment/armor/eq_armor_tunic_red_male",
+  "eq_armor_tunic_violet_male": "equipment/armor/eq_armor_tunic_violet_male",
+  "eq_armor_leather_male": "equipment/armor/eq_armor_leather_male",
+  "eq_armor_chain_male": "equipment/armor/eq_armor_chain_male",
+  "eq_armor_plate_male": "equipment/armor/eq_armor_plate_male",
+  "eq_armor_robe_blue_male": "equipment/armor/eq_armor_robe_blue_male",
+  "eq_armor_robe_violet_male": "equipment/armor/eq_armor_robe_violet_male",
+  "eq_armor_robe_ivory_male": "equipment/armor/eq_armor_robe_ivory_male",
+  "eq_armor_robe_brown_male": "equipment/armor/eq_armor_robe_brown_male",
+  "chr_class_adventurer_male": "characters/classes/chr_class_adventurer_male",
+  "chr_class_vanguard_male": "characters/classes/chr_class_vanguard_male",
+  "chr_class_ranger_male": "characters/classes/chr_class_ranger_male",
+  "chr_class_arcanist_male": "characters/classes/chr_class_arcanist_male",
+  "chr_class_cleric_male": "characters/classes/chr_class_cleric_male",
+  "chr_class_rogue_male": "characters/classes/chr_class_rogue_male",
+  "chr_class_artisan_male": "characters/classes/chr_class_artisan_male",
+  "chr_back_adventurer_male": "characters/classes/chr_back_adventurer_male",
+  "chr_back_ranger_male": "characters/classes/chr_back_ranger_male",
+  "chr_back_cape_blue_male": "characters/classes/chr_back_cape_blue_male",
+  "chr_back_cape_red_male": "characters/classes/chr_back_cape_red_male",
+  "chr_back_cape_gold_male": "characters/classes/chr_back_cape_gold_male",
+  "chr_back_cape_violet_male": "characters/classes/chr_back_cape_violet_male",
+  "npc_outfit_merchant_male": "npcs/npc_outfit_merchant_male",
+  "npc_outfit_blacksmith_male": "npcs/npc_outfit_blacksmith_male",
+  "npc_outfit_healer_male": "npcs/npc_outfit_healer_male",
+  "npc_outfit_innkeeper_male": "npcs/npc_outfit_innkeeper_male",
+  "npc_outfit_guard_male": "npcs/npc_outfit_guard_male",
+  "npc_outfit_farmer_male": "npcs/npc_outfit_farmer_male",
+  "npc_outfit_citizen_male": "npcs/npc_outfit_citizen_male",
+  "npc_outfit_elder_male": "npcs/npc_outfit_elder_male",
+  "npc_outfit_scholar_male": "npcs/npc_outfit_scholar_male",
+  "npc_outfit_mage_male": "npcs/npc_outfit_mage_male",
+  "npc_outfit_storage_male": "npcs/npc_outfit_storage_male",
+  "npc_outfit_noble_male": "npcs/npc_outfit_noble_male",
+  "npc_outfit_bard_male": "npcs/npc_outfit_bard_male",
+  "npc_outfit_traveler_male": "npcs/npc_outfit_traveler_male",
+  "npc_outfit_miner_male": "npcs/npc_outfit_miner_male",
+  "chr_base_female": "characters/base/chr_base_female",
+  "eq_armor_tunic_blue_female": "equipment/armor/eq_armor_tunic_blue_female",
+  "eq_armor_tunic_brown_female": "equipment/armor/eq_armor_tunic_brown_female",
+  "eq_armor_tunic_green_female": "equipment/armor/eq_armor_tunic_green_female",
+  "eq_armor_tunic_red_female": "equipment/armor/eq_armor_tunic_red_female",
+  "eq_armor_tunic_violet_female": "equipment/armor/eq_armor_tunic_violet_female",
+  "eq_armor_leather_female": "equipment/armor/eq_armor_leather_female",
+  "eq_armor_chain_female": "equipment/armor/eq_armor_chain_female",
+  "eq_armor_plate_female": "equipment/armor/eq_armor_plate_female",
+  "eq_armor_robe_blue_female": "equipment/armor/eq_armor_robe_blue_female",
+  "eq_armor_robe_violet_female": "equipment/armor/eq_armor_robe_violet_female",
+  "eq_armor_robe_ivory_female": "equipment/armor/eq_armor_robe_ivory_female",
+  "eq_armor_robe_brown_female": "equipment/armor/eq_armor_robe_brown_female",
+  "chr_class_adventurer_female": "characters/classes/chr_class_adventurer_female",
+  "chr_class_vanguard_female": "characters/classes/chr_class_vanguard_female",
+  "chr_class_ranger_female": "characters/classes/chr_class_ranger_female",
+  "chr_class_arcanist_female": "characters/classes/chr_class_arcanist_female",
+  "chr_class_cleric_female": "characters/classes/chr_class_cleric_female",
+  "chr_class_rogue_female": "characters/classes/chr_class_rogue_female",
+  "chr_class_artisan_female": "characters/classes/chr_class_artisan_female",
+  "chr_back_adventurer_female": "characters/classes/chr_back_adventurer_female",
+  "chr_back_ranger_female": "characters/classes/chr_back_ranger_female",
+  "chr_back_cape_blue_female": "characters/classes/chr_back_cape_blue_female",
+  "chr_back_cape_red_female": "characters/classes/chr_back_cape_red_female",
+  "chr_back_cape_gold_female": "characters/classes/chr_back_cape_gold_female",
+  "chr_back_cape_violet_female": "characters/classes/chr_back_cape_violet_female",
+  "npc_outfit_merchant_female": "npcs/npc_outfit_merchant_female",
+  "npc_outfit_blacksmith_female": "npcs/npc_outfit_blacksmith_female",
+  "npc_outfit_healer_female": "npcs/npc_outfit_healer_female",
+  "npc_outfit_innkeeper_female": "npcs/npc_outfit_innkeeper_female",
+  "npc_outfit_guard_female": "npcs/npc_outfit_guard_female",
+  "npc_outfit_farmer_female": "npcs/npc_outfit_farmer_female",
+  "npc_outfit_citizen_female": "npcs/npc_outfit_citizen_female",
+  "npc_outfit_elder_female": "npcs/npc_outfit_elder_female",
+  "npc_outfit_scholar_female": "npcs/npc_outfit_scholar_female",
+  "npc_outfit_mage_female": "npcs/npc_outfit_mage_female",
+  "npc_outfit_storage_female": "npcs/npc_outfit_storage_female",
+  "npc_outfit_noble_female": "npcs/npc_outfit_noble_female",
+  "npc_outfit_bard_female": "npcs/npc_outfit_bard_female",
+  "npc_outfit_traveler_female": "npcs/npc_outfit_traveler_female",
+  "npc_outfit_miner_female": "npcs/npc_outfit_miner_female",
+  "chr_hair_short": "characters/hair/chr_hair_short",
+  "chr_hair_spiky": "characters/hair/chr_hair_spiky",
+  "chr_hair_ponytail": "characters/hair/chr_hair_ponytail",
+  "chr_hair_long": "characters/hair/chr_hair_long",
+  "chr_hair_twin": "characters/hair/chr_hair_twin",
+  "chr_hair_bun": "characters/hair/chr_hair_bun",
+  "eq_weapon_sword": "equipment/weapons/eq_weapon_sword",
+  "eq_weapon_greatsword": "equipment/weapons/eq_weapon_greatsword",
+  "eq_weapon_dagger": "equipment/weapons/eq_weapon_dagger",
+  "eq_weapon_bow": "equipment/weapons/eq_weapon_bow",
+  "eq_weapon_staff": "equipment/weapons/eq_weapon_staff",
+  "eq_weapon_wand": "equipment/weapons/eq_weapon_wand",
+  "eq_weapon_mace": "equipment/weapons/eq_weapon_mace",
+  "eq_weapon_spear": "equipment/weapons/eq_weapon_spear",
+  "eq_weapon_device": "equipment/weapons/eq_weapon_device",
+  "eq_weapon_axe": "equipment/weapons/eq_weapon_axe",
+  "eq_weapon_pickaxe": "equipment/weapons/eq_weapon_pickaxe",
+  "eq_shield_round": "equipment/shields/eq_shield_round",
+  "eq_shield_kite": "equipment/shields/eq_shield_kite",
+  "eq_head_cap": "equipment/headgear/eq_head_cap",
+  "eq_head_straw": "equipment/headgear/eq_head_straw",
+  "eq_head_band_red": "equipment/headgear/eq_head_band_red",
+  "eq_head_band_moon": "equipment/headgear/eq_head_band_moon",
+  "eq_head_leather": "equipment/headgear/eq_head_leather",
+  "eq_head_iron": "equipment/headgear/eq_head_iron",
+  "eq_head_wizard": "equipment/headgear/eq_head_wizard",
+  "eq_head_hood_green": "equipment/headgear/eq_head_hood_green",
+  "eq_head_feather": "equipment/headgear/eq_head_feather",
+  "eq_head_miner": "equipment/headgear/eq_head_miner",
+  "eq_head_mask_shadow": "equipment/headgear/eq_head_mask_shadow",
+  "eq_head_flower": "equipment/headgear/eq_head_flower",
+  "eq_head_antler": "equipment/headgear/eq_head_antler",
+  "eq_head_ironcrown": "equipment/headgear/eq_head_ironcrown",
+  "eq_head_jelcrown": "equipment/headgear/eq_head_jelcrown",
+  "eq_head_traveler": "equipment/headgear/eq_head_traveler",
+  "eq_head_catears": "equipment/headgear/eq_head_catears",
+  "eq_head_party": "equipment/headgear/eq_head_party",
+  "eq_head_witch": "equipment/headgear/eq_head_witch",
+  "eq_head_circlet": "equipment/headgear/eq_head_circlet",
+  "eq_head_knight": "equipment/headgear/eq_head_knight"
+ },
+ "keys": {
+  "hair": [
+   "#2a1a14",
+   "#4a2c1c",
+   "#6e4228",
+   "#956238"
+  ],
+  "skin": [
+   "#5a3426",
+   "#8c5639",
+   "#c08560",
+   "#e8b48c",
+   "#f6d2b0"
+  ]
+ },
+ "tunic": [
+  "blue",
+  "brown",
+  "green",
+  "red",
+  "violet"
+ ],
+ "hair": [
+  "short",
+  "spiky",
+  "ponytail",
+  "long",
+  "twin",
+  "bun"
+ ],
+ "headgear": [
+  "cap",
+  "straw",
+  "band_red",
+  "band_moon",
+  "leather",
+  "iron",
+  "wizard",
+  "hood_green",
+  "feather",
+  "miner",
+  "mask_shadow",
+  "flower",
+  "antler",
+  "ironcrown",
+  "jelcrown",
+  "traveler",
+  "catears",
+  "party",
+  "witch",
+  "circlet",
+  "knight"
+ ],
+ "weapons": [
+  "sword",
+  "greatsword",
+  "dagger",
+  "bow",
+  "staff",
+  "wand",
+  "mace",
+  "spear",
+  "device",
+  "axe",
+  "pickaxe"
+ ],
+ "outfits": [
+  "merchant",
+  "blacksmith",
+  "healer",
+  "innkeeper",
+  "guard",
+  "farmer",
+  "citizen",
+  "elder",
+  "scholar",
+  "mage",
+  "storage",
+  "noble",
+  "bard",
+  "traveler",
+  "miner"
+ ],
+ "order": {
+  "S": [
+   "back",
+   "base",
+   "armor",
+   "class",
+   "hair",
+   "weapon",
+   "shield",
+   "head"
+  ],
+  "N": [
+   "base",
+   "armor",
+   "class",
+   "hair",
+   "back",
+   "weapon",
+   "shield",
+   "head"
+  ],
+  "E": [
+   "shield",
+   "back",
+   "base",
+   "armor",
+   "class",
+   "hair",
+   "weapon",
+   "head"
+  ]
+ }
+}

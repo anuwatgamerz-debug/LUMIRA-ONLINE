@@ -26,6 +26,9 @@ function img(n) {
   return i.complete && i.naturalWidth ? i : null;
 }
 (function loadMeta() { fetch('assets/meta.json').then(r => r.json()).then(m => { META = m; }).catch(() => setTimeout(loadMeta, 2000)); })();
+// LUMIRA world sprites (tools/art/world_assets.py): buildings, trees, vegetation, rocks, props — name -> {path, ax, ay, w, h, fade?}
+let WSPR = {};
+(function loadWorld() { fetch('assets/world/world.json').then(r => r.json()).then(m => { WSPR = m; for (const p of props) img(WSPR[p.n] ? WSPR[p.n].path : p.n); }).catch(() => setTimeout(loadWorld, 3000)); })();
 const CLS = ['knight', 'mage', 'rogue', 'hood', 'barb'];
 const CLS_TH = ['อัศวิน', 'จอมเวท', 'นักธนู', 'นักฆ่าฮู้ด', 'บาบาเรียน'];
 const NPC_SPR = { iris: 'n_iris', merchant: 'n_merchant', nurse: 'n_nurse', warper: 'n_warper', sage: 'n_sage' };
@@ -67,9 +70,18 @@ function drawChar(name, anim, tt, row, x, y, alpha = 1, g = ctx) {
   }
   return false;
 }
-function drawProp(name, x, y) {
-  const m = META.px[name], im = img(name); if (!m || !im) return;
+// draws a world sprite (LUMIRA set first, then the older prop sheets); returns false if nothing could be drawn
+function drawProp(name, x, y, alpha = 1) {
+  const w = WSPR[name], m = w || META.px[name], im = m && img(w ? w.path : name); if (!im) return false;
+  if (alpha < 1) ctx.globalAlpha = alpha;
   ctx.drawImage(im, Math.round(x - m.ax), Math.round(y - m.ay));
+  ctx.globalAlpha = 1; return true;
+}
+// a tree whose canopy covers the local player (who stands behind it) is drawn see-through
+function canopyAlpha(p) {
+  const w = WSPR[p.n], e = ents.get(myId); if (!w || !w.fade || !e) return 1;
+  const px = (e.x + 0.5) * TP, py = (e.y + 0.5) * TP + 12, [fx, fy, fw, fh] = w.fade, x0 = p.x - w.ax + fx, y0 = p.y - w.ay + fy;
+  return py < p.y && px > x0 && px < x0 + fw && py - 20 > y0 && py - 30 < y0 + fh ? 0.45 : 1;
 }
 
 // ------------------------------------------------------------ noise
@@ -82,9 +94,9 @@ const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), pars
 const SAND = 0, GRASS = 1, DIRT = 2, PLAZA = 3, WATER = 4, DGRASS = 5;
 const PAL = {
   [SAND]: ['#e6cb92', '#dfc285', '#ecd5a2', '#d6b777'].map(hex),
-  [GRASS]: ['#5aa346', '#62ad4c', '#6bb653', '#529a3f'].map(hex),
-  [DGRASS]: ['#3f8a3a', '#479341', '#4f9c47', '#38803a'].map(hex),
-  [DIRT]: ['#b98b57', '#b08250', '#c29560', '#a97a49'].map(hex),
+  [GRASS]: ['#5e9e4b', '#66a651', '#6fae58', '#56944a'].map(hex), // LUMIRA green ramp (art bible §5)
+  [DGRASS]: ['#46803f', '#4d8845', '#55904a', '#40783c'].map(hex),
+  [DIRT]: ['#b0814f', '#a87a4a', '#ba8d5c', '#9f7346'].map(hex), // brown ramp
   [WATER]: ['#3c86c9', '#4590d2', '#3479bc', '#4b98d8'].map(hex),
 };
 let ground = null, props = [], portals = [], waterPx = [], miniC = null;
@@ -189,22 +201,27 @@ function genGround(m) {
   for (let i = 0; i < w * h; i++) { let c = MC[cls[i]]; const v = m.t[i]; if (v === 5) c = [30, 90, 40]; if (v === 6 && !envOf(m).cave) c = [130, 130, 130]; if (v === 7) c = [60, 140, 70]; if (v === 9 || v === 3) c = [150, 80, 50]; if (v === 8) c = [150, 220, 255]; mi.data.set([...c, 255], i * 4); }
   mg.putImageData(mi, 0, 0);
 }
+const treeOf = (E, r) => E.snow ? (r < 0.6 ? 'tree_pine_snow_01' : 'tree_pine_01') : E.treeDark ? ['tree_pine_01', 'tree_oak_02', 'tree_pine_02', 'tree_oak_01', 'tree_oak_03'][Math.floor(r * 5)] : ['tree_oak_01', 'tree_oak_02', 'tree_oak_03', 'tree_oak_01', 'tree_pine_01'][Math.floor(r * 5)];
+const vegOf = (E, r) => E.base === SAND ? (r < 0.6 ? 'veg_grass_02' : 'rock_small_01') : E.treeDark ? ['veg_fern_01', 'veg_bush_small_01', 'veg_mushroom_01', 'veg_tallgrass_01', 'veg_grass_02'][Math.floor(r * 5)]
+  : ['veg_grass_01', 'veg_grass_02', 'veg_tallgrass_01', 'veg_flowers_red_01', 'veg_flowers_gold_01', 'veg_flowers_white_01', 'veg_flowers_violet_01', 'veg_bush_small_01', 'veg_bush_01', 'veg_grass_01'][Math.floor(r * 10)];
 function bakeMap(m) {
   genGround(m);
-  const w = m.w, h = m.h, t = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? -1 : m.t[y * w + x];
+  const E = envOf(m), w = m.w, h = m.h, t = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? -1 : m.t[y * w + x];
   props = []; portals = [];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const v = t(x, y), r = hash(x, y), jx = Math.round((hash(x + 3, y) - 0.5) * 8), jy = Math.round((hash(x, y + 3) - 0.5) * 6);
     const cx = x * TP + 16 + jx, cy = y * TP + 26 + jy;
-    if (v === 5) props.push({ n: r < 0.45 ? 'p_tree_single_A' : r < 0.9 ? 'p_tree_single_B' : 'p_trees_A_small', x: cx, y: cy, sh: 14 });
-    else if (v === 6 && !envOf(m).cave) props.push({ n: 'p_rock_single_' + 'ABCDE'[Math.floor(r * 5)], x: cx, y: cy - 4, sh: 10 });
-    else if (v === 7) props.push({ n: 'p_cactus', x: cx, y: cy - 2, sh: 8 });
-    else if (v === 3 && (x === 0 || y === 0 || x === w - 1 || y === h - 1)) props.push({ n: (x === 0 || x === w - 1) ? 'p_wallv' : 'p_wallh', x: x * TP + 16, y: y * TP + 20 });
+    // LUMIRA sprites (n) with the older prop sheets as fallback (fb); trees/rocks carry their own baked shadow
+    if (v === 5) props.push({ n: treeOf(E, r), x: cx, y: cy + 4, tree: 1, fb: r < 0.45 ? 'p_tree_single_A' : r < 0.9 ? 'p_tree_single_B' : 'p_trees_A_small', fsh: 14 });
+    else if (v === 6 && !E.cave) props.push({ n: ['rock_small_01', 'rock_medium_03', 'rock_medium_04', 'rock_large_05', 'rock_small_02'][Math.floor(r * 5)], x: cx, y: cy, fb: 'p_rock_single_' + 'ABCDE'[Math.floor(r * 5)], fsh: 10 });
+    else if (v === 7) props.push({ n: 'veg_cactus_01', x: cx, y: cy, fb: 'p_cactus', fsh: 8 });
+    else if (v === 3 && (x === 0 || y === 0 || x === w - 1 || y === h - 1)) { const vert = x === 0 || x === w - 1; props.push({ n: vert ? 'prop_wall_v_01' : 'prop_wall_h_01', x: x * TP + 16, y: y * TP + 28, fb: vert ? 'p_wallv' : 'p_wallh', fy: -8 }); }
     else if (v === 8) portals.push({ x: x * TP + 16, y: y * TP + 16 });
+    else if ((v === 1 || v === 0 && E.base === GRASS) && !m.town && r > 0.955) props.push({ n: vegOf(E, hash(y, x)), x: cx, y: cy - 6, veg: 1 }); // scattered vegetation
   }
-  for (const b of m.props || []) props.push({ n: `b_${b.k}_${b.w}x${b.h}`, x: (b.x + b.w / 2) * TP, y: (b.y + b.h / 2) * TP, sort: (b.y + b.h) * TP - 2 });
+  for (const b of m.props || []) props.push({ n: `bld_${b.k}_${b.w}x${b.h}`, fb: `b_${b.k}_${b.w}x${b.h}`, x: (b.x + b.w / 2) * TP, y: (b.y + b.h / 2) * TP, sort: (b.y + b.h) * TP - 2 });
   for (const [n, x, y] of m.deco || []) props.push({ n, x: x * TP, y: y * TP }); // decorations listed by the map (content/maps)
-  for (const p of props) img(p.n);
+  for (const p of props) img(WSPR[p.n] ? WSPR[p.n].path : p.n);
 }
 
 // ------------------------------------------------------------ item icons
@@ -288,12 +305,12 @@ function onMsg(m) {
 }
 function snap(m) {
   const seen = new Set();
-  for (const [id, name, x, y, dir, hp, maxhp, lv, look, wpn, head, dead] of m.p) {
+  for (const [id, name, x, y, dir, hp, maxhp, lv, look, wpn, head, dead, cls, arm] of m.p) {
     seen.add(id); let e = ents.get(id);
     if (!e) { e = { kind: 'p', x, y, row: SRV2ROW[dir] ?? 2, ph: Math.random() * 3 }; ents.set(id, e); img(heroOf(look)); }
     if (e.sdir !== dir && !e.moving) e.row = SRV2ROW[dir] ?? 2;
     if (dead && !e.dead) e.dieT = now();
-    Object.assign(e, { name, tx: x, ty: y, sdir: dir, hp, maxhp, lv, look, wpn, head, dead });
+    Object.assign(e, { name, tx: x, ty: y, sdir: dir, hp, maxhp, lv, look, wpn, head, dead, cls, arm });
   }
   for (const [id, type, x, y, dir, hp, maxhp, tg] of m.m) {
     seen.add(id); let e = ents.get(id);
@@ -443,7 +460,7 @@ function drawPortrait() {
   const n = heroOf(me.look), L = META.lpc[n], im = img(n), g = $('portrait').getContext('2d');
   if (!L || !im || !anchorsFor(me.look.sex)) { if (!portraitT) portraitT = setTimeout(() => { portraitT = 0; drawPortrait(); }, 400); return; }
   const pg = portC.getContext('2d'); pg.imageSmoothingEnabled = false; pg.clearRect(0, 0, 64, 64);
-  drawHero(me.look, 'stand', 0, 2, 32, 60, 1, me.eq.chead || me.eq.head || 0, pg);
+  drawHero(me.look, 'stand', 0, 2, 32, 60, 1, me.eq.chead || me.eq.head || 0, pg, { wpn: me.eq.wpn, arm: me.eq.arm, cls: me.cls });
   g.imageSmoothingEnabled = false; g.clearRect(0, 0, 32, 32); g.drawImage(portC, 16, 4, 32, 32, 0, 1, 32, 32);
 }
 // ------------------------------------------------------------ chat (compact 4-line log + full window with channels)
@@ -782,7 +799,7 @@ function frame(t) {
   if (clickMark && t - clickMark.t < 600) { const a = (t - clickMark.t) / 600; ctx.fillStyle = `rgba(255,236,150,${1 - a})`; const cx = clickMark.x * TP + 16, cy = clickMark.y * TP + 16, r = Math.round(4 + a * 8); ctx.fillRect(cx - r, cy, 3, 1); ctx.fillRect(cx + r - 2, cy, 3, 1); ctx.fillRect(cx, cy - r, 1, 3); ctx.fillRect(cx, cy + r - 2, 1, 3); }
   labels.length = 0;
   const list = [];
-  for (const p of props) if (p.x > vx0 - 140 && p.x < vx1 + 140 && p.y > vy0 && p.y < vy1 + 60) list.push({ y: p.sort ?? p.y, f: () => { if (p.sh) shadow(p.x, p.y, p.sh); drawProp(p.n, p.x, p.y); } });
+  for (const p of props) if (p.x > vx0 - 140 && p.x < vx1 + 140 && p.y > vy0 && p.y < vy1 + 60) list.push({ y: p.sort ?? p.y, f: () => { if (p.sh) shadow(p.x, p.y, p.sh); if (!drawProp(p.n, p.x, p.y, p.tree ? canopyAlpha(p) : 1) && p.fb && META.px[p.fb]) { if (p.fsh) shadow(p.x, p.y - 4, p.fsh); drawProp(p.fb, p.x, p.y + (p.fy || 0) - (p.tree ? 4 : 0)); } } });
   for (const n of map.npcs) {
     const x = (n.x + 0.5) * TP, y = (n.y + 0.5) * TP + 12;
     list.push({ y, f: () => { shadow(x, y, 9); drawNpc(n, x, y, tn); const b = Math.round(Math.sin(tn * 4) * 2); drawNpcBadge(n, x, y - 60 + b); labels.push([x, y + 6, n.label, '#ffe08a', 'npc']); } });
@@ -810,7 +827,7 @@ function frame(t) {
     else if (e.kind === 'p') list.push({ y, f: () => {
       const nm = heroOf(e.look); shadow(x, y, 10);
       const [an, at] = entAnim(e, nm, tn);
-      drawHero(e.look, an, at, e.row ?? 2, x, y, 1, e.head);
+      drawHero(e.look, an, at, e.row ?? 2, x, y, 1, e.head, ctx, { wpn: e.wpn, arm: e.arm, cls: e.cls });
       hpBar(x, y + 4, e.hp / e.maxhp, 24, '#58d65a');
       if (HUD.S.names || id === myId) labels.push([x, y + 10, e.name, id === myId ? '#9fe7ff' : '#c8f7c5', 'pc']);
       const b = bubbles.get(id); if (b && b.until > t) labels.push([x, y - 60, b.m, '#2a1f3a', 'bubble']);
@@ -969,7 +986,7 @@ let mode = 'login';
 const look = { sex: 0, hair: 0, hc: 0, cc: 0 };
 function setMode(m) { mode = m; $('tLogin').classList.toggle('on', m === 'login'); $('tReg').classList.toggle('on', m === 'reg'); $('regbox').style.display = m === 'reg' ? 'block' : 'none'; $('go').textContent = m === 'reg' ? 'สร้างตัวละครและเข้าเกม' : 'เข้าเกม'; $('err').textContent = ''; }
 $('tLogin').onclick = () => setMode('login'); $('tReg').onclick = () => setMode('reg');
-const OUTFIT_TH = ['ชุดอัศวิน', 'ชุดจอมเวท', 'ชุดนักธนู', 'ชุดฮู้ดเงา', 'ชุดนักรบป่า'];
+const OUTFIT_TH = ['ชุดเดินทางสีฟ้า', 'ชุดเดินทางสีน้ำตาล', 'ชุดเดินทางสีเขียว', 'ชุดเดินทางสีแดง', 'ชุดเดินทางสีม่วง']; // everyone starts as an Adventurer: the choice is the tunic colour
 document.querySelectorAll('.sel button').forEach(b => b.onclick = () => {
   const k = b.dataset.k, L = { cc: 5, sex: 2, hair: 6, hc: 9 }[k]; look[k] = (look[k] + +b.dataset.d + L) % L;
   $('v_cc').textContent = OUTFIT_TH[look.cc]; $('v_sex').textContent = look.sex ? 'หญิง' : 'ชาย'; $('v_hair').textContent = HAIR_STYLE_TH[look.hair]; $('v_hc').textContent = HAIR_TH[look.hc];
@@ -977,10 +994,10 @@ document.querySelectorAll('.sel button').forEach(b => b.onclick = () => {
 (function prev() {
   requestAnimationFrame(prev); if (mode !== 'reg') return;
   const c = $('preview'), g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 96, 96);
-  const n = heroOf(look), L = META.lpc[n], im = img(n); img('h_knight_' + (look.sex ? 'f' : 'm')); if (!L || !im) return;
+  const n = heroOf(look), L = META.lpc[n], im = img(n); img('h_knight_' + (look.sex ? 'f' : 'm')); if ((!L || !im) && !CHR) return;
   const tn = performance.now() / 1000, ph = Math.floor(tn / 2) % 6;
   const row = [2, 3, 0, 1, 2, 2][ph], atk = ph === 5;
-  drawHero(look, atk ? 'atk' : 'walk', atk ? (tn % 2) * 0.45 : tn, row, 48, 92, 1, 0, g);
+  drawHero(look, atk ? 'atk' : 'walk', atk ? (tn % 2) * 0.45 : tn, row, 48, 92, 1, 0, g, { wpn: 200, cls: 'adventurer' });
 })();
 setMode('login');
 try { $('u').value = localStorage.getItem('lmo_u') || ''; } catch (e) { }

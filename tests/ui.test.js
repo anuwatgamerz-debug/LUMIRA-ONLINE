@@ -324,8 +324,10 @@ async function phase2Desktop(b, srv, R) {
   // cycling needs at least two monsters in range; monsters wander, so wait for that instead of assuming it
   const two = await waitFor(pg, () => targetList().length >= 2, null, 20000);
   const seq = []; for (let i = 0; i < 3; i++) { await pg.keyboard.press('Tab'); await pg.waitForTimeout(80); seq.push(await pg.evaluate(() => selected)); }
-  await pg.keyboard.press('Shift+Tab'); const back = await pg.evaluate(() => selected);
-  if (two) R.ok(seq.every(Boolean) && new Set(seq).size > 1 && back === seq[1], `D2 Tab cycles targets, Shift+Tab goes back (${seq.join(',')} <- ${back})`);
+  // Shift+Tab steps back from the current target; if that monster wandered out of range (or died) in between,
+  // there is nothing to step back from and the cycle restarts at the head of the list — that's correct too
+  await pg.keyboard.press('Shift+Tab'); const [back, gone] = await pg.evaluate(cur => [selected, !targetList().includes(cur)], seq[2]);
+  if (two) R.ok(seq.every(Boolean) && new Set(seq).size > 1 && (back === seq[1] || gone), `D2 Tab cycles targets, Shift+Tab goes back (${seq.join(',')} <- ${back}${gone ? ', last target left range' : ''})`);
   else R.skipped('D2 Tab cycling', 'fewer than 2 monsters in range for 20s');
   await pg.keyboard.press('i'); await pg.waitForTimeout(100); await pg.keyboard.press('Escape');
   R.ok(await pg.$eval('#wBag', e => e.style.display !== 'block') && await pg.evaluate(() => selected) !== 0, 'D3 Esc closes an open window first (target kept)');

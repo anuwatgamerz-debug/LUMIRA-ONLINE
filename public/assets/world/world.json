@@ -1,0 +1,907 @@
+{
+"bld_house_small_village_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_house_small_village_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_house_large_village_6x4": {
+"w": 192,
+"h": 176,
+"ax": 96,
+"ay": 112,
+"path": "world/buildings/bld_house_large_village_6x4",
+"footprint": [
+6,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_inn_village_7x5": {
+"w": 224,
+"h": 208,
+"ax": 112,
+"ay": 128,
+"path": "world/buildings/bld_inn_village_7x5",
+"footprint": [
+7,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 96,
+"kind": "house"
+},
+"bld_potion_shop_village_6x5": {
+"w": 192,
+"h": 208,
+"ax": 96,
+"ay": 128,
+"path": "world/buildings/bld_potion_shop_village_6x5",
+"footprint": [
+6,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_weapon_shop_village_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_weapon_shop_village_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_armor_shop_village_6x5": {
+"w": 192,
+"h": 208,
+"ax": 96,
+"ay": 128,
+"path": "world/buildings/bld_armor_shop_village_6x5",
+"footprint": [
+6,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_blacksmith_village_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_blacksmith_village_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_storage_village_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_storage_village_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_chapel_village_7x5": {
+"w": 224,
+"h": 252,
+"ax": 112,
+"ay": 172,
+"path": "world/buildings/bld_chapel_village_7x5",
+"footprint": [
+7,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_class_hall_village_8x5": {
+"w": 256,
+"h": 208,
+"ax": 128,
+"ay": 128,
+"path": "world/buildings/bld_class_hall_village_8x5",
+"footprint": [
+8,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 96,
+"kind": "house"
+},
+"bld_house_small_capital_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_house_small_capital_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_house_large_capital_6x4": {
+"w": 192,
+"h": 176,
+"ax": 96,
+"ay": 112,
+"path": "world/buildings/bld_house_large_capital_6x4",
+"footprint": [
+6,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_inn_capital_7x5": {
+"w": 224,
+"h": 208,
+"ax": 112,
+"ay": 128,
+"path": "world/buildings/bld_inn_capital_7x5",
+"footprint": [
+7,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 96,
+"kind": "house"
+},
+"bld_weapon_shop_capital_6x5": {
+"w": 192,
+"h": 208,
+"ax": 96,
+"ay": 128,
+"path": "world/buildings/bld_weapon_shop_capital_6x5",
+"footprint": [
+6,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_armor_shop_capital_6x5": {
+"w": 192,
+"h": 208,
+"ax": 96,
+"ay": 128,
+"path": "world/buildings/bld_armor_shop_capital_6x5",
+"footprint": [
+6,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_blacksmith_capital_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_blacksmith_capital_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_workshop_capital_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_workshop_capital_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_storage_capital_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_storage_capital_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_bank_capital_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_bank_capital_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_library_capital_5x4": {
+"w": 160,
+"h": 176,
+"ax": 80,
+"ay": 112,
+"path": "world/buildings/bld_library_capital_5x4",
+"footprint": [
+5,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_guild_hall_capital_8x5": {
+"w": 256,
+"h": 208,
+"ax": 128,
+"ay": 128,
+"path": "world/buildings/bld_guild_hall_capital_8x5",
+"footprint": [
+8,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 96,
+"kind": "house"
+},
+"bld_class_hall_capital_6x4": {
+"w": 192,
+"h": 176,
+"ax": 96,
+"ay": 112,
+"path": "world/buildings/bld_class_hall_capital_6x4",
+"footprint": [
+6,
+4
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_sanctuary_capital_7x5": {
+"w": 224,
+"h": 252,
+"ax": 112,
+"ay": 172,
+"path": "world/buildings/bld_sanctuary_capital_7x5",
+"footprint": [
+7,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_town_hall_capital_8x5": {
+"w": 256,
+"h": 252,
+"ax": 128,
+"ay": 172,
+"path": "world/buildings/bld_town_hall_capital_8x5",
+"footprint": [
+8,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 96,
+"kind": "house"
+},
+"bld_market_capital_6x5": {
+"w": 192,
+"h": 208,
+"ax": 96,
+"ay": 128,
+"path": "world/buildings/bld_market_capital_6x5",
+"footprint": [
+6,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_special_shop_capital_6x5": {
+"w": 192,
+"h": 208,
+"ax": 96,
+"ay": 128,
+"path": "world/buildings/bld_special_shop_capital_6x5",
+"footprint": [
+6,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 72,
+"kind": "house"
+},
+"bld_garrison_capital_8x5": {
+"w": 256,
+"h": 208,
+"ax": 128,
+"ay": 128,
+"path": "world/buildings/bld_garrison_capital_8x5",
+"footprint": [
+8,
+5
+],
+"door": [
+24,
+56
+],
+"facade": 96,
+"kind": "house"
+},
+"bld_castle_gate_capital_8x5": {
+"w": 256,
+"h": 208,
+"ax": 128,
+"ay": 128,
+"path": "world/buildings/bld_castle_gate_capital_8x5",
+"footprint": [
+8,
+5
+],
+"door": [
+40,
+64
+],
+"facade": 72,
+"kind": "gate"
+},
+"tree_oak_01": {
+"w": 92,
+"h": 120,
+"ax": 46,
+"ay": 114,
+"path": "world/trees/tree_oak_01",
+"fade": [
+6.560000000000002,
+2.640000000000015,
+78.88,
+74.24
+],
+"trunk": 6
+},
+"tree_oak_02": {
+"w": 97,
+"h": 126,
+"ax": 48,
+"ay": 120,
+"path": "world/trees/tree_oak_02",
+"fade": [
+6.520000000000003,
+2.8799999999999955,
+82.96,
+78.08
+],
+"trunk": 6
+},
+"tree_oak_03": {
+"w": 93,
+"h": 121,
+"ax": 46,
+"ay": 115,
+"path": "world/trees/tree_oak_03",
+"fade": [
+6.219999999999999,
+2.680000000000007,
+79.56,
+74.88
+],
+"trunk": 6
+},
+"tree_pine_01": {
+"w": 66,
+"h": 112,
+"ax": 33,
+"ay": 106,
+"path": "world/trees/tree_pine_01",
+"fade": [
+5.0,
+2.0,
+56.0,
+84.0
+],
+"trunk": 4
+},
+"tree_pine_02": {
+"w": 55,
+"h": 116,
+"ax": 27,
+"ay": 110,
+"path": "world/trees/tree_pine_02",
+"fade": [
+-2.120000000000001,
+1.8400000000000034,
+58.24,
+87.36
+],
+"trunk": 4
+},
+"tree_pine_snow_01": {
+"w": 66,
+"h": 112,
+"ax": 33,
+"ay": 106,
+"path": "world/trees/tree_pine_snow_01",
+"fade": [
+5.0,
+2.0,
+56.0,
+84.0
+],
+"trunk": 4
+},
+"veg_grass_01": {
+"w": 20,
+"h": 14,
+"ax": 10,
+"ay": 12,
+"path": "world/vegetation/veg_grass_01"
+},
+"veg_grass_02": {
+"w": 20,
+"h": 14,
+"ax": 10,
+"ay": 12,
+"path": "world/vegetation/veg_grass_02"
+},
+"veg_tallgrass_01": {
+"w": 28,
+"h": 22,
+"ax": 14,
+"ay": 20,
+"path": "world/vegetation/veg_tallgrass_01"
+},
+"veg_flowers_red_01": {
+"w": 24,
+"h": 16,
+"ax": 12,
+"ay": 14,
+"path": "world/vegetation/veg_flowers_red_01"
+},
+"veg_flowers_gold_01": {
+"w": 24,
+"h": 16,
+"ax": 12,
+"ay": 14,
+"path": "world/vegetation/veg_flowers_gold_01"
+},
+"veg_flowers_violet_01": {
+"w": 24,
+"h": 16,
+"ax": 12,
+"ay": 14,
+"path": "world/vegetation/veg_flowers_violet_01"
+},
+"veg_flowers_white_01": {
+"w": 24,
+"h": 16,
+"ax": 12,
+"ay": 14,
+"path": "world/vegetation/veg_flowers_white_01"
+},
+"veg_bush_01": {
+"w": 40,
+"h": 30,
+"ax": 20,
+"ay": 27,
+"path": "world/vegetation/veg_bush_01"
+},
+"veg_bush_small_01": {
+"w": 26,
+"h": 19,
+"ax": 13,
+"ay": 16,
+"path": "world/vegetation/veg_bush_small_01"
+},
+"veg_fern_01": {
+"w": 30,
+"h": 20,
+"ax": 15,
+"ay": 18,
+"path": "world/vegetation/veg_fern_01"
+},
+"veg_mushroom_01": {
+"w": 18,
+"h": 16,
+"ax": 9,
+"ay": 15,
+"path": "world/vegetation/veg_mushroom_01"
+},
+"veg_reed_01": {
+"w": 24,
+"h": 30,
+"ax": 12,
+"ay": 28,
+"path": "world/vegetation/veg_reed_01"
+},
+"veg_herb_01": {
+"w": 22,
+"h": 18,
+"ax": 11,
+"ay": 16,
+"path": "world/vegetation/veg_herb_01"
+},
+"veg_cactus_01": {
+"w": 28,
+"h": 40,
+"ax": 14,
+"ay": 38,
+"path": "world/vegetation/veg_cactus_01"
+},
+"rock_small_01": {
+"w": 27,
+"h": 23,
+"ax": 13,
+"ay": 19,
+"path": "world/rocks/rock_small_01"
+},
+"rock_small_02": {
+"w": 27,
+"h": 23,
+"ax": 13,
+"ay": 19,
+"path": "world/rocks/rock_small_02"
+},
+"rock_medium_03": {
+"w": 38,
+"h": 32,
+"ax": 19,
+"ay": 28,
+"path": "world/rocks/rock_medium_03"
+},
+"rock_medium_04": {
+"w": 38,
+"h": 32,
+"ax": 19,
+"ay": 28,
+"path": "world/rocks/rock_medium_04"
+},
+"rock_large_05": {
+"w": 52,
+"h": 43,
+"ax": 26,
+"ay": 39,
+"path": "world/rocks/rock_large_05"
+},
+"rock_ore_01": {
+"w": 38,
+"h": 32,
+"ax": 19,
+"ay": 28,
+"path": "world/rocks/rock_ore_01"
+},
+"rock_crystal_01": {
+"w": 38,
+"h": 32,
+"ax": 19,
+"ay": 28,
+"path": "world/rocks/rock_crystal_01"
+},
+"prop_barrel_01": {
+"w": 22,
+"h": 28,
+"ax": 11,
+"ay": 25,
+"path": "world/props/prop_barrel_01"
+},
+"prop_crate_01": {
+"w": 26,
+"h": 28,
+"ax": 13,
+"ay": 25,
+"path": "world/props/prop_crate_01"
+},
+"prop_sack_01": {
+"w": 20,
+"h": 22,
+"ax": 10,
+"ay": 20,
+"path": "world/props/prop_sack_01"
+},
+"prop_cart_01": {
+"w": 48,
+"h": 34,
+"ax": 24,
+"ay": 31,
+"path": "world/props/prop_cart_01"
+},
+"prop_bench_01": {
+"w": 40,
+"h": 22,
+"ax": 20,
+"ay": 19,
+"path": "world/props/prop_bench_01"
+},
+"prop_lamp_01": {
+"w": 18,
+"h": 66,
+"ax": 9,
+"ay": 63,
+"path": "world/props/prop_lamp_01",
+"glow": [
+9,
+10
+]
+},
+"prop_sign_sword_01": {
+"w": 30,
+"h": 40,
+"ax": 15,
+"ay": 37,
+"path": "world/props/prop_sign_sword_01"
+},
+"prop_sign_potion_01": {
+"w": 30,
+"h": 40,
+"ax": 15,
+"ay": 37,
+"path": "world/props/prop_sign_potion_01"
+},
+"prop_sign_bed_01": {
+"w": 30,
+"h": 40,
+"ax": 15,
+"ay": 37,
+"path": "world/props/prop_sign_bed_01"
+},
+"prop_fence_01": {
+"w": 34,
+"h": 24,
+"ax": 17,
+"ay": 21,
+"path": "world/props/prop_fence_01"
+},
+"prop_well_01": {
+"w": 44,
+"h": 52,
+"ax": 22,
+"ay": 47,
+"path": "world/props/prop_well_01"
+},
+"prop_stall_01": {
+"w": 56,
+"h": 52,
+"ax": 28,
+"ay": 48,
+"path": "world/props/prop_stall_01"
+},
+"prop_tent_01": {
+"w": 52,
+"h": 44,
+"ax": 26,
+"ay": 41,
+"path": "world/props/prop_tent_01"
+},
+"prop_campfire_01": {
+"w": 28,
+"h": 24,
+"ax": 14,
+"ay": 21,
+"path": "world/props/prop_campfire_01",
+"glow": [
+14,
+10
+]
+},
+"prop_weaponrack_01": {
+"w": 40,
+"h": 40,
+"ax": 20,
+"ay": 36,
+"path": "world/props/prop_weaponrack_01"
+},
+"prop_anvil_01": {
+"w": 30,
+"h": 22,
+"ax": 15,
+"ay": 19,
+"path": "world/props/prop_anvil_01"
+},
+"prop_hay_01": {
+"w": 34,
+"h": 24,
+"ax": 17,
+"ay": 21,
+"path": "world/props/prop_hay_01"
+},
+"prop_flag_blue_01": {
+"w": 24,
+"h": 60,
+"ax": 6,
+"ay": 57,
+"path": "world/props/prop_flag_blue_01"
+},
+"prop_flag_red_01": {
+"w": 24,
+"h": 60,
+"ax": 6,
+"ay": 57,
+"path": "world/props/prop_flag_red_01"
+},
+"prop_flag_gold_01": {
+"w": 24,
+"h": 60,
+"ax": 6,
+"ay": 57,
+"path": "world/props/prop_flag_gold_01"
+},
+"prop_bucket_01": {
+"w": 16,
+"h": 16,
+"ax": 8,
+"ay": 14,
+"path": "world/props/prop_bucket_01"
+},
+"prop_lumber_01": {
+"w": 44,
+"h": 22,
+"ax": 22,
+"ay": 20,
+"path": "world/props/prop_lumber_01"
+},
+"prop_wheelbarrow_01": {
+"w": 34,
+"h": 24,
+"ax": 16,
+"ay": 21,
+"path": "world/props/prop_wheelbarrow_01"
+},
+"prop_fountain_01": {
+"w": 64,
+"h": 52,
+"ax": 32,
+"ay": 48,
+"path": "world/props/prop_fountain_01",
+"glow": null
+},
+"prop_statue_01": {
+"w": 32,
+"h": 60,
+"ax": 16,
+"ay": 57,
+"path": "world/props/prop_statue_01"
+},
+"prop_wall_h_01": {
+"w": 32,
+"h": 44,
+"ax": 16,
+"ay": 40,
+"path": "world/props/prop_wall_h_01"
+},
+"prop_wall_v_01": {
+"w": 32,
+"h": 44,
+"ax": 16,
+"ay": 40,
+"path": "world/props/prop_wall_v_01"
+}
+}

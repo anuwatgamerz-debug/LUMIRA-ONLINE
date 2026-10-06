@@ -26,3 +26,6 @@ secrets.json
 node_modules/
 data/db.json.corrupt
 server-crash.log
+
+__pycache__/
+*.pyc
