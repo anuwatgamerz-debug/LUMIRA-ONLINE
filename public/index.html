@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#141a33">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>LUMIRA ONLINE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
@@ -33,7 +36,7 @@ input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;bord
 #credit{position:fixed;right:8px;bottom:6px;font-size:10px;z-index:21}#credit a{color:#ffe39acc}
 /* ---------------- HUD: everything below is sized in rem; html font-size = 10px * --ui (set by hud.js) */
 html{font-size:calc(10px * var(--ui,1))}
-:root{--sl:max(8px,env(safe-area-inset-left));--sr:max(8px,env(safe-area-inset-right));--st:max(6px,env(safe-area-inset-top));--sb:max(6px,env(safe-area-inset-bottom))}
+:root{--sl:max(8px,calc(env(safe-area-inset-left) + 4px));--sr:max(8px,calc(env(safe-area-inset-right) + 4px));--st:max(6px,env(safe-area-inset-top));--sb:max(10px,calc(env(safe-area-inset-bottom) + 6px))}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5;display:none;font-size:1.2rem}
 #hud>*{pointer-events:auto}
 .pi{display:inline-block;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;flex:0 0 auto;pointer-events:none}
@@ -58,38 +61,46 @@ html{font-size:calc(10px * var(--ui,1))}
 #topbar::-webkit-scrollbar{display:none}
 /* right-aligned via an auto margin (not justify-content:flex-end) so overflow stays scrollable and measurable */
 #topbar>:first-child{margin-left:auto}
-#hud .tb{flex:0 0 auto;width:4.6rem;height:4.8rem;padding:.3rem 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;font-size:.95rem;line-height:1.1;white-space:nowrap;background:linear-gradient(180deg,#2b3566,#171d3c)}
+#hud .tb{flex:0 0 auto;width:4.4rem;height:4.8rem;padding:.3rem 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;font-size:.95rem;line-height:1.1;white-space:nowrap;background:linear-gradient(180deg,#2b3566,#171d3c)}
 .tb .pi{width:2.4rem;height:2.4rem}
 .tb.on{border-color:#7dff8a;box-shadow:0 0 0 2px #0a0d1c,0 0 1rem #7dff8a}
 .gold{flex:0 0 auto;display:flex;align-items:center;gap:.4rem;height:2.8rem;margin:1rem .2rem 0 0;padding:0 .9rem 0 .4rem;background:#0a0d1cd0;border:1px solid var(--gold2);border-radius:1.4rem;font-size:1.25rem;color:var(--gold)}
 .gold .pi{width:2rem;height:2rem}
-body.barc1 #topbar .lp1,body.barc2 #topbar .lp2{display:none}
+body.barc1 #topbar .lp1,body.portrait #topbar .lp1{display:none}
+#topbar{gap:.4rem}
+body.barc2 .gold{padding:0 .6rem 0 .3rem;font-size:1.05rem;gap:.25rem}body.barc2 .gold .pi{width:1.8rem;height:1.8rem}body.barc2 #hud .tb{width:4.1rem}
 /* minimap (top-right) */
 #mm{position:absolute;right:var(--sr);top:var(--st);width:12.6rem;padding:.4rem;cursor:pointer}
 #mmc{display:block;width:100%;height:auto;aspect-ratio:138/104;image-rendering:pixelated;background:#0a0d1c}
 #mmn{font-size:1.15rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:.2rem .2rem 0}
 #mmxy{font-size:1.05rem;color:var(--dim);display:flex;justify-content:space-between;padding:0 .2rem}
 /* quest tracker (left side) */
-#quest{position:absolute;left:var(--sl);top:calc(var(--st) + 10.4rem);width:18rem;padding:.5rem .8rem;font-size:1.1rem;line-height:1.4;cursor:pointer;background:linear-gradient(90deg,#161c38e6,#161c3899)}
+#quest{position:absolute;left:var(--sl);top:calc(var(--st) + 10.4rem);width:16.4rem;padding:.35rem .7rem .45rem;font-size:1rem;line-height:1.35;cursor:pointer;background:linear-gradient(90deg,#161c38e6,#161c3899)}
+#qhead{display:flex;align-items:center;gap:.3rem;min-height:2.2rem}
+#qhead b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#qprog{color:#ffe39a;font-size:.95rem}#qtog{color:#e8d9a8;font-size:1.1rem;width:2.4rem;height:2.2rem;margin:-.2rem -.5rem -.2rem 0;display:flex;align-items:center;justify-content:center;border-radius:.4rem;background:#0a0d1c55}
+#quest .qobj{color:#d8d2c0}#quest .qdone{color:#7dff8a}
+#quest.col{width:auto;max-width:16.4rem;padding:.25rem .6rem}#quest.col #qt{display:none}#quest:not(.col) #qprog{display:none}
 #quest b{color:var(--gold);font-weight:500;font-size:1.1rem}
 #quest .qk{color:#ffe39a}
 /* floating joystick (bottom-left) */
 #joyzone{position:absolute;left:0;bottom:0;width:min(46vw,30rem);height:min(38vh,24rem);touch-action:none}
-#joy{position:absolute;left:calc(var(--sl) + 1.6rem);bottom:calc(var(--sb) + 1.6rem);width:12rem;height:12rem;border-radius:50%;background:radial-gradient(circle,#2a346888 0 55%,#141a33aa 56%);border:.3rem solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,inset 0 0 1.2rem #000;opacity:.7;transition:left .15s,top .15s,bottom .15s,opacity .2s;pointer-events:none}
-#joy.act{opacity:1;transition:opacity .1s}
+#joy{position:absolute;left:calc(var(--sl) + 1.6rem);bottom:calc(var(--sb) + 1.6rem);width:10.4rem;height:10.4rem;border-radius:50%;background:radial-gradient(circle,#2a346888 0 55%,#141a33aa 56%);border:.3rem solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,inset 0 0 1.2rem #000;opacity:.42;transition:left .15s,top .15s,bottom .15s,opacity .2s;pointer-events:none}
+#joy.act{opacity:.92;transition:opacity .1s}
 #joy::after{content:'';position:absolute;inset:1.3rem;border-radius:50%;border:1px dashed #e8c46a55}
-#knob{position:absolute;left:50%;top:50%;width:4.6rem;height:4.6rem;margin:-2.3rem 0 0 -2.3rem;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fb2ff,#2f5cc0 60%,#1a3070);border:2px solid var(--gold);box-shadow:0 2px 6px #000a}
+#knob{position:absolute;left:50%;top:50%;width:4.2rem;height:4.2rem;margin:-2.1rem 0 0 -2.1rem;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fb2ff,#2f5cc0 60%,#1a3070);border:2px solid var(--gold);box-shadow:0 2px 6px #000a}
 /* combat wheel (bottom-right). Button centres sit on two arcs around Attack; positions are rem from the corner. */
-#acts{position:absolute;right:var(--sr);bottom:var(--sb);width:21.4rem;height:21.4rem;pointer-events:none}
+#acts{position:absolute;right:var(--sr);bottom:var(--sb);width:22rem;height:22rem;pointer-events:none}
 #hud .rb{pointer-events:auto;position:absolute;width:5rem;height:5rem;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.9rem;line-height:1;background:radial-gradient(circle at 40% 30%,#3d4a8c,#161c3a 70%);border:2px solid var(--gold2);box-shadow:0 0 0 2px #0a0d1c,0 3px 6px #000a;touch-action:manipulation}
 .rb .pi{width:2.4rem;height:2.4rem;margin-bottom:.1rem}
 #hud .rb.big{width:7.2rem;height:7.2rem;right:1rem;bottom:1rem;font-size:1.05rem;background:radial-gradient(circle at 40% 30%,#c0533d,#5a1a14 70%);border-color:var(--gold)}
 .rb.big .pi{width:3.4rem;height:3.4rem}
-#hud .rb.sm{width:4.2rem;height:4.2rem;font-size:.8rem}
+#hud .rb.sm{width:3.9rem;height:3.9rem;font-size:.8rem}
 .rb.sm .pi{width:2rem;height:2rem}
-#sk1{right:10.5rem;bottom:2.1rem}#sk2{right:8.04rem;bottom:8.04rem}#sk3{right:2.1rem;bottom:10.5rem}
-#sk4{right:15.37rem;bottom:5.9rem}#sk5{right:11.86rem;bottom:11.86rem}#sk6{right:5.9rem;bottom:15.37rem}
-#bInt{right:16.5rem;bottom:.9rem}#bPot{right:.9rem;bottom:16.5rem}#bTgt{right:17.1rem;bottom:11.1rem}#bAuto{right:11.1rem;bottom:17.1rem}
+#sk1{right:11.1rem;bottom:2.3rem}#sk2{right:8.52rem;bottom:8.52rem}#sk3{right:2.3rem;bottom:11.1rem}
+#sk4{right:15.95rem;bottom:6.21rem}#sk5{right:12.34rem;bottom:12.34rem}#sk6{right:6.21rem;bottom:15.95rem}
+#bInt{right:17.45rem;bottom:1.15rem}#bPot{right:1.15rem;bottom:17.45rem}#bTgt{right:17.95rem;bottom:11.75rem}#bAuto{right:11.75rem;bottom:17.95rem}
+#hud #bPot,#hud #bAuto{opacity:.88}#hud #bAuto.on{opacity:1} /* lighter weight than Attack / skills */
 #hud .rb.on{border-color:#7dff8a;box-shadow:0 0 0 2px #0a0d1c,0 0 1.4rem #7dff8a}
 .rb .q{position:absolute;right:-.3rem;bottom:-.3rem;background:#0a0d1c;border:1px solid var(--gold2);border-radius:.6rem;font-size:1rem;padding:0 .3rem}
 #hud .rb.dis{opacity:.45;filter:grayscale(.7)}
@@ -101,8 +112,8 @@ body.barc1 #topbar .lp1,body.barc2 #topbar .lp2{display:none}
 .rb.sk .cdo{position:absolute;inset:0;border-radius:50%;background:conic-gradient(#05070fd8 calc(var(--p,0) * 1turn),transparent 0);display:none;pointer-events:none}
 .rb.sk .cdt{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:1.35rem;color:#fff;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none}
 .rb.sk.cd .cdo{display:block}.rb.sk.cd .cdt{display:flex}
-#hud .rb.sk.empty{border-style:dashed;background:#0a0d1c99;box-shadow:0 0 0 2px #0a0d1c}
-.rb.sk.empty::after{content:'+';color:var(--dim);font-size:1.8rem;line-height:1}
+#hud .rb.sk.empty{border:2px solid #6b5426;background:radial-gradient(circle,#0b1022 0 52%,#151b36 53% 60%,#0b1022 61%);box-shadow:0 0 0 2px #0a0d1c,inset 0 0 0 .35rem #0a0d1c,inset 0 0 0 .45rem #8a6a2e66}
+.rb.sk.empty::after{content:'+';color:#c9a75c99;font-size:1.15rem;line-height:1;font-weight:300}
 .rb.sk.lock .pi{filter:grayscale(1) brightness(.45)}
 .rb.sk.nosp .pi{filter:grayscale(.85) brightness(.8)}.rb.sk.nosp .ssp{color:#ff6b6b}
 #hud .rb.sk.oor{border-color:#ff6b6b}
@@ -123,7 +134,7 @@ body.cs-dead #acts .rb{opacity:.35;pointer-events:none}
 #hud .rb.sk.skinned.empty::after{position:relative;z-index:1}
 body.skin #joy{background:url(assets/ui/joy_ring.webp) 50% 50%/118% no-repeat;border:0;box-shadow:none}
 body.skin #joy::after{display:none}
-body.skin #knob{background-color:transparent;background-image:none;border:0;box-shadow:none;width:5.2rem;height:5.2rem;margin:-2.6rem 0 0 -2.6rem}
+body.skin #knob{background-color:transparent;background-image:none;border:0;box-shadow:none;width:4.6rem;height:4.6rem;margin:-2.3rem 0 0 -2.3rem}
 /* target panel */
 #tgt{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--st) + 6.2rem);width:22rem;display:none;align-items:center;gap:.6rem;padding:.4rem .6rem}
 #tgt.on{display:flex}
@@ -176,10 +187,10 @@ body.skin .slot{height:7.4rem}
 #mm.art #mmxy2{display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#e6eefc;text-shadow:1px 1px 0 #000}
 #mm.art #mmp{display:flex;align-items:center;justify-content:center;font-size:.72rem;color:#b9c6e6;white-space:nowrap;overflow:hidden}
 body.skin.portrait #topbar{top:calc(var(--st) + 14rem)}
-body.skin.portrait #quest{top:calc(var(--st) + 19.8rem)}
-body.skin.portrait #tgt.art{top:calc(var(--st) + 28rem)}
+body.skin.portrait #quest{top:calc(var(--st) + 19.6rem)}
+body.skin.portrait #tgt.art{top:calc(var(--st) + 26.4rem)}
 /* quest tracker accents */
-#quest .qmark{width:1.7rem;height:1.7rem;vertical-align:-.45rem;margin-right:.3rem}
+#quest .qmark{width:1.7rem;height:1.7rem;flex:0 0 auto}
 body.skin #quest{border-color:#c79a3e;background:linear-gradient(90deg,#141a33ee,#141a3399)}
 /* player status on the art frame (inner boxes placed from ui.json by skinHud) */
 .pv{display:none}
@@ -193,33 +204,38 @@ body.skin #quest{border-color:#c79a3e;background:linear-gradient(90deg,#141a33ee
 #pstat.art #hJob{display:flex;align-items:center;justify-content:center;font-size:.95rem;color:#f2d38a;padding-left:1.2rem}
 #pstat.art .bar{border:1px solid #000;border-radius:.3rem;background:#0d1624;height:auto;box-shadow:inset 0 0 0 1px #ffffff14}
 #pstat.art .bar b{font-size:.72rem;line-height:1;display:flex;align-items:center;justify-content:center}
-#pstat.art .bar.xp i{background:linear-gradient(180deg,#9be36a,#4e9e2c)}
-#pstat.art .bar.xp b{display:none}
+#pstat.art .bar.xp i{background:linear-gradient(180deg,#c8ff7a,#5fbf2c 55%,#3c8a1c);box-shadow:inset 0 1px 0 #ffffff80}
+#pstat.art .bar.xp{background:#05080f;border-color:#000}
+#pstat.art .bar.xp #xpt{display:flex;align-items:center;justify-content:center;line-height:1;font-size:.68rem;font-weight:700;color:#fff;text-shadow:0 0 2px #000,1px 1px 0 #000,-1px -1px 0 #000}
+#xpt{display:none}
+#pstat.art .bar.xp #hX{display:none}
 #pstat.art .pv,#pstat.art #hX2{display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#f4ecd8;text-shadow:1px 1px 0 #000}
+#pstat.art #hX2{color:#d9ff9a;font-weight:700}
 #pstat.art #buffs{position:absolute;display:flex;gap:0;justify-content:space-around;align-items:center}
 body.skin #topbar{left:calc(var(--sl) + 24rem)}
 body.skin.landscape #quest{top:calc(var(--st) + 11.8rem)}
 /* target panel on the art frame (positions of the inner boxes are set from ui.json by skinTarget) */
-#tgt.art{width:31rem;aspect-ratio:var(--ar);padding:0;gap:0;background:none 0 0/100% 100% no-repeat;border:0;box-shadow:none;filter:drop-shadow(0 .3rem .4rem #000b)}
+#tgt.art{width:25.5rem;aspect-ratio:var(--ar);padding:0;gap:0;background:none 0 0/100% 100% no-repeat;border:0;box-shadow:none;filter:drop-shadow(0 .3rem .4rem #000b)}
 #tgt.art::before,#tgt.art::after{display:none}
 #tgt.art .tgi,#tgt.art .tgn{display:contents}
 #tgt.art>*,#tgt.art .tgi>*,#tgt.art .tgn>*{position:absolute;margin:0}
 #tgt.art #tgpic{border:0;border-radius:50%;background:radial-gradient(#3a2a3a,#120c16);z-index:-1}
-#tgt.art #tgName{display:flex;align-items:center;font-size:1.45rem;font-weight:500;color:#f6e7c1;text-shadow:1px 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#tgt.art #tgLv{display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#f2d38a;text-shadow:1px 1px 0 #000}
+#tgt.art #tgName{display:flex;align-items:center;font-size:1.25rem;font-weight:500;color:#f6e7c1;text-shadow:1px 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tgt.art #tgLv{display:flex;align-items:center;justify-content:center;font-size:1.05rem;color:#f2d38a;text-shadow:1px 1px 0 #000}
 #tgt.art .bar{border:0;border-radius:.3rem;background:#1a1016;overflow:hidden}
-#tgt.art .bar b{font-size:.85rem;line-height:1;display:flex;align-items:center;justify-content:center}
-#tgt.art #tgSt{display:flex;align-items:flex-start;font-size:.85rem;line-height:1.1;padding:.1rem 0 0 .2rem;white-space:nowrap;overflow:hidden}
-#hud #tgt.art #tgX{padding:0;font-size:1rem;display:flex;align-items:center;justify-content:center;border-radius:50%}
-body.landscape #tgt.art{transform:none;left:max(calc(50% - 15.5rem),calc(var(--sl) + 24rem))} /* centred, but never under the status frame on small landscape phones */
-body.portrait #tgt.art{width:30rem;left:50%;right:auto;transform:translateX(-50%);top:calc(var(--st) + 27.6rem)} /* own row under the quest tracker */
+#tgt.art .bar b{font-size:.82rem;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center}
+#tgt.art #tgSt{display:flex;align-items:flex-start;font-size:.78rem;line-height:1.1;padding:.1rem 0 0 .2rem;white-space:nowrap;overflow:hidden}
+#hud #tgt.art #tgX{padding:0;font-size:.8rem;transform:scale(.78);display:flex;align-items:center;justify-content:center;border-radius:50%}
+body.landscape #tgt.art{transform:none;top:calc(var(--st) + 5.7rem);left:max(calc(50% - 12.75rem),calc(var(--sl) + 24rem))} /* centred, but never under the status frame on small landscape phones */
+body.portrait #tgt.art{width:24.6rem;left:50%;right:auto;transform:translateX(-50%);top:calc(var(--st) + 26.4rem)} /* own row under the quest tracker */
 /* combat toast ("Out of range", "SP ไม่เพียงพอ"): one reused element */
 #ctoast{position:absolute;left:50%;top:30%;transform:translateX(-50%);padding:.4rem 1.2rem;border-radius:1.4rem;background:#0a0d1cd8;border:1px solid #ff8b8b;color:#ffd0d0;font-size:1.3rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s}
 #ctoast.on{opacity:1;transition:none}
 /* compact chat (bottom) */
-#chat{position:absolute;bottom:var(--sb);left:calc(var(--sl) + 15rem);right:calc(var(--sr) + 21.6rem);display:flex;align-items:flex-end;gap:.4rem;pointer-events:none}
-#log{flex:1;min-width:0;font-size:1.15rem;line-height:1.45;height:calc(1.45em * 4 + .8rem);overflow:hidden;padding:.4rem .7rem;display:flex;flex-direction:column;justify-content:flex-end;text-shadow:1px 1px 0 #000,0 0 3px #000;background:linear-gradient(90deg,#0a0d1caa,#0a0d1c33);border-radius:.4rem;pointer-events:auto;cursor:pointer}
-#log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chat{position:absolute;bottom:var(--sb);left:calc(var(--sl) + 13.6rem);right:calc(var(--sr) + 22.4rem);display:flex;align-items:flex-end;gap:.4rem;pointer-events:none}
+#log{flex:1;min-width:0;font-size:1.1rem;line-height:1.4;height:calc(1.4em * 3 + .6rem);overflow:hidden;padding:.4rem .7rem;display:flex;flex-direction:column;justify-content:flex-end;text-shadow:1px 1px 0 #000,0 0 3px #000;background:linear-gradient(90deg,#0a0d1c70,#0a0d1c10 85%);border-radius:.4rem;pointer-events:auto;cursor:pointer}
+#log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .4s}
+#log div:nth-last-child(3){opacity:.45}#log div:nth-last-child(2){opacity:.75}
 #hud #bChat{pointer-events:auto;width:3.8rem;height:3.8rem;padding:0;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 #bChat .pi{width:2.4rem;height:2.4rem}
 .ch-world{color:#ffcf6b}.ch-whisper{color:#e9a3ff}.ch-party{color:#7fe7ff}.ch-guild{color:#9dff8a}
@@ -227,7 +243,7 @@ body.portrait #tgt.art{width:30rem;left:50%;right:auto;transform:translateX(-50%
 body.portrait #topbar{left:var(--sl);right:var(--sr);top:calc(var(--st) + 13.6rem)}
 body.portrait #topbar>:first-child{margin-left:0}
 body.portrait #quest{top:calc(var(--st) + 19.4rem)}
-body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.2rem)}
+body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6rem)}
 /* windows */
 .win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(44rem,calc(100vw - var(--sl) - var(--sr)));max-height:calc(100vh - var(--st) - var(--sb) - 1rem);max-height:calc(100dvh - var(--st) - var(--sb) - 1rem);overflow:auto;padding:1.2rem;display:none;z-index:8;font-size:1.35rem}
 .win h3{margin:0 0 .8rem;color:var(--gold);display:flex;justify-content:space-between;align-items:center;font-weight:500;font-size:1.6rem}
@@ -298,16 +314,16 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.2r
     <div class="nm"><span id="hName">-</span><span id="hJob"></span></div>
     <div class="bar hp"><i id="hpb"></i><b id="hpt" class="num"></b></div>
     <div class="bar sp"><i id="spb"></i><b id="spt" class="num"></b></div>
-    <div class="bar xp"><i id="xpb"></i><b id="hX" class="num">0%</b></div>
+    <div class="bar xp"><i id="xpb"></i><b id="hX" class="num">0%</b><b id="xpt" class="num"></b></div>
     <span id="hpP" class="pv num"></span><span id="spP" class="pv num"></span>
   </div>
   <div id="buffs"></div>
   <div id="topbar">
     <div class="gold" title="Zeny"><span class="pi" data-icon="coin"></span><span id="hZ" class="num">0</span></div>
-    <button class="tb lp2" id="bSkill" data-icon="skill">สกิล</button>
+    <button class="tb" id="bSkill" data-icon="skill">สกิล</button>
     <button class="tb" id="bEquip" data-icon="equip">อุปกรณ์</button>
     <button class="tb" id="bBag" data-icon="bag">กระเป๋า</button>
-    <button class="tb lp2" id="bQuest" data-icon="quest">เควส</button>
+    <button class="tb" id="bQuest" data-icon="quest">เควส</button>
     <button class="tb" id="bMap" data-icon="map">แผนที่</button>
     <button class="tb lp1" id="bParty" data-icon="party">ปาร์ตี้</button>
     <button class="tb lp1" id="bGuild" data-icon="guild">กิลด์</button>
@@ -316,7 +332,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.2r
     <button class="tb" id="bMore" data-icon="more">เพิ่มเติม</button>
   </div>
   <div id="mm" class="frame" title="แตะเพื่อเปิดแผนที่โลก"><canvas id="mmc" width="138" height="104"></canvas><div id="mmn">-</div><div id="mmxy"><span id="mmp">1</span><span id="mmxy2" class="num">0,0</span></div></div>
-  <div id="quest" class="frame"><b><i class="pi qmark" data-icon="quest" data-skin="quest_mark"></i>ภารกิจหลัก</b><div id="qt">-</div></div>
+  <div id="quest" class="frame"><div id="qhead" role="button" aria-label="ย่อ/ขยายภารกิจ"><i class="pi qmark" data-icon="quest" data-skin="quest_mark"></i><b id="qtitle">ภารกิจหลัก</b><span id="qprog" class="num"></span><span id="qtog">▾</span></div><div id="qt">-</div></div>
   <div id="joyzone"><div id="joy"><div id="knob"></div></div></div>
   <div id="chat"><div id="log" title="แตะเพื่อเปิดแชท"></div><button id="bChat" data-icon="chat" aria-label="แชท"></button></div>
   <div id="tgt" class="frame"><canvas id="tgpic" width="64" height="64"></canvas><div class="tgi"><div class="tgn"><span id="tgName">-</span><span id="tgLv" class="num"></span></div><div class="bar hp"><i id="tgHp"></i><b id="tgHpT" class="num"></b></div><div id="tgSt"></div></div><button id="tgX" aria-label="ยกเลิกเป้าหมาย">✕</button></div>

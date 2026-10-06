@@ -328,6 +328,19 @@ function onFx(m) {
 }
 
 // ------------------------------------------------------------ hud
+// quest tracker: expanded = title + objective + progress, collapsed = icon + short title + progress
+function questTrack() {
+  const s = me.q.step;
+  if (!QT[s]) return { title: 'ภารกิจหลัก', obj: 'จบบททดสอบแล้ว!', prog: '✔', done: true };
+  const [obj, where] = QT[s].split('\n'), done = me.q.k >= QN[s];
+  return { title: obj, obj: where || '', prog: `${Math.min(me.q.k, QN[s])}/${QN[s]}`, done, hint: done ? '✔ กลับไปหาไอริส' : '' };
+}
+function updQuestTrack() {
+  const t = questTrack(), q = $('quest');
+  q.classList.toggle('col', !!HUD.S.qCol);
+  $('qtitle').textContent = t.title; $('qprog').textContent = t.prog; $('qtog').textContent = HUD.S.qCol ? '▸' : '▾';
+  $('qt').innerHTML = `<div class="qobj">${t.obj} <span class="num qk">${t.prog}</span></div>${t.hint ? `<div class="qdone">${t.hint}</div>` : ''}`;
+}
 const QN = [10, 8, 10, 1];
 const QT = ['ปราบ เจลลอป\n(ทุ่งทรายสีทอง)', 'ปราบ ปูทราย\n(ทุ่งทรายสีทอง)', 'ปราบ ลีฟลิง\n(ป่าโอเอซิส)', 'ปราบ ราชาเจลลอป\n(บอส ทุ่งทราย)'];
 function updHud() {
@@ -338,8 +351,8 @@ function updHud() {
   $('hpP').textContent = Math.round(me.hp / me.maxhp * 100) + '%'; $('spP').textContent = Math.round(me.sp / me.maxsp * 100) + '%';
   if ($('hX2')) $('hX2').textContent = $('hX').textContent;
   const z = me.zeny.toLocaleString(); if ($('hZ').textContent !== z) { $('hZ').textContent = z; HUD.fitBar(); } // wider gold can push buttons out of the bar
-  const s = me.q.step;
-  $('qt').innerHTML = QT[s] ? `${QT[s].replace('\n', '<br>')} <span class="num qk">${me.q.k}/${QN[s]}</span>${me.q.k >= QN[s] ? '<br><span style="color:#7dff8a">✔ กลับไปหาไอริส</span>' : ''}` : 'จบบททดสอบแล้ว!';
+  $('xpt').textContent = `${me.exp.toLocaleString()} / ${me.next.toLocaleString()}`;
+  updQuestTrack();
   if (me.hp > 0) $('dead').style.display = 'none';
   updPotion(); renderHotbar();
   drawPortrait();
@@ -359,7 +372,7 @@ function skinHud() {
   };
   put($('pport'), B.portrait); put($('lvb'), B.level, B.portrait); put($('hName'), B.name); put($('hJob'), B.job);
   const tall = b => [b[0], b[1] - b[3] * 0.3, b[2], b[3] * 1.6]; // the art's tracks are thin: cover their outline so numbers fit
-  put(P.querySelector('.bar.hp'), tall(B.hp)); put(P.querySelector('.bar.sp'), tall(B.sp)); put(P.querySelector('.bar.xp'), B.exp);
+  put(P.querySelector('.bar.hp'), tall(B.hp)); put(P.querySelector('.bar.sp'), tall(B.sp)); put(P.querySelector('.bar.xp'), [B.exp[0], B.exp[1] - B.exp[3] * 0.3, B.exp[2], B.exp[3] * 1.6]); // never taller than HP/SP
   put($('hpP'), B.hpv); put($('spP'), B.spv);
   if (!$('hX2')) { const x = document.createElement('span'); x.id = 'hX2'; x.className = 'num'; P.appendChild(x); x.textContent = $('hX').textContent; }
   put($('hX2'), B.expv);
@@ -412,7 +425,7 @@ function addChat(ch, text, col) {
 }
 function log(t, col) { addChat('sys', t, col || '#ffe9a8'); }
 function chatLine(e) { const d = document.createElement('div'); d.textContent = (CH_TAG[e.ch] || '') + e.text; if (e.col) d.style.color = e.col; else d.className = 'ch-' + e.ch; return d; }
-function renderLog() { const l = $('log'); l.textContent = ''; for (const e of chatLog.slice(-4)) l.appendChild(chatLine(e)); }
+function renderLog() { const l = $('log'); l.textContent = ''; for (const e of chatLog.slice(-3)) l.appendChild(chatLine(e)); } // mini chat: 3 newest, older ones dimmed by CSS
 function renderChatList() {
   const l = $('chlist'); l.textContent = '';
   const list = chatLog.filter(e => chTab === 'all' || e.ch === chTab);
@@ -557,7 +570,10 @@ $('bBag').onclick = toggleWin('wBag', renderBag);
 $('pport').onclick = toggleWin('wStat', renderStat);
 $('bMap').onclick = $('mm').onclick = toggleWin('wMap', renderBigMap);
 $('bEquip').onclick = toggleWin('wEquip', renderEquip);
-$('bQuest').onclick = $('quest').onclick = toggleWin('wQuest', renderQuest);
+$('bQuest').onclick = toggleWin('wQuest', renderQuest); $('quest').onclick = e => { if (!e._fold) $('bQuest').onclick(); };
+// chevron folds the tracker; a folded tracker unfolds on any tap; the rest opens the quest window
+const qFold = e => { e.stopPropagation(); e._fold = 1; HUD.S.qCol = !HUD.S.qCol; HUD.saveSettings(); if (me) updQuestTrack(); };
+$('qtog').onclick = qFold; $('quest').addEventListener('click', e => { if (HUD.S.qCol) qFold(e); }, true);
 $('bParty').onclick = toggleWin('wParty');
 $('bGuild').onclick = toggleWin('wGuild');
 $('bSet').onclick = toggleWin('wSet', renderSettings);

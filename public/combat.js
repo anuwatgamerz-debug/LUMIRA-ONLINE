@@ -31,10 +31,12 @@ const press = b => anim(b, 'press'), shake = b => anim(b, 'shake');
 // Wheel buttons act on pointerdown: a second finger tapping while the joystick is held never produces a
 // 'click' (the browser treats it as a multi-touch gesture), and pressing on touch-down also feels faster.
 // 'click' stays as the fallback for keyboard / element.click(); the timestamp stops a tap firing twice.
+let ghostUntil = 0; // a press acted on pointerdown may open a window; its trailing click must not hit what is now under the finger
 function onPress(el, fn) {
-  el.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; el._pd = performance.now(); fn(); });
+  el.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; el._pd = performance.now(); ghostUntil = el._pd + 500; fn(); });
   el.addEventListener('click', () => { if (performance.now() - (el._pd || 0) > 700) fn(); });
 }
+addEventListener('click', e => { if (performance.now() < ghostUntil && e.target.closest('.win')) { e.stopPropagation(); e.preventDefault(); } }, true);
 
 // ------------------------------------------------------------ target system
 function setTarget(id) { selected = id; updTarget(); }

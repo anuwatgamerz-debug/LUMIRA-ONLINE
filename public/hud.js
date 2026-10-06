@@ -149,7 +149,7 @@
   }).catch(() => { });
 
   // ---------------------------------------------------------- settings
-  const DEF = { uiSize: 1, zoom: 'normal', joy: 'float', names: true, fps: false };
+  const DEF = { uiSize: 1, zoom: 'normal', joy: 'float', names: true, fps: false, qCol: false };
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('lmo_set') || '{}') || {}; } catch (e) { }
   const S = Object.assign({}, DEF, saved);
   function saveSettings() { try { localStorage.setItem('lmo_set', JSON.stringify(S)); } catch (e) { } layout(); }
@@ -174,6 +174,7 @@
     if (bar.scrollWidth > bar.clientWidth + 1) document.body.classList.add('barc2');
   }
   addEventListener('resize', layout);
+  if (window.visualViewport) visualViewport.addEventListener('resize', layout); // iOS toolbar show/hide changes the usable height
   addEventListener('orientationchange', () => setTimeout(layout, 150));
 
   window.HUD = { icon: pix, iconURL, applyIcons, S, saveSettings, layout, fitBar, UI, SKIN, sprite, atlasCell };

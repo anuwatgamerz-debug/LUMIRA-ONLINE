@@ -384,13 +384,49 @@ async function phase2States(b, srv, R) {
   await fr.context().close();
 }
 
+// final mobile polish: quest tracker fold, joystick weight, narrow top bar, mini chat, EXP text, safe area
+async function phaseA(b, srv, R) {
+  const pg = await register(b, { viewport: { width: 360, height: 800 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }, srv, 'Pa');
+  const qh = () => pg.evaluate(() => document.getElementById('quest').getBoundingClientRect().height);
+  const h0 = await qh();
+  await pg.tap('#qtog'); await pg.waitForTimeout(150);
+  const h1 = await qh(), win = await pg.$eval('#wQuest', e => e.style.display);
+  const col = await pg.evaluate(() => ({ c: document.getElementById('quest').classList.contains('col'), t: document.getElementById('qtitle').textContent, p: document.getElementById('qprog').textContent, s: JSON.parse(localStorage.getItem('lmo_set')).qCol }));
+  R.ok(col.c && col.s === true && h1 < h0 * 0.75 && win !== 'block' && col.t && /\d+\/\d+/.test(col.p), `A-UI quest tracker folds to icon + short name + progress (${h0.toFixed(0)}px -> ${h1.toFixed(0)}px, "${col.t}" ${col.p}) and remembers it`);
+  await pg.reload(); await pg.fill('#u', 'r' + pg.name.toLowerCase()); await pg.fill('#p', 'pass1234'); await pg.click('#go');
+  await waitFor(pg, () => document.getElementById('hud').style.display === 'block'); await pg.waitForTimeout(600);
+  R.ok(await pg.evaluate(() => document.getElementById('quest').classList.contains('col')), 'A-UI folded quest tracker stays folded after reload');
+  await pg.tap('#quest'); await pg.waitForTimeout(150);
+  R.ok(!await pg.evaluate(() => document.getElementById('quest').classList.contains('col')) && await pg.$eval('#wQuest', e => e.style.display) !== 'block', 'A-UI tapping a folded tracker unfolds it (no window)');
+  await pg.tap('#qt'); await pg.waitForTimeout(150);
+  R.ok(await pg.$eval('#wQuest', e => e.style.display) === 'block', 'A-UI tapping the expanded tracker body opens the quest log');
+  await pg.evaluate(() => document.querySelectorAll('.win').forEach(w => { w.style.display = 'none'; }));
+  const j = await pg.evaluate(() => { const j = document.getElementById('joy'), z = document.getElementById('joyzone'); return { op: +getComputedStyle(j).opacity, w: j.getBoundingClientRect().width, zw: z.getBoundingClientRect().width, rem: parseFloat(getComputedStyle(document.documentElement).fontSize) }; });
+  R.ok(j.op >= 0.35 && j.op <= 0.5 && j.zw > j.w * 1.5, `A-UI joystick idle opacity ${j.op}, visual ${j.w.toFixed(0)}px inside a ${j.zw.toFixed(0)}px touch zone`);
+  const tb = await pg.evaluate(() => [...document.querySelectorAll('#topbar .tb')].filter(e => e.offsetParent).map(e => e.id));
+  R.ok(tb.join() === 'bSkill,bEquip,bBag,bQuest,bMap,bMore', 'A-UI narrow top bar = Skills, Equipment, Bag, Quest, Map, More', tb.join());
+  await pg.tap('#bMore'); await pg.waitForTimeout(100);
+  const more = await pg.evaluate(() => [...document.querySelectorAll('#moregrid button')].map(b => b.textContent).join('|'));
+  R.ok(['ปาร์ตี้', 'กิลด์', 'ออโต้', 'ตั้งค่า'].every(t => more.includes(t)), 'A-UI Party / Guild / Auto / Settings reachable from More');
+  await pg.evaluate(() => document.querySelectorAll('.win').forEach(w => { w.style.display = 'none'; }));
+  await pg.evaluate(() => { for (let i = 0; i < 6; i++) addChat('sys', 'line ' + i); });
+  const lg = await pg.evaluate(() => [...document.querySelectorAll('#log div')].map(d => +getComputedStyle(d).opacity));
+  R.ok(lg.length === 3 && lg[0] < lg[2], `A-UI mini chat shows 3 newest lines, older ones faded (${lg.join(', ')})`);
+  const xp = await pg.evaluate(() => { me.exp = 7; me.next = 28; updHud(); return [document.getElementById('xpt').textContent, document.getElementById('hX2') ? document.getElementById('hX2').textContent : document.getElementById('hX').textContent, document.querySelector('#pstat .bar.xp').getBoundingClientRect().height, document.querySelector('#pstat .bar.hp').getBoundingClientRect().height]; });
+  R.ok(xp[0] === '7 / 28' && xp[1] === '25.0%' && xp[2] <= xp[3], `A-UI EXP bar shows "${xp[0]}" + ${xp[1]}, no taller than HP (${xp[2].toFixed(1)} <= ${xp[3].toFixed(1)}px)`);
+  const sb = await pg.evaluate(() => { const r = document.getElementById('acts').getBoundingClientRect(); return innerHeight - r.bottom; });
+  R.ok(sb >= 10, `A-UI combat wheel keeps ${sb.toFixed(0)}px off the bottom edge (safe-area floor)`);
+  R.ok(!pg.errs.length, 'A-UI no page errors', JSON.stringify(pg.errs));
+  await pg.context().close();
+}
+
 async function run(srv, R) {
   const pw = loadPlaywright();
   if (!pw) { R.skipped('browser suite', 'Playwright not installed (npm i -D playwright)'); return; }
   const b = await pw.chromium.launch();
   try {
     const only = process.env.UI_ONLY; // e.g. UI_ONLY=phase2Mobile to repeat one section
-    const S = [['responsive (Phase 1 + 2 layout)', responsive], ['Phase 1 HUD / joystick / chat', phase1], ['Phase 2 mobile touch', phase2Mobile], ['Phase 2 desktop keyboard/mouse', phase2Desktop], ['Phase 2 SP / potion / death states', phase2States]];
+    const S = [['responsive (Phase 1 + 2 layout)', responsive], ['Phase 1 HUD / joystick / chat', phase1], ['Phase 2 mobile touch', phase2Mobile], ['Phase 2 desktop keyboard/mouse', phase2Desktop], ['Phase 2 SP / potion / death states', phase2States], ['Phase A final mobile polish', phaseA]];
     for (const [name, fn] of S) if (!only || only === fn.name) { console.log('-- ' + name); await fn(b, srv, R); }
   } finally { await b.close(); }
 }
