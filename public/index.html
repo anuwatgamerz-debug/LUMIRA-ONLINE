@@ -345,6 +345,41 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 #quest .aqs{color:#ffd34d;font-size:.9rem;margin-top:.15rem}
 #aqask{position:absolute;left:50%;top:30%;transform:translateX(-50%);display:none;padding:.8rem 1.2rem;text-align:center;font-size:1.2rem;z-index:30}
 #aqask .aqb{display:flex;gap:.6rem;justify-content:center;margin-top:.6rem}
+/* AUTO settings window (deep navy / gold / celestial blue; ON = blue-gold glow, OFF = dark grey, danger = red) */
+#wAuto{width:min(46rem,92vw);max-height:min(86dvh,calc(100dvh - var(--st) - var(--sb) - 1rem));display:none;flex-direction:column}
+#wAuto[style*="block"]{display:flex!important}
+#autobody{overflow:auto;flex:1;min-height:0;padding-right:.2rem}
+#actabs button{font-size:1.15rem;padding:.55rem 0}
+.acrow{display:flex;align-items:center;gap:.7rem;padding:.55rem .6rem;margin:.35rem 0;background:#0c1022;border:2px solid #2b3466;border-radius:.6rem;font-size:1.15rem;min-height:2.8rem}
+.acrow.tg{cursor:pointer}.acrow.tg input{display:none}
+.acrow .sw{flex:0 0 auto;width:3.2rem;height:1.7rem;border-radius:1rem;background:#2a2d3a;border:2px solid #4a4f66;position:relative;transition:.15s}
+.acrow .sw::after{content:'';position:absolute;top:.15rem;left:.2rem;width:1.1rem;height:1.1rem;border-radius:50%;background:#8a8fa6;transition:.15s}
+.acrow.tg.on{border-color:#3d6fd8;box-shadow:0 0 .6rem #3d6fd855}.acrow.tg.on .sw{background:linear-gradient(90deg,#1f3f9a,#3d6fd8);border-color:#e8c46a}.acrow.tg.on .sw::after{left:1.65rem;background:#ffe39a;box-shadow:0 0 .4rem #ffd34d}
+.acrow.tg.sm{margin:0;padding:.3rem;background:none;border:0;box-shadow:none;min-height:0}
+.acrow.sl input{flex:1;accent-color:#e8c46a;height:2.2rem}.acrow.sl b{min-width:4.2rem;text-align:right;color:var(--gold)}
+.acdanger .acrow.tg.on{border-color:#e5484d;box-shadow:0 0 .6rem #e5484d66}.acdanger .acrow.tg.on .sw{background:linear-gradient(90deg,#7a1f24,#e5484d)}
+.acsub{margin:.7rem 0 .2rem;color:var(--gold);font-size:1.05rem}
+.acradio{display:flex;flex-direction:column;gap:.3rem}.acradio label{display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;background:#0c1022;border:2px solid #2b3466;border-radius:.6rem;font-size:1.1rem}.acradio label.on{border-color:#e8c46a;color:#ffe39a}.acradio input{accent-color:#e8c46a;width:1.3rem;height:1.3rem}
+.acsk{display:flex;align-items:center;gap:.6rem;padding:.5rem;margin:.35rem 0;background:#0c1022;border:2px solid #2b3466;border-radius:.6rem;opacity:.75}
+.acsk.on{opacity:1;border-color:#3d6fd8;box-shadow:0 0 .6rem #3d6fd844}
+.acsk .aski{width:3rem;height:3rem;flex:0 0 auto}.acsk .grow{flex:1;min-width:0;font-size:1.05rem}.acsk small{color:var(--dim)}
+.acsk .acc{display:flex;align-items:center;gap:.3rem;margin-top:.25rem}.acsk select,.acsk input[type=number],.acrow select{font-size:1rem;background:#141a33;color:var(--txt);border:1px solid #3b4680;border-radius:.4rem;padding:.25rem}
+.acsk input[type=number]{width:4rem}
+.acpr{display:flex;flex-direction:column;align-items:center}.acpr button{padding:0 .5rem;font-size:.8rem;min-height:1.6rem}.acpr b{color:var(--gold)}
+.acpot{border:2px solid #2b3466;border-radius:.8rem;padding:.5rem;margin:.5rem 0;background:#0a0e20}.acpot.on{border-color:#e8c46a}
+.acph{display:flex;align-items:center;gap:.6rem;color:#ffe39a;font-size:1.15rem}
+.aci{display:inline-block;width:2.2rem;height:2.2rem;background:center/contain no-repeat;vertical-align:middle;border-radius:.3rem;image-rendering:auto}
+.acrow.own{gap:1rem}.acrow.own span{display:flex;align-items:center;gap:.25rem}
+.mat{display:inline-flex;align-items:center;gap:.2rem;margin-right:.5rem}.mat .aci{width:1.6rem;height:1.6rem}
+#acQuick{position:absolute;right:calc(var(--sr) + 15.6rem);bottom:calc(var(--sb) + 19.4rem);display:none;align-items:center;gap:.45rem;padding:.25rem .5rem;font-size:.85rem;z-index:6;background:linear-gradient(180deg,#1d2a5aee,#121a3aee)}
+#acQuick.on{display:flex;box-shadow:0 0 .7rem #3d6fd8aa}
+#acQuick .t{color:#ffe39a}#acQuick span{display:flex;align-items:center;gap:.15rem}#acQuick .pi{width:1.3rem;height:1.3rem}#acQuick .pi.sp{filter:hue-rotate(200deg) saturate(1.3)}
+#acQuick em{font-style:normal;color:#9fe7ff}#acQuick .off{opacity:.45}#acQuick .off em{color:#8a8fa6}
+#hud #acGear{min-width:1.9rem;height:1.9rem;padding:0;font-size:1rem;border-radius:50%}
+#itemact{position:absolute;left:50%;bottom:calc(var(--sb) + 6rem);transform:translateX(-50%);width:min(30rem,92vw);display:none;align-items:center;gap:.6rem;padding:.6rem;z-index:12;flex-wrap:wrap}
+#itemact .iah canvas{width:4rem;height:4rem}#itemact .grow{flex:1;min-width:10rem;font-size:1.1rem}#itemact .iab{display:flex;gap:.4rem;width:100%;justify-content:flex-end}#itemact .iab button{min-height:2.6rem;padding:0 1rem;font-size:1.05rem}
+.slot.locked{opacity:.45}
+#bPot .potart{position:absolute;inset:18%;background:center/contain no-repeat;pointer-events:none;border-radius:50%}
 </style>
 </head>
 <body>
@@ -400,6 +435,8 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
   </div>
   <div id="mm" class="frame" title="แตะเพื่อเปิดแผนที่โลก"><canvas id="mmc" width="138" height="104"></canvas><div id="mmn">-</div><div id="mmxy"><span id="mmp">1</span><span id="mmxy2" class="num">0,0</span></div></div>
   <div id="quest" class="frame"><div id="qhead" role="button" aria-label="ย่อ/ขยายภารกิจ"><i class="pi qmark" data-icon="quest" data-skin="quest_mark"></i><b id="qtitle">ภารกิจหลัก</b><span id="qprog" class="num"></span><button id="qauto" aria-label="Auto Quest" title="Auto Quest: เดินไปทำภารกิจอัตโนมัติ">▶</button><span id="qtog">▾</span></div><div id="qt">-</div></div>
+  <div id="acQuick" class="frame"><b class="t">AUTO</b><span class="s"><i class="pi" data-icon="skill"></i><em class="sv">OFF</em></span><span class="h"><i class="pi" data-icon="potion"></i><em class="hv">OFF</em></span><span class="p"><i class="pi sp" data-icon="potion"></i><em class="pv">OFF</em></span><button id="acGear" aria-label="ตั้งค่า AUTO">⚙</button></div>
+  <div id="itemact" class="frame"></div>
   <div id="aqask" class="frame"><div>ดำเนินภารกิจต่อหรือไม่?</div><div class="aqb"><button id="aqYes">ดำเนินการต่อ</button><button id="aqNo" class="ghost">ยกเลิก</button></div></div>
   <div id="joyzone"><div id="joy"><div id="knob"></div></div></div>
   <div id="chat"><div id="log" title="แตะเพื่อเปิดแชท"></div><button id="bChat" data-icon="chat" aria-label="แชท"></button></div>
@@ -415,7 +452,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
     <button class="rb sm" id="bPot" data-icon="potion"><span class="q num" id="potq">0</span></button>
     <button class="rb sm dis" id="bInt" data-icon="loot"><span id="intL">เก็บ</span></button>
     <button class="rb sm" id="bTgt" data-icon="target">เป้า</button>
-    <button class="rb sm" id="bAuto" data-icon="auto" data-skin="btn_auto">AUTO</button>
+    <button class="rb sm" id="bAuto" data-icon="auto" data-skin="btn_auto" title="แตะ = เปิด/ปิด · กดค้าง/คลิกขวา = ตั้งค่า">AUTO</button>
   </div>
   <div id="ctoast"></div>
   <div id="fps" class="num"></div>
@@ -434,6 +471,9 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
     <div id="maplocal"><canvas id="bmc"></canvas><div class="note" id="mapinfo"></div></div>
     <div id="mapworld" style="display:none"><div id="wmw"><canvas id="wmc"></canvas></div><div id="wminfo" class="li" style="display:block;margin-top:.6rem">แตะเมืองหรือแผนที่เพื่อดูข้อมูล</div></div>
   </div>
+  <div id="wAuto" class="win frame"><h3><span>⚔ ตั้งค่า AUTO</span><button class="x">✕</button></h3>
+    <div class="tabs2" id="actabs"><button data-t="fight" class="on">ต่อสู้</button><button data-t="skill">สกิล</button><button data-t="pot">ยา</button><button data-t="loot">เก็บของ</button></div>
+    <div id="autobody"></div></div>
   <div id="wSvc" class="win frame"><h3><span id="svct">บริการ</span><button class="x">✕</button></h3><div id="svcbody"></div></div>
   <div id="wChat" class="win frame"><h3><span>แชท</span><button class="x">✕</button></h3>
     <div class="tabs2" id="chtabs"><button data-ch="all" class="on">ทั้งหมด</button><button data-ch="sys">ระบบ</button><button data-ch="local">ท้องถิ่น</button><button data-ch="world">โลก</button><button data-ch="party">ปาร์ตี้</button><button data-ch="guild">กิลด์</button><button data-ch="whisper">กระซิบ</button></div>
@@ -469,6 +509,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 <script src="paperdoll.js"></script>
 <script src="combat.js"></script>
 <script src="autoquest.js"></script>
+<script src="autocombat.js"></script>
 <script src="audio-events.js"></script>
 </body>
 </html>

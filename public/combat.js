@@ -146,6 +146,7 @@ function onCd(m) { // server confirmed a cast: start the overlay from its number
   if (m.g) { gcdEnd = Math.max(gcdEnd, t + m.g); gcdLen = m.g; }
 }
 function onCastFail(m) {
+  if (typeof acCastFailed === 'function' && acCastFailed(m)) { if (m.r === 'cd' && SK[m.s] && m.ms) { cdEnd[m.s] = performance.now() + m.ms; cdLen[m.s] = Math.max(cdLen[m.s] || 0, m.ms); } return; } // AUTO's own request: no toast
   if (m.r === 'cd' && SK[m.s] && m.ms) { cdEnd[m.s] = performance.now() + m.ms; cdLen[m.s] = Math.max(cdLen[m.s] || 0, m.ms); }
   const b = m.s === 'attack' ? $('bAtk') : slotEl[(me && me.hot || []).indexOf(m.s)];
   shake(b);
@@ -289,14 +290,20 @@ addEventListener('uiskin', () => { renderHotbar(); HUD.sprite($('knob'), 'joy_kn
 if (HUD.UI.man) { HUD.sprite($('knob'), 'joy_knob'); } // the compact target HUD keeps its plain frame (skinTarget is kept for reference)
 
 // ------------------------------------------------------------ AUTO (simple; full auto-combat is Phase 3)
-$('bAuto').onclick = null; onPress($('bAuto'), toggleAuto);
-let autoAtk = 0, autoSent = 0;
+// the AUTO button itself (tap / long press / right click) is wired in autocombat.js
+let autoAtk = 0, autoSent = 0, autoLastTarget = 0;
 setInterval(() => {
   if (!auto || !me || me.hp <= 0) return;
-  if (me.hp < me.maxhp * 0.35) { const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i, id: 1 }); }
-  const d = nearest('d', 3); if (d) { send({ t: 'pick', id: d }); return; }
-  if (!selected || !ents.has(selected)) { const l = targetList(14); const id = typeof aqPickTarget === 'function' ? aqPickTarget(l) : l[0]; if (!id) return; setTarget(id); }
-  const t = performance.now();
+  const C = typeof ACFG !== 'undefined' ? ACFG : { loot: true, retarget: true, chase: true, cont: true, basic: true, range: 14 };
+  if (C.loot) { const d = nearest('d', 3); if (d) { const it = ents.get(d); if (!C.lootQuest || (it && ITEMS[it.item] && ITEMS[it.item].ty === 'quest')) { send({ t: 'pick', id: d }); return; } } }
+  if (!selected || !ents.has(selected)) {
+    if (autoLastTarget && !C.retarget && !(typeof AQ !== 'undefined' && AQ.on)) return; // target died: wait for the player
+    const id = typeof acPickTarget === 'function' ? acPickTarget() : (() => { const l = targetList(14); return typeof aqPickTarget === 'function' ? aqPickTarget(l) : l[0]; })();
+    if (!id) return; setTarget(id); autoLastTarget = id;
+  }
+  if (!C.basic) return; // skills only (Auto Skill keeps casting on the selected target)
+  const t = performance.now(), e = ents.get(selected), m = myEnt();
+  if (!C.chase && e && m && cheb(m, e) > ((me && me.rng) || MELEE_R) + 0.15) return; // no walking in: wait until it comes
   // (re)start the server-side chase when the target changed or nothing has landed for a while
-  if (autoAtk !== selected || (t - lastMyHitT > 3000 && t - autoSent > 3000)) { autoAtk = selected; autoSent = t; send({ t: 'attack', id: selected }); }
+  if (autoAtk !== selected || (C.cont && t - lastMyHitT > 3000 && t - autoSent > 3000)) { autoAtk = selected; autoSent = t; send(C.chase ? { t: 'attack', id: selected } : { t: 'attack', id: selected, n: 1 }); }
 }, 700);

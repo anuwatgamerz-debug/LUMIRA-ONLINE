@@ -252,8 +252,20 @@ function drawIcon(g, id) {
 }
 const iconCache = {};
 function icon16(id) { if (!iconCache[id]) { const c = mkCanvas(16, 16); drawIcon(c.getContext('2d'), id); iconCache[id] = c; } return iconCache[id]; }
-// item icon for windows: art from the item atlas (real item id -> artwork) or the 16px pixel icon as fallback
-function iconCanvas(id) {
+// ------------------------------------------------------------ ITEM ICON REGISTRY (single source for every window)
+// assets/items/items.json: icons {name: path} + items {itemId: name}. Item ids are never renamed for art; ids without
+// new art fall back to the item atlas, then the LPC icon sheet, then the 16px pixel icon (never an empty square).
+let ITEM_ART = { icons: {}, items: {} };
+const itemArtImg = {}, itemUrlCache = {};
+fetch('assets/items/items.json').then(r => r.json()).then(j => { ITEM_ART = j; for (const k in itemUrlCache) delete itemUrlCache[k]; dispatchEvent(new Event('itemart')); }).catch(() => { });
+function itemArtPath(id) { const n = ITEM_ART.items[String(id)]; return (n && ITEM_ART.icons[n]) || ''; }
+function itemArt(id) { const p = itemArtPath(id); if (!p) return null; let im = itemArtImg[p]; if (!im) { im = itemArtImg[p] = new Image(); im.src = p; } return im; }
+// a URL for CSS / <img> use (same picture as the canvases)
+function itemIconURL(id) { const p = itemArtPath(id); if (p) return p; if (!itemUrlCache[id]) itemUrlCache[id] = iconCanvas(id, true).toDataURL(); return itemUrlCache[id]; }
+// item icon for windows: new item art, then the item atlas / LPC sheet, then the 16px pixel icon
+function iconCanvas(id, noArt) {
+  const ia = !noArt && itemArt(id);
+  if (ia) { const c = mkCanvas(64, 64), g = c.getContext('2d'); c.className = 'art'; const draw = () => { g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.clearRect(0, 0, 64, 64); g.drawImage(ia, 0, 0, 64, 64); }; if (ia.complete && ia.naturalWidth) draw(); else ia.addEventListener('load', draw, { once: true }); return c; }
   const art = HUD.atlasCell('items', String(id)) || HUD.atlasCell('items_lpc', String(id));
   if (art) { const n = art.s <= 40 ? art.s * 2 : 64, c = mkCanvas(n, n), g = c.getContext('2d'); g.imageSmoothingEnabled = art.s > 40; if (art.s <= 40) c.style.imageRendering = 'pixelated'; g.drawImage(art.im, art.sx, art.sy, art.s, art.s, 0, 0, n, n); c.className = 'art'; return c; }
   const c = mkCanvas(32, 32); const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(icon16(id), 0, 0, 32, 32); c.style.imageRendering = 'pixelated'; return c;
@@ -264,7 +276,9 @@ function slotHint(d, k, lab) {
   if (art) { const c = mkCanvas(64, 64), g = c.getContext('2d'); g.drawImage(art.im, art.sx, art.sy, art.s, art.s, 0, 0, 64, 64); c.className = 'art hint'; d.appendChild(c); d.append(lab); }
   else d.textContent = lab;
 }
-addEventListener('uiskin', () => { HUD.atlasCell('items', '1'); HUD.atlasCell('items_lpc', '1'); }); // start loading the item atlas once the art manifest is in
+addEventListener('uiskin', () => { HUD.atlasCell('items', '1'); HUD.atlasCell('items_lpc', '1'); });
+// combat wheel potion button shows the same potion art as the bag / shop / AUTO settings
+addEventListener('itemart', () => { const b = $('bPot'); if (!b || !itemArtPath(1)) return; let i = b.querySelector('.potart'); if (!i) { i = document.createElement('i'); i.className = 'potart'; b.appendChild(i); } i.style.backgroundImage = `url(${itemArtPath(1)})`; }); // start loading the item atlas once the art manifest is in
 
 // ------------------------------------------------------------ state
 let ws, myId = 0, map = null, ITEMS = {}, MOBN = {}, me = null;
@@ -303,6 +317,7 @@ function onMsg(m) {
     case 'shop': openShop(m); break;
     case 'cd': onCd(m); break;
     case 'castfail': onCastFail(m); break;
+    case 'usefail': if (typeof acUseFailed === 'function') acUseFailed(m); break;
     case 'skills': SK = m.skills || SK; if (me) renderHotbar(); break;
     case 'storage': openStorage(m); break;
     case 'bankui': openBank(m); break;
@@ -556,9 +571,23 @@ function renderBag() {
   me.inv.forEach((s, i) => {
     const it = ITEMS[s.id]; const d = document.createElement('div'); d.className = 'slot r' + (it.rar | 0); d.appendChild(iconCanvas(s.id)); d.append(it.n);
     if (s.q > 1) d.insertAdjacentHTML('beforeend', `<span class="q num">${s.q}</span>`);
-    d.onclick = () => { if (it.ty === 'etc') log(`${it.n} - ${it.d ? it.d + ' · ' : ''}ขายได้ ${it.sell} Zeny ที่ร้านรับซื้อในเมือง`, '#b9a98e'); else if (it.ty === 'quest') log(`${it.n} - ${it.d || 'ไอเทมเควส'}`, '#e8d9a8'); else send({ t: 'use', i, id: s.id }); };
+    d.onclick = () => itemActions(s, i);
     g.appendChild(d);
   });
+}
+
+// inventory item actions: use / equip, drop (one or the stack), quantity — the server checks everything
+function itemActions(s, i) {
+  const it = ITEMS[s.id], box = $('itemact'); if (!it) return;
+  const act = it.ty === 'use' ? 'ใช้' : it.ty === 'eq' ? 'สวม' : '';
+  box.innerHTML = `<div class="iah"></div><div class="grow"><b class="r${it.rar | 0}">${esc(it.n)}</b>${s.q > 1 ? ` <span class="num">x${s.q}</span>` : ''}<br><small class="st">${statOf(it) || (it.d ? esc(it.d) : it.ty === 'etc' ? 'วัตถุดิบ · ขายได้ ' + it.sell + 'z' : '')}${reqOf(it)}</small></div>
+    <div class="iab">${act ? `<button data-a="use">${act}</button>` : ''}${it.ty !== 'quest' ? `<button data-a="drop1" class="ghost">ทิ้ง${s.q > 1 ? ' 1' : ''}</button>${s.q > 1 ? '<button data-a="drop" class="ghost">ทิ้งทั้งหมด</button>' : ''}` : ''}<button data-a="x" class="ghost">ปิด</button></div>`;
+  box.querySelector('.iah').appendChild(iconCanvas(s.id));
+  box.querySelectorAll('button').forEach(b => b.onclick = () => {
+    const a = b.dataset.a; box.style.display = 'none';
+    if (a === 'use') send({ t: 'use', i, id: s.id }); else if (a === 'drop1') send({ t: 'drop', i, id: s.id, q: 1 }); else if (a === 'drop') send({ t: 'drop', i, id: s.id });
+  });
+  box.style.display = 'flex';
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pct = (a, b) => Math.max(0, Math.min(100, a / b * 100));
@@ -585,6 +614,7 @@ function renderEquip() {
     if (id) { d.appendChild(iconCanvas(id)); d.append(ITEMS[id].n); d.onclick = () => send({ t: 'unequip', s: k }); } else slotHint(d, k === 'chead' ? 'head' : k.startsWith('acc') ? 'acc' : k, lab + ' (ว่าง)');
     eg.appendChild(d);
   }
+  for (const [k, lab] of [['shield', 'โล่ / มือรอง'], ['shoes', 'รองเท้า']]) { const d = document.createElement('div'); d.className = 'slot eq locked'; slotHint(d, k, lab + ' (ยังไม่เปิด)'); eg.appendChild(d); }
   b.appendChild(eg);
   b.insertAdjacentHTML('beforeend', '<div class="note" style="margin:10px 0 6px">อุปกรณ์ในกระเป๋า (แตะเพื่อสวม)</div>');
   const l = document.createElement('div'); l.className = 'list';
@@ -654,7 +684,7 @@ $('bMore').onclick = toggleWin('wMore', renderMore);
 $('log').onclick = $('bChat').onclick = () => openChat(false);
 $('chtabs').querySelectorAll('button').forEach(b => b.onclick = () => { chTab = b.dataset.ch; $('chtabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderChatList(); });
 function nearest(kind, maxd = 12) { const m = ents.get(myId); if (!m) return 0; let best = 0, bd = maxd; for (const [id, e] of ents) { if (e.kind !== kind) continue; const d = Math.hypot(e.x - m.x, e.y - m.y); if (d < bd) { bd = d; best = id; } } return best; }
-function setAuto(v) { auto = v; $('bAuto').classList.toggle('on', v); $('bAutoT').classList.toggle('on', v); }
+function setAuto(v) { auto = v; $('bAuto').classList.toggle('on', v); $('bAutoT').classList.toggle('on', v); if (typeof acPanel === 'function') acPanel(); }
 $('bAutoT').onclick = () => $('bAuto').click();
 function toggleAuto() { setAuto(!auto); log(auto ? 'เปิดโหมดออโต้ — ตีมอนใกล้ๆ อัตโนมัติ' : 'ปิดโหมดออโต้', '#9fe7ff'); }
 $('bAuto').onclick = toggleAuto;
@@ -831,8 +861,9 @@ function frame(t) {
   for (const [id, e] of ents) {
     const x = (e.x + 0.5) * TP, y = (e.y + 0.5) * TP + 12;
     if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
-    if (e.kind === 'd') list.push({ y: y - 6, f: () => { const bob = Math.round(Math.sin(tn * 3 + id)); shadow(x, y - 6, 5); const art = HUD.atlasCell('items', String(e.item)) || HUD.atlasCell('items_lpc', String(e.item));
-        if (art) { ctx.imageSmoothingEnabled = art.s > 40; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 10), Math.round(y - 25 + bob), 20, 20); ctx.imageSmoothingEnabled = false; }
+    if (e.kind === 'd') list.push({ y: y - 6, f: () => { const bob = Math.round(Math.sin(tn * 3 + id)); shadow(x, y - 6, 5); const ia = itemArt(e.item), art = !(ia && ia.complete && ia.naturalWidth) && (HUD.atlasCell('items', String(e.item)) || HUD.atlasCell('items_lpc', String(e.item)));
+        if (ia && ia.complete && ia.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(ia, Math.round(x - 11), Math.round(y - 26 + bob), 22, 22); ctx.imageSmoothingEnabled = false; }
+        else if (art) { ctx.imageSmoothingEnabled = art.s > 40; ctx.drawImage(art.im, art.sx, art.sy, art.s, art.s, Math.round(x - 10), Math.round(y - 25 + bob), 20, 20); ctx.imageSmoothingEnabled = false; }
         else ctx.drawImage(icon16(e.item), Math.round(x - 8), Math.round(y - 22 + bob)); if (Math.floor(tn * 2 + id) % 4 === 0) { ctx.fillStyle = '#fff'; ctx.fillRect(Math.round(x + 4), Math.round(y - 22 + bob), 1, 1); } } });
     else if (e.kind === 'm') list.push({ y, f: () => {
       const nm = mobSprite(e.type) || 'm_' + e.type, sc = mobScale(e.type), big = e.type === 'kingjel' || mobBig(e.type);

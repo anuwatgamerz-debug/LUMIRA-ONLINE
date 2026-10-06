@@ -368,7 +368,7 @@ function openCraft(m) {
   for (const rid of m.recipes) {
     const r = RECIPES[rid]; if (!r) continue;
     const ok = r.in.every(([id, n]) => have(id) >= n) && me.zeny >= r.zeny;
-    const ing = r.in.map(([id, n]) => `<span style="color:${have(id) >= n ? '#7dff8a' : '#ff8b8b'}">${esc(ITEMS[id].n)} ${have(id)}/${n}</span>`).join(' · ');
+    const ing = r.in.map(([id, n]) => `<span class="mat" style="color:${have(id) >= n ? '#7dff8a' : '#ff8b8b'}"><i class="aci" style="background-image:url(${itemIconURL(id)})"></i>${esc(ITEMS[id].n)} ${have(id)}/${n}</span>`).join(' ');
     const d = itemRow(r.out[0], r.out[1], `<br><small class="st">${ing}${r.zeny ? ` · ${r.zeny}z` : ''}<br>${statOf(ITEMS[r.out[0]])}${reqOf(ITEMS[r.out[0]])}</small>`);
     const bt = document.createElement('button'); bt.textContent = 'สร้าง'; bt.disabled = !ok; bt.onclick = () => { send({ t: 'craft', r: rid }); setTimeout(() => $('wSvc').style.display === 'block' && openCraft(m), 350); }; d.appendChild(bt); l.appendChild(d);
   }

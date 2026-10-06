@@ -206,7 +206,7 @@ function me(p) {
   const now = Date.now(), B = buffsOf(c);
   send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit,
     matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
-    cls: clsOf(c).id, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV,
+    cls: clsOf(c).id, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
     buffs: Object.entries(B).filter(([, b]) => b.until > now).map(([id, b]) => ({ id, th: b.th, ms: b.until - now })) } });
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
@@ -264,7 +264,7 @@ function changeClass(p, id) {
   bcastAll({ t: 'sys', m: `🎉 ${c.name} ได้เปลี่ยนอาชีพเป็น ${K.th} (${K.en})!`, col: '#ffd34d' });
   send(p, { t: 'skills', skills: skillDefs(c) });
 }
-const skillDefs = c => Object.fromEntries(skillsFor(c).map(id => { const { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound } = SKILLS[id]; return [id, { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound }]; }));
+const skillDefs = c => Object.fromEntries(skillsFor(c).map(id => { const S = SKILLS[id], { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound } = S; return [id, { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound, heal: S.heal ? 1 : 0, spRestore: S.spRestore ? 1 : 0, buff: S.buff ? { id: S.buff.id } : undefined }]; })); // heal/buff/spRestore: kind only (AUTO settings)
 
 // ---------------------------------------------------------------- combat
 function gainExp(p, e) {
@@ -641,6 +641,26 @@ function logout(p) {
   for (const mb of mobs.values()) if (mb.target === p.id) mb.target = null;
   p.c = null;
 }
+// ------------------------------------------------------------ AUTO settings (per character)
+const POTION_CD = 500;
+const AUTO_TARGET = ['quest', 'near', 'aggro'], AUTO_COND = ['ready', 'tgtHp', 'myHp', 'mySp', 'spLow', 'enemies', 'buff', 'boss', 'nonboss', 'quest'];
+function sanitizeAuto(a) {
+  if (!a || typeof a !== 'object') return null;
+  const num = (v, lo, hi, d) => { v = +v; return Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d; };
+  const b = v => !!v, id = v => (Number.isInteger(+v) && ITEMS[+v] && ITEMS[+v].ty === 'use' ? +v : 0);
+  const sk = {};
+  for (const [k, v] of Object.entries(a.skills || {}).slice(0, 40)) {
+    if (!SKILLS[k] || !v || typeof v !== 'object') continue;
+    sk[k] = { on: b(v.on), pr: num(v.pr, 1, 20, 5), cond: AUTO_COND.includes(v.cond) ? v.cond : 'ready', val: num(v.val, 1, 99, 50) };
+  }
+  return {
+    target: AUTO_TARGET.includes(a.target) ? a.target : 'quest', range: num(a.range, 4, 20, 12),
+    chase: a.chase !== false, cont: a.cont !== false, retarget: a.retarget !== false, loot: a.loot !== false, avoidBoss: b(a.avoidBoss), lootQuest: b(a.lootQuest),
+    basic: a.basic !== false, skills: sk,
+    hpOn: b(a.hpOn), hpAt: num(a.hpAt, 10, 90, 40), hpItem: +a.hpItem === 0 ? 0 : id(a.hpItem) || 1, hpFall: a.hpFall !== false,
+    spOn: b(a.spOn), spAt: num(a.spAt, 10, 90, 25), spItem: +a.spItem === 0 ? 0 : id(a.spItem) || 3, spFall: a.spFall !== false,
+  };
+}
 // navigation data for Auto Quest (client side): where NPCs stand, where monsters spawn, which nodes / monsters give an
 // item, and every portal of every open map (with its lock / level gate) so the client can route across maps.
 // Movement itself stays server-authoritative: the client only asks the server to walk to a tile / NPC / node.
@@ -810,6 +830,11 @@ function handle(p, m) {
       if (it.ty === 'use') {
         if (it.req && c.lv < it.req) return sys(p, `ต้องการ Lv ${it.req}`);
         if (it.recall) { delSlot(c, m.i | 0); dirty = true; sys(p, 'คัมภีร์เรืองแสง... กลับสู่จุดเซฟ'); return warp(p, c.save.map, c.save.x, c.save.y); }
+        // potions: shared cooldown, and never drunk when they would restore nothing (AUTO or a mis-tap)
+        const fail = r => { send(p, { t: 'usefail', id: it.id, r }); if (!m.auto) sys(p, r, '#ffb36b'); };
+        if ((it.heal || it.sp) && Date.now() < (p.nextPot || 0)) return fail('ยังใช้ยาไม่ได้ (คูลดาวน์)');
+        if ((it.heal || it.sp) && (!it.heal || c.hp >= c.maxhp) && (!it.sp || c.sp >= c.maxsp)) return fail(it.heal && !it.sp ? 'HP เต็มอยู่แล้ว' : it.sp && !it.heal ? 'SP เต็มอยู่แล้ว' : 'HP/SP เต็มอยู่แล้ว');
+        if (it.heal || it.sp) p.nextPot = Date.now() + POTION_CD;
         const hp0 = c.hp, sp0 = c.sp;
         if (it.heal) c.hp = Math.min(c.maxhp, c.hp + it.heal);
         if (it.sp) c.sp = Math.min(c.maxsp, c.sp + it.sp);
@@ -822,7 +847,10 @@ function handle(p, m) {
       break;
     }
     case 'unequip': { const sl = String(m.s); if (!EQ_SLOTS.includes(sl)) return; if (c.eq[sl] && c.inv.length < 40) { addItem(c, c.eq[sl]); delete c.eq[sl]; me(p); dirty = true; } break; }
-    case 'drop': { const i = m.i | 0; if (c.inv[i] && (m.id == null || c.inv[i].id === m.id)) { delSlot(c, i, c.inv[i].q); me(p); Q.onItems(p); } break; }
+    case 'autocfg': { // AUTO settings: stored per character (validated + size-limited), applied by the client
+      const v = sanitizeAuto(m.cfg); if (!v) return; c.auto = v; dirty = true; break;
+    }
+    case 'drop': { const i = m.i | 0; if (c.inv[i] && (m.id == null || c.inv[i].id === m.id) && ITEMS[c.inv[i].id].ty !== 'quest') { const q = Math.max(1, Math.min(c.inv[i].q, (m.q | 0) || c.inv[i].q)); delSlot(c, i, q); dirty = true; me(p); Q.onItems(p); } break; }
     case 'stat': { const k = String(m.s); if (STATS.includes(k) && c.pts > 0 && c.st[k] < LV.STAT_CAP) { c.pts--; c.st[k]++; me(p); dirty = true; } break; }
     case 'buy': {
       const id = m.id | 0, q = Math.max(1, Math.min(99, m.q | 0));

@@ -10,7 +10,8 @@
     "test:ui": "node tests/run.js ui",
     "test:world": "node tests/run.js world",
     "test:art": "node tests/run.js art",
-    "test:aq": "node tests/run.js aq"
+    "test:aq": "node tests/run.js aq",
+    "test:auto": "node tests/run.js auto"
   },
   "keywords": [],
   "author": "",
