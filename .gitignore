@@ -22,3 +22,7 @@ id_rsa
 id_rsa.*
 credentials.json
 secrets.json
+
+node_modules/
+data/db.json.corrupt
+server-crash.log

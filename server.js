@@ -34,6 +34,7 @@ const ITEMS = {
 };
 for (const k in ITEMS) { const it = ITEMS[k]; it.id = +k; if (!it.sell) it.sell = Math.floor((it.buy || 10) / 4); }
 const SHOP = [1, 2, 3, 20, 21, 22, 30, 31, 40];
+const EQ_SLOTS = ['wpn', 'arm', 'head'], STATS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
 
 const MOBS = {
   jellop:   { n: 'เจลลอป', lv: 1, hp: 40, atk: [3, 5], def: 0, flee: 2, exp: 6, spd: 2.2, aggro: 0, drops: [[10, .6], [1, .08]], z: 2 },
@@ -113,19 +114,36 @@ function building(m, x, y, w, h, k) { rect(m, x, y, x + w - 1, y + h - 2, 9); re
 })();
 
 // ---------------------------------------------------------------- db
-let db = { accounts: {} };
-try { db = JSON.parse(fs.readFileSync(DATA, 'utf8')); } catch (e) { }
+const BAK = DATA + '.bak';
+function loadDb() {
+  if (!fs.existsSync(DATA)) return { accounts: {} };
+  try { return JSON.parse(fs.readFileSync(DATA, 'utf8')); }
+  catch (e) {
+    // never start with an empty db over a broken file: the next save would wipe every account
+    console.error(`[db] ${DATA} is unreadable: ${e.message}`);
+    try { const b = JSON.parse(fs.readFileSync(BAK, 'utf8')); fs.copyFileSync(DATA, DATA + '.corrupt'); console.error(`[db] loaded backup ${BAK} (broken file kept as db.json.corrupt)`); return b; }
+    catch (e2) { console.error('[db] no usable backup either - fix data/db.json and restart'); process.exit(1); }
+  }
+}
+let db = loadDb();
+if (!db || typeof db !== 'object') db = {};
+if (!db.accounts || typeof db.accounts !== 'object') db.accounts = {};
 let dirty = false;
 function saveDb() {
   if (!dirty) return;
   dirty = false;
   const tmp = DATA + '.tmp';
-  fs.mkdirSync(path.dirname(DATA), { recursive: true });
-  fs.writeFileSync(tmp, JSON.stringify(db));
-  fs.renameSync(tmp, DATA);
+  try {
+    fs.mkdirSync(path.dirname(DATA), { recursive: true });
+    fs.writeFileSync(tmp, JSON.stringify(db));
+    if (fs.existsSync(DATA)) fs.copyFileSync(DATA, BAK);
+    fs.renameSync(tmp, DATA);
+  } catch (e) { dirty = true; console.error('[db] save failed:', e.message); }
 }
 setInterval(saveDb, 15000);
-function hashPw(pw, salt) { return crypto.scryptSync(pw, salt, 32).toString('hex'); }
+// same scrypt params as the old scryptSync call, so existing hashes still match
+function hashPw(pw, salt, cb) { crypto.scrypt(pw, salt, 32, (e, k) => cb(e, k && k.toString('hex'))); }
+function samePw(a, b) { const x = Buffer.from(a, 'hex'), y = Buffer.from(String(b), 'hex'); return x.length === y.length && crypto.timingSafeEqual(x, y); }
 
 // ---------------------------------------------------------------- formulas
 const expNext = lv => Math.floor(18 * Math.pow(lv, 1.85) + 10);
@@ -149,6 +167,24 @@ function newChar(name, look) {
     map: 'solkara', x: 21, y: 20, inv: [{ id: 1, q: 10 }], eq: { wpn: 20, arm: 30 }, q: { step: 0, k: 0 }, hp: 1, sp: 1,
   };
   derive(c); c.hp = c.maxhp; c.sp = c.maxsp;
+  return c;
+}
+// fill anything an older/hand-edited save may be missing, so the game loop never trips on it
+function fixChar(c) {
+  const st = c.st = Object.assign({ str: 5, agi: 5, vit: 5, int: 5, dex: 5, luk: 5 }, c.st);
+  for (const k in st) st[k] = Math.max(1, Math.min(99, +st[k] || 5));
+  c.lv = Math.max(1, Math.min(99, c.lv | 0 || 1)); c.exp = Math.max(0, +c.exp || 0);
+  c.zeny = Math.max(0, +c.zeny || 0); c.pts = Math.max(0, c.pts | 0);
+  c.look = c.look || { hair: 0, hc: 0, cc: 0, sex: 0 };
+  c.inv = Array.isArray(c.inv) ? c.inv.filter(s => s && ITEMS[s.id] && s.q > 0) : [];
+  c.eq = c.eq && typeof c.eq === 'object' ? c.eq : {};
+  for (const sl in c.eq) if (!ITEMS[c.eq[sl]] || ITEMS[c.eq[sl]].slot !== sl) delete c.eq[sl];
+  c.q = c.q && typeof c.q === 'object' ? c.q : { step: 0, k: 0 }; c.q.step |= 0; c.q.k |= 0;
+  if (typeof c.hp !== 'number' || isNaN(c.hp)) c.hp = 1;
+  if (typeof c.sp !== 'number' || isNaN(c.sp)) c.sp = 0;
+  const m = MAPS[c.map];
+  if (!m || !(Number.isFinite(c.x) && Number.isFinite(c.y)) || !walkable(m, Math.round(c.x), Math.round(c.y))) { c.map = 'solkara'; c.x = 21; c.y = 20; }
+  derive(c);
   return c;
 }
 
@@ -215,7 +251,7 @@ function warp(p, mapId, x, y) {
 function addItem(c, id, q = 1) {
   const it = ITEMS[id]; if (!it) return false;
   if (it.ty !== 'eq') { const s = c.inv.find(s => s.id === id); if (s) { s.q += q; return true; } }
-  if (c.inv.length >= 40) return false;
+  if (c.inv.length + (it.ty === 'eq' ? q : 1) > 40) return false;
   if (it.ty === 'eq') for (let i = 0; i < q; i++) c.inv.push({ id, q: 1 }); else c.inv.push({ id, q });
   return true;
 }
@@ -306,6 +342,8 @@ function npcTalk(p, npcId, act, arg) {
     const q = QUESTS[c.q.step];
     if (!q) return dlg('ขอบคุณที่ช่วยโซลคารานะ นักผจญภัย!\nเรื่องราวบทต่อไปกำลังจะมาเร็วๆ นี้... (Phase 2)');
     if (act === 'done' && c.q.k >= q.n) {
+      const ri = ITEMS[q.item[0]], stacks = ri.ty !== 'eq' && c.inv.some(s => s.id === ri.id);
+      if (!stacks && c.inv.length + (ri.ty === 'eq' ? q.item[1] : 1) > 40) return dlg('กระเป๋าของเจ้าเต็มแล้ว เคลียร์ช่องว่างก่อนแล้วค่อยมารับรางวัลนะ');
       c.zeny += q.zeny; gainExp(p, q.exp); addItem(c, q.item[0], q.item[1]);
       c.q.step++; c.q.k = 0; dirty = true; me(p);
       return dlg(`เยี่ยมมาก! รับรางวัล ${q.zeny} Zeny, EXP ${q.exp} และ ${ITEMS[q.item[0]].n} x${q.item[1]}\n\n${QUESTS[c.q.step] ? 'ภารกิจถัดไป: ' + QUESTS[c.q.step].txt : 'เจ้าผ่านบททดสอบทั้งหมดแล้ว!'}`);
@@ -325,10 +363,12 @@ function npcTalk(p, npcId, act, arg) {
 
 // ---------------------------------------------------------------- ws handling
 const server = http.createServer((req, res) => {
-  let u = decodeURIComponent(req.url.split('?')[0]);
+  let u;
+  try { u = decodeURIComponent(req.url.split('?')[0]); } catch (e) { res.writeHead(400); return res.end(); }
+  if (u.includes('\0')) { res.writeHead(400); return res.end(); }
   if (u === '/') u = '/index.html';
   const f = path.join(PUB, path.normalize(u).replace(/^(\.\.[\/\\])+/, ''));
-  if (!f.startsWith(PUB)) { res.writeHead(403); return res.end(); }
+  if (!f.startsWith(PUB + path.sep)) { res.writeHead(403); return res.end(); }
   fs.readFile(f, (e, b) => {
     if (e) { res.writeHead(404); return res.end('not found'); }
     const ext = path.extname(f);
@@ -339,19 +379,43 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server, maxPayload: 4096 });
 const conns = new Set();
 wss.on('connection', ws => {
-  const p = { id: NID++, ws, c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0 };
+  const p = { id: NID++, ws, c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0, authBusy: false, authFails: 0 };
   conns.add(p);
+  // without a listener, a protocol error (e.g. a message over maxPayload) is thrown and kills the process
+  ws.on('error', e => console.error('[ws]', e.message));
   ws.on('message', raw => {
     if (++p.msgs > 40) return; // rate limit (reset each second)
     let m; try { m = JSON.parse(raw); } catch (e) { return; }
+    if (!m || typeof m !== 'object') return;
     try { handle(p, m); } catch (e) { console.error(e); }
   });
-  ws.on('close', () => {
-    conns.delete(p);
-    if (p.c) { db.accounts[p.acct].char = p.c; dirty = true; players.delete(p.id); bcast(p.c.map, { t: 'fx', k: 'leave', id: p.id }); for (const mb of mobs.values()) if (mb.target === p.id) mb.target = null; }
-  });
+  ws.on('close', () => { conns.delete(p); logout(p); });
 });
 setInterval(() => { for (const p of conns) p.msgs = 0; }, 1000);
+function logout(p) {
+  if (!p.c) return;
+  db.accounts[p.acct].char = p.c; dirty = true;
+  players.delete(p.id);
+  bcast(p.c.map, { t: 'fx', k: 'leave', id: p.id });
+  for (const mb of mobs.values()) if (mb.target === p.id) mb.target = null;
+  p.c = null;
+}
+
+function enterWorld(p, u) {
+  const a = db.accounts[u];
+  for (const o of players.values()) if (o.acct === u) {
+    send(o, { t: 'err', m: 'มีการล็อกอินจากที่อื่น' });
+    logout(o); // drop the old session now; its socket can take up to 30s to finish closing
+    o.ws.close();
+  }
+  p.acct = u; p.c = fixChar(a.char);
+  if (p.c.hp <= 0) { p.c.hp = Math.floor(p.c.maxhp / 2); p.c.map = 'solkara'; p.c.x = 21; p.c.y = 20; }
+  players.set(p.id, p);
+  send(p, { t: 'welcome', id: p.id, items: ITEMS, mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss }])) });
+  warp(p, p.c.map, p.c.x, p.c.y);
+  bcastAll({ t: 'sys', m: `${p.c.name} เข้าสู่โลก Elyndra`, col: '#9ad0ff' });
+  if (p.c.q.step === 0 && p.c.q.k === 0) sys(p, 'คุยกับ ไอริส ที่ลานกลางเมืองเพื่อรับภารกิจแรก', '#ffd34d');
+}
 
 function handle(p, m) {
   if (!p.c) {
@@ -359,28 +423,40 @@ function handle(p, m) {
       const u = String(m.u || '').trim().toLowerCase(), pw = String(m.p || '');
       if (!/^[a-z0-9_]{3,16}$/.test(u)) return send(p, { t: 'err', m: 'ไอดีต้องเป็น a-z 0-9 _ ยาว 3-16 ตัว' });
       if (pw.length < 4 || pw.length > 64) return send(p, { t: 'err', m: 'รหัสผ่านต้องยาว 4 ตัวขึ้นไป' });
-      let a = db.accounts[u];
+      if (p.authBusy) return; // one password check at a time per connection
       if (m.t === 'register') {
-        if (a) return send(p, { t: 'err', m: 'ไอดีนี้มีคนใช้แล้ว' });
+        if (db.accounts[u]) return send(p, { t: 'err', m: 'ไอดีนี้มีคนใช้แล้ว' });
         const name = String(m.name || '').trim();
         if (!/^[A-Za-z0-9ก-๙ _]{2,14}$/.test(name)) return send(p, { t: 'err', m: 'ชื่อตัวละคร 2-14 ตัวอักษร (ไทย/อังกฤษ/ตัวเลข)' });
         if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
         const salt = crypto.randomBytes(12).toString('hex');
         const look = { hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(7, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 };
-        a = db.accounts[u] = { salt, hash: hashPw(pw, salt), char: newChar(name, look), created: Date.now() };
-        dirty = true; saveDb();
+        p.authBusy = true;
+        hashPw(pw, salt, (e, hash) => {
+          p.authBusy = false;
+          if (e || p.ws.readyState !== 1 || p.c) return;
+          // re-check: another connection may have taken the id/name while we were hashing
+          if (db.accounts[u]) return send(p, { t: 'err', m: 'ไอดีนี้มีคนใช้แล้ว' });
+          if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
+          db.accounts[u] = { salt, hash, char: newChar(name, look), created: Date.now() };
+          dirty = true; saveDb();
+          enterWorld(p, u);
+        });
       } else {
-        if (!a || hashPw(pw, a.salt) !== a.hash) return send(p, { t: 'err', m: 'ไอดีหรือรหัสผ่านไม่ถูกต้อง' });
+        const a = db.accounts[u];
+        p.authBusy = true;
+        // hash even for unknown ids so response time doesn't reveal which ids exist
+        hashPw(pw, a ? a.salt : 'nosuchaccount', (e, hash) => {
+          p.authBusy = false;
+          if (e || p.ws.readyState !== 1 || p.c) return;
+          if (!a || db.accounts[u] !== a || !samePw(hash, a.hash)) {
+            send(p, { t: 'err', m: 'ไอดีหรือรหัสผ่านไม่ถูกต้อง' });
+            if (++p.authFails >= 5) p.ws.close();
+            return;
+          }
+          enterWorld(p, u);
+        });
       }
-      for (const o of players.values()) if (o.acct === u) { send(o, { t: 'err', m: 'มีการล็อกอินจากที่อื่น' }); o.ws.close(); }
-      p.acct = u; p.c = a.char; derive(p.c);
-      if (!MAPS[p.c.map]) { p.c.map = 'solkara'; p.c.x = 21; p.c.y = 20; }
-      if (p.c.hp <= 0) { p.c.hp = Math.floor(p.c.maxhp / 2); p.c.map = 'solkara'; p.c.x = 21; p.c.y = 20; }
-      players.set(p.id, p);
-      send(p, { t: 'welcome', id: p.id, items: ITEMS, mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss }])) });
-      warp(p, p.c.map, p.c.x, p.c.y);
-      bcastAll({ t: 'sys', m: `${p.c.name} เข้าสู่โลก Elyndra`, col: '#9ad0ff' });
-      if (p.c.q.step === 0 && p.c.q.k === 0) sys(p, 'คุยกับ ไอริส ที่ลานกลางเมืองเพื่อรับภารกิจแรก', '#ffd34d');
     }
     return;
   }
@@ -389,17 +465,20 @@ function handle(p, m) {
   switch (m.t) {
     case 'move': {
       const x = m.x | 0, y = m.y | 0;
-      p.target = null; p.pick = null; p.npcGo = null;
+      p.target = null; p.pick = null; p.npcGo = null; p.pendingSkill = false;
       const pa = findPath(map, c.x, c.y, x, y);
       p.path = pa;
       break;
     }
-    case 'attack': { const mob = mobs.get(m.id); if (mob && mob.map === c.map) { p.target = mob.id; p.pick = null; } break; }
+    case 'attack': { const mob = mobs.get(m.id); if (mob && mob.map === c.map) { if (p.target !== mob.id) p.pendingSkill = false; p.target = mob.id; p.pick = null; } break; }
     case 'skill': {
-      const mob = mobs.get(p.target || m.id); if (!mob || mob.map !== c.map) return sys(p, 'เลือกเป้าหมายก่อน (แตะมอน)');
+      // the mob the player just tapped wins over an older target
+      let mob = mobs.get(m.id); if (!mob || mob.map !== c.map) mob = mobs.get(p.target);
+      if (!mob || mob.map !== c.map) return sys(p, 'เลือกเป้าหมายก่อน (แตะมอน)');
       if (c.sp < 8) return sys(p, 'SP ไม่พอ');
+      if (Date.now() < (p.skillAt || 0)) return; // global cooldown so the skill can't be spammed every message
       if (Math.max(Math.abs(mob.x - c.x), Math.abs(mob.y - c.y)) > 1.6) { p.target = mob.id; p.pendingSkill = true; return; }
-      c.sp -= 8; playerAttack(p, mob, 2.2, true); p.nextAtk = Date.now() + c.aspd; me(p);
+      c.sp -= 8; playerAttack(p, mob, 2.2, true); p.nextAtk = p.skillAt = Date.now() + c.aspd; me(p);
       break;
     }
     case 'pick': { const d = drops.get(m.id); if (d && d.map === c.map) { p.pick = d.id; p.target = null; p.path = findPath(map, c.x, c.y, d.x, d.y) || []; } break; }
@@ -419,7 +498,7 @@ function handle(p, m) {
       break;
     }
     case 'use': {
-      const s = c.inv[m.i | 0]; if (!s) return; const it = ITEMS[s.id];
+      const s = c.inv[m.i | 0]; if (!s || (m.id != null && s.id !== m.id)) return; const it = ITEMS[s.id];
       if (it.ty === 'use') {
         if (it.heal) c.hp = Math.min(c.maxhp, c.hp + it.heal);
         if (it.sp) c.sp = Math.min(c.maxsp, c.sp + it.sp);
@@ -429,9 +508,9 @@ function handle(p, m) {
       }
       break;
     }
-    case 'unequip': { const sl = String(m.s); if (c.eq[sl] && c.inv.length < 40) { addItem(c, c.eq[sl]); delete c.eq[sl]; me(p); dirty = true; } break; }
-    case 'drop': { const i = m.i | 0; if (c.inv[i]) { delSlot(c, i, c.inv[i].q); me(p); } break; }
-    case 'stat': { const k = String(m.s); if (c.st[k] != null && c.pts > 0 && c.st[k] < 99) { c.pts--; c.st[k]++; me(p); dirty = true; } break; }
+    case 'unequip': { const sl = String(m.s); if (!EQ_SLOTS.includes(sl)) return; if (c.eq[sl] && c.inv.length < 40) { addItem(c, c.eq[sl]); delete c.eq[sl]; me(p); dirty = true; } break; }
+    case 'drop': { const i = m.i | 0; if (c.inv[i] && (m.id == null || c.inv[i].id === m.id)) { delSlot(c, i, c.inv[i].q); me(p); } break; }
+    case 'stat': { const k = String(m.s); if (STATS.includes(k) && c.pts > 0 && c.st[k] < 99) { c.pts--; c.st[k]++; me(p); dirty = true; } break; }
     case 'buy': {
       if (!map.town) return; const id = m.id | 0, q = Math.max(1, Math.min(99, m.q | 0));
       if (!SHOP.includes(id)) return; const cost = ITEMS[id].buy * q;
@@ -441,7 +520,7 @@ function handle(p, m) {
       break;
     }
     case 'sell': {
-      if (!map.town) return; const i = m.i | 0, s = c.inv[i]; if (!s) return; const q = Math.max(1, Math.min(s.q, m.q | 0 || s.q));
+      if (!map.town) return; const i = m.i | 0, s = c.inv[i]; if (!s || (m.id != null && s.id !== m.id)) return; const q = Math.max(1, Math.min(s.q, m.q | 0 || s.q));
       const gain = ITEMS[s.id].sell * q; delSlot(c, i, q); c.zeny += gain; me(p); dirty = true; sys(p, `ขายได้ ${gain} Zeny`);
       break;
     }
@@ -471,12 +550,12 @@ setInterval(() => {
     // chase target
     if (p.target) {
       const mob = mobs.get(p.target);
-      if (!mob || mob.map !== c.map) p.target = null;
+      if (!mob || mob.map !== c.map) { p.target = null; p.pendingSkill = false; }
       else {
         const d = Math.max(Math.abs(mob.x - c.x), Math.abs(mob.y - c.y));
         if (d <= 1.6) {
           pe.path = null;
-          if (p.pendingSkill && c.sp >= 8) { p.pendingSkill = false; c.sp -= 8; playerAttack(p, mob, 2.2, true); p.nextAtk = now + c.aspd; me(p); }
+          if (p.pendingSkill && c.sp >= 8) { p.pendingSkill = false; c.sp -= 8; playerAttack(p, mob, 2.2, true); p.nextAtk = p.skillAt = now + c.aspd; me(p); }
           else if (now >= p.nextAtk) { playerAttack(p, mob); p.nextAtk = now + c.aspd; }
         } else if (!pe.path || !pe.path.length || (p.chaseAt || 0) < now) {
           pe.path = findPath(MAPS[c.map], c.x, c.y, Math.round(mob.x), Math.round(mob.y), 300);
@@ -517,6 +596,7 @@ setInterval(() => {
   for (const mob of mobs.values()) {
     const d = MOBS[mob.type];
     let tgt = mob.target ? players.get(mob.target) : null;
+    if (!tgt) mob.target = null; // target logged out: let the next attacker re-aggro it
     if (tgt && (tgt.dead || tgt.c.map !== mob.map || Math.hypot(tgt.c.x - mob.x, tgt.c.y - mob.y) > 14)) { mob.target = null; tgt = null; }
     if (!tgt && d.aggro) {
       for (const p of players.values()) if (!p.dead && p.c.map === mob.map && Math.hypot(p.c.x - mob.x, p.c.y - mob.y) < 5) { mob.target = p.id; tgt = p; break; }
@@ -529,7 +609,9 @@ setInterval(() => {
       mob.nextWander = now + 3000 + Math.random() * 5000;
       const m = MAPS[mob.map];
       const tx = Math.round(mob.hx + (Math.random() * 10 - 5)), ty = Math.round(mob.hy + (Math.random() * 10 - 5));
-      if (walkable(m, tx, ty) && get(m, tx, ty) !== 8) mob.path = findPath(m, mob.x, mob.y, tx, ty, 150);
+      // a mob dragged far away by a chase gets a bigger search budget so it can walk back home
+      const far = Math.max(Math.abs(mob.x - mob.hx), Math.abs(mob.y - mob.hy)) > 10;
+      if (walkable(m, tx, ty) && get(m, tx, ty) !== 8) mob.path = findPath(m, mob.x, mob.y, tx, ty, far ? 600 : 150);
       if (mob.hp < mob.maxhp) mob.hp = Math.min(mob.maxhp, mob.hp + Math.ceil(mob.maxhp * 0.05));
       if (!tgt) mob.dmg.clear();
     }
@@ -552,9 +634,16 @@ setInterval(() => {
   for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.head || 0, p.dead ? 1 : 0]); }
   for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp]); }
   for (const d of drops.values()) { const s = per[d.map]; if (s) s.d.push([d.id, d.item, d.x, d.y]); }
-  for (const p of players.values()) { const s = per[p.c.map]; if (s && p.ws.readyState === 1) p.ws.send(JSON.stringify({ t: 's', ...s })); }
+  for (const k in per) per[k] = JSON.stringify({ t: 's', ...per[k] }); // serialize once per map, not once per player
+  for (const p of players.values()) { const s = per[p.c.map]; if (s && p.ws.readyState === 1) p.ws.send(s); }
 }, TICK);
 
-process.on('SIGINT', () => { for (const p of players.values()) db.accounts[p.acct].char = p.c; dirty = true; saveDb(); process.exit(0); });
-setInterval(() => { for (const p of players.values()) db.accounts[p.acct].char = p.c; dirty = true; }, 30000);
+function syncChars() { for (const p of players.values()) db.accounts[p.acct].char = p.c; if (players.size) dirty = true; }
+function shutdown() { syncChars(); dirty = true; saveDb(); process.exit(0); }
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+// last resort: keep player progress before the process dies (START-LUMIRA-ONLINE.bat restarts it)
+process.on('uncaughtException', e => { console.error('[fatal]', e); try { syncChars(); dirty = true; saveDb(); } catch (e2) { } process.exit(1); });
+setInterval(syncChars, 30000);
+server.on('error', e => { console.error(`[http] ${e.code === 'EADDRINUSE' ? 'port ' + PORT + ' is already in use' : e.message}`); process.exit(1); });
 server.listen(PORT, () => console.log(`LUMIRA ONLINE running on http://localhost:${PORT}`));

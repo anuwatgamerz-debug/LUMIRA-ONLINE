@@ -20,7 +20,7 @@ function img(n) {
   let i = IMG[n]; if (!i) { i = IMG[n] = new Image(); i.src = 'assets/' + n + '.png'; }
   return i.complete && i.naturalWidth ? i : null;
 }
-fetch('assets/meta.json').then(r => r.json()).then(m => { META = m; });
+(function loadMeta() { fetch('assets/meta.json').then(r => r.json()).then(m => { META = m; }).catch(() => setTimeout(loadMeta, 2000)); })();
 const CLS = ['knight', 'mage', 'rogue', 'hood', 'barb'];
 const CLS_TH = ['อัศวิน', 'จอมเวท', 'นักธนู', 'นักฆ่าฮู้ด', 'บาบาเรียน'];
 const NPC_SPR = { iris: 'n_iris', merchant: 'n_merchant', nurse: 'n_nurse', warper: 'n_warper', sage: 'n_sage' };
@@ -227,7 +227,12 @@ function connect(msg) {
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
   ws.onopen = () => ws.send(JSON.stringify(msg));
   ws.onmessage = e => onMsg(JSON.parse(e.data));
-  ws.onclose = () => { if (me) { log('การเชื่อมต่อหลุด... กำลังรีเฟรช', '#ff8b8b'); setTimeout(() => location.reload(), 2500); } };
+  const sock = ws;
+  sock.onclose = () => {
+    if (ws !== sock) return; // an older socket replaced by a new login attempt
+    if (me) { log('การเชื่อมต่อหลุด... กำลังรีเฟรช', '#ff8b8b'); setTimeout(() => location.reload(), 2500); }
+    else if (!$('err').textContent || $('err').textContent === 'กำลังเชื่อมต่อ...') $('err').textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง';
+  };
 }
 const send = o => ws && ws.readyState === 1 && ws.send(JSON.stringify(o));
 const now = () => performance.now() / 1000;
@@ -263,17 +268,19 @@ function snap(m) {
   for (const [id, item, x, y] of m.d) { seen.add(id); let e = ents.get(id); if (!e) { e = { kind: 'd', x, y, born: performance.now() }; ents.set(id, e); } Object.assign(e, { item, tx: x, ty: y }); }
   for (const id of [...ents.keys()]) if (!seen.has(id)) ents.delete(id);
   if (selected && !ents.has(selected)) selected = 0;
+  const tb = performance.now(); for (const [id, b] of bubbles) if (b.until < tb) bubbles.delete(id);
 }
 function face(a, b) { a.row = row4(b.x - a.x, b.y - a.y); }
 function onFx(m) {
   const t = performance.now();
+  if (fx.length > 300) fx.splice(0, fx.length - 300);
   if (m.k === 'hit') {
     const e = ents.get(m.to); const a = ents.get(m.from);
     if (a) { a.atkT = now(); if (e) face(a, e); }
     if (!e) return;
     fx.push({ k: 'num', x: e.x, y: e.y, v: m.dmg ? '' + m.dmg : 'MISS', col: m.to === myId ? '#ff6b6b' : m.crit ? '#ffd34d' : m.skill ? '#ff9f43' : '#ffffff', t, big: m.crit || m.skill });
     if (m.dmg) { e.hurtT = now(); fx.push({ k: 'slash', x: e.x, y: e.y, t, skill: m.skill, crit: m.crit, r: Math.random() }); }
-  } else if (m.k === 'die') { const e = ents.get(m.id); if (e) { ghosts.push({ ...e, dieT: now() }); ents.delete(m.id); if (selected === m.id) selected = 0; } }
+  } else if (m.k === 'die') { const e = ents.get(m.id); if (e) { if (ghosts.length > 60) ghosts.shift(); ghosts.push({ ...e, dieT: now() }); ents.delete(m.id); if (selected === m.id) selected = 0; } }
   else if (m.k === 'lvup') fx.push({ k: 'lvup', id: m.id, t });
   else if (m.k === 'heal') fx.push({ k: 'heal', id: m.id, t });
   else if (m.k === 'pdie') { const e = ents.get(m.id); if (e) e.dieT = now(); if (m.id === myId) { $('dead').style.display = 'block'; setAuto(false); } }
@@ -297,9 +304,10 @@ function updHud() {
   if ($('wStat').style.display === 'block') renderStat();
   if ($('wShop').style.display === 'block' && shopMode === 'sell') renderSell();
 }
+let portraitT = 0;
 function drawPortrait() {
   const n = heroOf(me.look), L = META.lpc[n], im = img(n), g = $('portrait').getContext('2d');
-  if (!L || !im) { setTimeout(drawPortrait, 400); return; }
+  if (!L || !im) { if (!portraitT) portraitT = setTimeout(() => { portraitT = 0; drawPortrait(); }, 400); return; }
   g.imageSmoothingEnabled = false; g.clearRect(0, 0, 32, 32);
   const c = L.cell, a = L.anims.walk, o = (c - 64) / 2;
   g.drawImage(im, o + 16, (a[0] + 2) * c + o + 6, 32, 32, 0, 2, 32, 32);
@@ -337,7 +345,7 @@ function renderSell() {
   me.inv.forEach((s, i) => {
     const it = ITEMS[s.id]; const d = document.createElement('div'); d.className = 'li'; d.appendChild(iconCanvas(s.id));
     d.insertAdjacentHTML('beforeend', `<div class="grow">${it.n} x${s.q}</div><span class="num" style="color:var(--gold)">${it.sell}z</span>`);
-    const b = document.createElement('button'); b.textContent = s.q > 1 ? 'ขายหมด' : 'ขาย'; b.onclick = () => send({ t: 'sell', i, q: s.q }); d.appendChild(b); l.appendChild(d);
+    const b = document.createElement('button'); b.textContent = s.q > 1 ? 'ขายหมด' : 'ขาย'; b.onclick = () => send({ t: 'sell', i, id: s.id, q: s.q }); d.appendChild(b); l.appendChild(d);
   });
   if (!me.inv.length) l.textContent = 'กระเป๋าว่าง';
 }
@@ -352,7 +360,7 @@ function renderBag() {
   me.inv.forEach((s, i) => {
     const it = ITEMS[s.id]; const d = document.createElement('div'); d.className = 'slot'; d.appendChild(iconCanvas(s.id)); d.append(it.n);
     if (s.q > 1) d.insertAdjacentHTML('beforeend', `<span class="q num">${s.q}</span>`);
-    d.onclick = () => { if (it.ty === 'etc') log(`${it.n} - ขายได้ ${it.sell} Zeny ที่ปราชญ์ในเมือง`, '#b9a98e'); else send({ t: 'use', i }); };
+    d.onclick = () => { if (it.ty === 'etc') log(`${it.n} - ขายได้ ${it.sell} Zeny ที่ปราชญ์ในเมือง`, '#b9a98e'); else send({ t: 'use', i, id: s.id }); };
     g.appendChild(d);
   });
 }
@@ -371,13 +379,13 @@ $('bMap').onclick = toggleWin('wMap', renderBigMap);
 function nearest(kind, maxd = 12) { const m = ents.get(myId); if (!m) return 0; let best = 0, bd = maxd; for (const [id, e] of ents) { if (e.kind !== kind) continue; const d = Math.hypot(e.x - m.x, e.y - m.y); if (d < bd) { bd = d; best = id; } } return best; }
 $('bAtk').onclick = () => { let id = selected && ents.has(selected) ? selected : nearest('m'); if (id) { selected = id; send({ t: 'attack', id }); } else log('ไม่มีมอนสเตอร์ใกล้ๆ', '#b9a98e'); };
 $('skill').onclick = () => { const id = selected && ents.has(selected) ? selected : nearest('m', 6); if (id) { selected = id; send({ t: 'skill', id }); } };
-$('bPot').onclick = () => { const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i }); else log('ไม่มียาแดง', '#ff8b8b'); };
+$('bPot').onclick = () => { if (!me) return; const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i, id: 1 }); else log('ไม่มียาแดง', '#ff8b8b'); };
 $('bPick').onclick = () => { const id = nearest('d', 8); if (id) send({ t: 'pick', id }); };
 function setAuto(v) { auto = v; $('bAuto').classList.toggle('on', v); }
 $('bAuto').onclick = () => { setAuto(!auto); log(auto ? 'เปิดโหมดออโต้ — ตีมอนใกล้ๆ อัตโนมัติ' : 'ปิดโหมดออโต้', '#9fe7ff'); };
 setInterval(() => {
   if (!auto || !me || me.hp <= 0) return;
-  if (me.hp < me.maxhp * 0.35) { const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i }); }
+  if (me.hp < me.maxhp * 0.35) { const i = me.inv.findIndex(s => s.id === 1); if (i >= 0) send({ t: 'use', i, id: 1 }); }
   const d = nearest('d', 3); if (d) { send({ t: 'pick', id: d }); return; }
   if (!selected || !ents.has(selected)) { const id = nearest('m', 14); if (id) { selected = id; send({ t: 'attack', id }); } }
 }, 700);
@@ -430,7 +438,13 @@ function joyMove(e) {
   K.style.transform = `translate(${dx}px,${dy}px)`; joy.dx = dx / R; joy.dy = dy / R;
 }
 const keys = {};
-addEventListener('keydown', e => { if (document.activeElement === $('ci')) return; keys[e.key.toLowerCase()] = 1; if (e.key === 'Enter') $('ci').focus(); if (e.key === '1') $('bPot').click(); if (e.key === 'q') $('skill').click(); if (e.key === 'i') $('bBag').click(); if (e.key === ' ') $('bAtk').click(); if (e.key === 'm') $('bMap').click(); });
+addEventListener('keydown', e => {
+  if (!me || document.activeElement instanceof HTMLInputElement) return; // login form / chat box
+  const k = e.key.toLowerCase(); keys[k] = 1;
+  if (e.repeat && k !== ' ') return;
+  if (k === 'enter') $('ci').focus(); if (k === '1') $('bPot').click(); if (k === 'q') $('skill').click(); if (k === 'i') $('bBag').click(); if (k === ' ') { e.preventDefault(); $('bAtk').click(); } if (k === 'm') $('bMap').click();
+});
+addEventListener('blur', () => { for (const k in keys) keys[k] = 0; }); // don't keep walking after alt-tab
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = 0; });
 setInterval(() => {
   if (!me || !map) return; const e = ents.get(myId); if (!e) return;
@@ -640,4 +654,4 @@ $('go').onclick = () => {
   if (ws) try { ws.close(); } catch (e) { }
   connect(mode === 'reg' ? { t: 'register', u, p, name: $('cn').value.trim(), ...look } : { t: 'login', u, p });
 };
-$('p').onkeydown = e => { if (e.key === 'Enter') $('go').click(); };
+for (const f of ['u', 'p', 'cn']) $(f).onkeydown = e => { if (e.key === 'Enter') $('go').click(); };
