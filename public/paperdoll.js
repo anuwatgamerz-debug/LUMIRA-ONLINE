@@ -2,7 +2,8 @@
 // ============================================================ ELYNDRA ONLINE — layered characters (paperdoll)
 // Players and NPCs are drawn from layer sheets made by tools/art. Two sets share one renderer:
 //   v1  assets/characters/chars.json  64x64 frames, ~42px characters (every look)
-//   hd  assets/chr_hd/chars.json      64x80 frames, ~50px HD characters (prototype looks; tools/art/build_characters_hd.py)
+//   hd  assets/chr_hd/chars.json      64x80 frames, ~50px HD characters (every class + NPC role; tools/art/build_characters_hd.py)
+//   lpc assets/chr_lpc/chars.json     128x128 frames, LPC art (fallback when a look needs a layer HD doesn't have)
 // Layers (same frames, pivot and timing): base -> face -> armor/clothes -> class gear -> costume -> hair -> weapon /
 // shield -> headgear, back items behind (or over the back in the N view); aura is drawn by the engine.
 // A character is drawn in HD only when every layer it needs exists in the HD set (never half HD, half v1), and
@@ -34,14 +35,15 @@ function paperLayers(look, gear, S = CHR, strict = false) {
   if (look.outfit) L.armor = pick('npc_outfit_' + look.outfit + '_' + sx);
   else if (look.arm) L.armor = pick('eq_armor_' + (look.arm === 'tunic' ? tunic : look.arm) + '_' + sx); // NPC: armor look by name
   else { const it = gear.arm && ITEMS[gear.arm]; let a = it ? ARMOR_LOOK[it.id] || it.av || BY_TYPE[it.at] || 'tunic' : 'tunic'; if (a === 'tunic') a = tunic; L.armor = pick('eq_armor_' + a + '_' + sx); }
-  // second / third classes wear their first-class outfit until they get art of their own
+  // second classes wear their own outfit where the set has one; otherwise (and third classes) the first-class outfit
   const cls0 = look.cls || gear.cls || (look.outfit ? null : 'adventurer'), cls = CLS_BASE[cls0] || cls0;
-  if (cls) L.class = pick('chr_class_' + cls + '_' + sx);
+  const own = cls0 && cls0 !== cls && S.layers['chr_class_' + cls0 + '_' + sx];
+  if (cls) L.class = pick('chr_class_' + (own ? cls0 : cls) + '_' + sx);
   const wt = look.wpn || (gear.wpn && ITEMS[gear.wpn] && ITEMS[gear.wpn].wt) || null;
   if (wt) { if (S.weapons.includes(wt)) L.weapon = pick('eq_weapon_' + wt); else miss = true; }
   const shield = look.shield || (cls === 'vanguard' && cls0 !== 'berserker' && ONE_HAND[wt] ? 'kite' : null);
   if (shield) L.shield = pick('eq_shield_' + shield);
-  const back = look.back || (cls === 'ranger' || wt === 'bow' ? 'ranger' : cls === 'adventurer' ? 'adventurer' : null);
+  const back = look.back || (own && S.classBack && S.classBack[cls0]) || (cls === 'ranger' || wt === 'bow' ? 'ranger' : cls === 'adventurer' ? 'adventurer' : null);
   if (back) L.back = pick('chr_back_' + back + '_' + sx);
   L.hair = pick('chr_hair_' + (S.hair[look.hair | 0] || S.hair[0]));
   const vis = typeof gear.head === 'string' ? gear.head : (gear.head && ITEMS[gear.head] && ITEMS[gear.head].vis) || look.head || '';
@@ -102,13 +104,13 @@ let lastPaperSet = null;
 // draw one character; returns false if nothing could be drawn yet (caller uses the old renderer meanwhile)
 function drawPaper(look, gear, anim, tt, row, x, y, alpha = 1, g = ctx, scale = 1) {
   look = look || {};
-  if (CHRLPC && hdWanted()) { // LPC set (Liberated Pixel Cup art): preferred whenever every layer exists
-    const L = paperLayers(look, gear, CHRLPC, true);
-    if (L && pdDraw(CHRLPC, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'lpc'; return true; }
-  }
-  if (CHRHD && hdWanted()) {
+  if (CHRHD && hdWanted()) { // ELYNDRA HD set (our own art): preferred whenever every layer exists
     const L = paperLayers(look, gear, CHRHD, true);
     if (L && pdDraw(CHRHD, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'hd'; return true; }
+  }
+  if (CHRLPC && hdWanted()) { // LPC set (Liberated Pixel Cup art): fallback for looks the HD set doesn't cover
+    const L = paperLayers(look, gear, CHRLPC, true);
+    if (L && pdDraw(CHRLPC, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'lpc'; return true; }
   }
   const L = paperLayers(look, gear, CHR); if (!L) return false;
   if (pdDraw(CHR, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'v1'; return true; }

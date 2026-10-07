@@ -639,7 +639,223 @@ def draw_class(L, J, cls):
             ha = J['hands'][i]; el = J['elbows'][i]
             fillg(L, limb(J, ((el[0] + ha[0] * 2) / 3, (el[1] + ha[1] * 2) / 3), ((el[0] + ha[0] * 4) / 5, (el[1] + ha[1] * 4) / 5), 5.6), vi, light=3, mid=2, dark=1)
 
-BACKS = ['adventurer', 'ranger', 'cape_blue', 'cape_red', 'cape_gold', 'cape_violet']
+    elif cls in CLASS2:
+        draw_class2(L, J, cls)
+    else:
+        draw_class1b(L, J, cls)
+
+
+# ---------------------------------------------------------------- first classes added after the prototype: cleric, rogue, artisan
+def mantle(L, J, rp, drop=4.0, back=6.0, trim=None):
+    """short capelet over the shoulders (all views), optional trim along the lower edge"""
+    v, sh = J['view'], J['sh']; y0 = sh[0][1]
+    if v == 'S': pts = [(sh[0][0] - 1.8, y0 - 1.2), (sh[1][0] + 1.8, y0 - 1.2), (sh[1][0] + 1.4, y0 + drop), (32, y0 + drop + 2.4), (sh[0][0] - 1.4, y0 + drop)]
+    elif v == 'N': pts = [(sh[0][0] - 1.8, y0 - 1.6), (sh[1][0] + 1.8, y0 - 1.6), (sh[1][0] + 1.4, y0 + back), (32, y0 + back + 1.6), (sh[0][0] - 1.4, y0 + back)]
+    else: pts = [(sh[0][0] - 4.4, y0 - 1.6), (sh[1][0] + 2.8, y0 - 1.2), (sh[1][0] + 2, y0 + drop), (sh[0][0] - 4.6, y0 + back)]
+    pix = quad(J, pts); fillg(L, pix, rp)
+    if trim:
+        ys = {}
+        for (x, y) in pix: ys[x] = max(ys.get(x, -1), y)
+        for x, y in ys.items(): L.px[(x, y)] = trim[3]; L.dark[(x, y)] = trim[0]
+    return pix
+
+def gem(L, J, x, y, rp, r=1.4):
+    fillg(L, Tset(J, ellipse(x, y, r, r)), rp, light=len(rp) - 1, mid=len(rp) - 2, dark=1, edge=False)
+    L.put(Tset(J, rect(x - 0.6, y - 0.8, 1, 1)), rp[-1], rp[0])
+
+def pouch(L, J, x, y, rp, w=2.6, h=3.0):
+    fillg(L, quad(J, [(x - w / 2, y), (x + w / 2, y), (x + w / 2 + 0.2, y + h), (x - w / 2 - 0.2, y + h)]), rp, light=4, mid=3, dark=2)
+    line(L, J, (x - w / 2, y + 0.8), (x + w / 2, y + 0.8), rp[1])
+
+def bracers(L, J, rp, w=4.6, a=0.5, b=0.8):
+    for i in (0, 1):
+        el, ha = J['elbows'][i], J['hands'][i]
+        fillg(L, limb(J, (el[0] + (ha[0] - el[0]) * a, el[1] + (ha[1] - el[1]) * a), (el[0] + (ha[0] - el[0]) * b, el[1] + (ha[1] - el[1]) * b), w), rp, light=min(4, len(rp) - 1), mid=min(3, len(rp) - 2), dark=1)
+
+def stole(L, J, rp, trim, length=12):
+    """two cloth bands hanging from the neck down the front (cleric line)"""
+    v, sh, hips = J['view'], J['sh'], J['hips']
+    if v == 'S':
+        for s in (-1, 1):
+            x = 32 + s * 2.6
+            fillg(L, quad(J, [(x - 1.1, sh[0][1] - 0.6), (x + 1.1, sh[0][1] - 0.6), (x + 1.2 + s * 0.4, hips[0][1] + length - 6), (x - 1.0 + s * 0.4, hips[0][1] + length - 6)]), rp, edge=False)
+            line(L, J, (x, hips[0][1] + length - 7), (x + s * 0.4, hips[0][1] + length - 6.2), trim[3], trim[0])
+    elif J['side']:
+        x = sh[1][0] + 1.6
+        fillg(L, quad(J, [(x - 1, sh[1][1] - 0.6), (x + 1.2, sh[1][1] - 0.6), (x + 1.8, hips[1][1] + length - 6), (x - 0.4, hips[1][1] + length - 6)]), rp, edge=False)
+
+def draw_class1b(L, J, cls):
+    v, side, sh, hips = J['view'], J['side'], J['sh'], J['hips']
+    y0, y1 = sh[0][1], hips[0][1]
+    br, gd, iv, sk = ramp('brown'), ramp('gold'), ramp('ivory'), ramp('sky')
+    if cls == 'cleric':
+        stole(L, J, sk, gd, 12)
+        mantle(L, J, iv, 4.2, 6.4, gd)
+        if v == 'S':   # sun-disc emblem (not a real religious symbol)
+            c = (32, y0 + 3.6)
+            fillg(L, Tset(J, ellipse(c[0], c[1], 2.2, 2.2)), gd, light=4, mid=3, dark=2, edge=False)
+            for dx, dy in ((0, -3), (0, 3), (-3, 0), (3, 0)): L.put(Tset(J, rect(c[0] + dx - 0.5, c[1] + dy - 0.5, 1, 1)), gd[4], gd[0])
+            L.put(Tset(J, rect(c[0] - 0.5, c[1] - 0.5, 1, 1)), sk[3], sk[0])
+        belt(L, J, gd, None, h=1.6)
+        bracers(L, J, iv, 4.8, 0.62, 0.86)
+    elif cls == 'rogue':
+        vi, st = ramp('violet'), ramp('stone')
+        mantle(L, J, [vi[0], vi[1], vi[1], vi[2]], 3.4, 5.4)
+        if v == 'S':   # crossed bandolier + scarf knot
+            line(L, J, (sh[0][0] + 0.4, y0 + 1), (hips[1][0] + 0.6, y1 - 1.4), br[1]); line(L, J, (sh[0][0] + 1.2, y0 + 1), (hips[1][0] + 1.4, y1 - 1.4), br[3], br[0])
+            fillg(L, Tset(J, ellipse(29.6, y0 + 0.6, 1.4, 1.2)), vi, light=3, mid=2, dark=1, edge=False)
+        belt(L, J, br, 'stone', h=2.0)
+        for k, x in enumerate((hips[0][0] - 2.6, hips[1][0] + 2.6) if not side else (hips[1][0] + 2.2,)):   # pouches on the belt
+            pouch(L, J, x, waist_y(J) + 1.2, br, 2.4, 2.8)
+        bracers(L, J, [st[0], st[1], st[2], st[3], st[4]], 4.6, 0.5, 0.82)
+        for i in (0, 1):   # knee wraps
+            k = J['knees'][i]; fillg(L, Tset(J, ellipse(k[0], k[1], 2.4, 1.2)), [vi[0], vi[1], vi[2], vi[2]], edge=False)
+    elif cls == 'artisan':
+        cu, te = ramp('copper'), ramp('teal')
+        if v == 'S': ap = quad(J, [(28.8, y0 + 2.4), (35.2, y0 + 2.4), (36.4, y1 + 8), (27.6, y1 + 8)])
+        elif side: ap = quad(J, [(sh[1][0] + 1.6, y0 + 2.4), (sh[1][0] + 4.2, y0 + 2.4), (hips[1][0] + 5, y1 + 8), (hips[1][0] + 1.4, y1 + 8)])
+        else: ap = set()
+        if ap:
+            fillg(L, ap, [br[0], br[2], br[3], br[4]])
+            if v == 'S':
+                line(L, J, (29, y0 + 2.4), (sh[0][0] + 1, y0 - 1), br[1]); line(L, J, (35, y0 + 2.4), (sh[1][0] - 1, y0 - 1), br[1])
+                pouch(L, J, 32, y1 + 1, cu, 3.4, 2.6)
+        belt(L, J, br, 'gold', h=2.2)
+        if v != 'N':   # tools hanging from the belt: wrench (stone) + small hammer (copper)
+            tx = hips[0][0] - 2.2 if not side else hips[1][0] + 2.4
+            fillg(L, quad(J, [(tx - 0.6, waist_y(J) + 1.8), (tx + 0.6, waist_y(J) + 1.8), (tx + 0.6, waist_y(J) + 6.4), (tx - 0.6, waist_y(J) + 6.4)]), ramp('stone'), light=4, mid=3, edge=False)
+            fillg(L, Tset(J, ellipse(tx, waist_y(J) + 6.8, 1.4, 1.0)), ramp('stone'), light=4, mid=3, edge=False)
+        for i in (0, 1): fillg(L, Tset(J, ellipse(J['hands'][i][0], J['hands'][i][1] - 0.2, 2.3, 1.8)), te, light=3, mid=2, dark=1)   # work gloves
+        if v == 'S':   # goggles hanging at the collar
+            for x in (30.2, 33.8): fillg(L, Tset(J, ellipse(x, y0 + 0.8, 1.4, 1.2)), cu, light=3, mid=2, dark=1, edge=False); L.put(Tset(J, rect(x - 0.5, y0 + 0.4, 1, 1)), sk[2], sk[0])
+
+
+# ---------------------------------------------------------------- second classes: evolutions of the first-class layer (art bible §9)
+CLASS2 = {'knight': 'vanguard', 'berserker': 'vanguard', 'sharpshooter': 'ranger', 'beasthunter': 'ranger', 'elementalist': 'arcanist',
+          'warlock': 'arcanist', 'priest': 'cleric', 'oracle': 'cleric', 'assassin': 'rogue', 'shadowdancer': 'rogue',
+          'alchemist': 'artisan', 'machinist': 'artisan'}
+# back item each second class wears unless the look names one (client: paperdoll.js CLASS_BACK)
+CLASS_BACK = {'knight': 'cape_blue', 'berserker': 'fur', 'sharpshooter': 'ranger', 'beasthunter': 'ranger', 'elementalist': 'cape_violet',
+              'warlock': 'cape_dusk', 'priest': 'cape_gold', 'oracle': 'cape_star', 'assassin': 'scarf_red', 'shadowdancer': 'cape_violet',
+              'alchemist': 'satchel', 'machinist': 'gearpack'}
+
+def pauldron(L, J, i, rp, rx=4.2, ry=3.2, trim=None):
+    sh = J['sh'][i]; dx = 0 if J['side'] else (-1.4 if i == 0 else 1.4)
+    pix = Tset(J, ellipse(sh[0] + dx, sh[1] + 0.2, rx, ry)); fillg(L, pix, rp, light=min(5, len(rp) - 1), mid=min(4, len(rp) - 2), dark=2)
+    if trim: line(L, J, (sh[0] + dx - rx + 0.8, sh[1] + ry - 1), (sh[0] + dx + rx - 0.8, sh[1] + ry - 1), trim[3], trim[0])
+    return pix
+
+def fur_collar(L, J, rp):
+    v, sh = J['view'], J['sh']; y0 = sh[0][1]
+    if v == 'S': pts = [(sh[0][0] - 2.4, y0 - 1.8), (sh[1][0] + 2.4, y0 - 1.8), (sh[1][0] + 1.6, y0 + 2.6), (32, y0 + 3.6), (sh[0][0] - 1.6, y0 + 2.6)]
+    elif v == 'N': pts = [(sh[0][0] - 2.4, y0 - 2.0), (sh[1][0] + 2.4, y0 - 2.0), (sh[1][0] + 1.8, y0 + 3.2), (sh[0][0] - 1.8, y0 + 3.2)]
+    else: pts = [(sh[0][0] - 4.6, y0 - 2.0), (sh[1][0] + 3.0, y0 - 1.6), (sh[1][0] + 2.2, y0 + 2.6), (sh[0][0] - 4.6, y0 + 3.4)]
+    pix = quad(J, pts); fillg(L, pix, rp)
+    for (x, y) in pix:   # tufts: dither the lower edge and a few light strands
+        if (x * 3 + y) % 5 == 0: L.px[(x, y)] = rp[min(len(rp) - 1, 4)]
+        if (x, y + 1) not in pix and x % 2: L.px[(x, y)] = rp[1]
+    return pix
+
+def rune_marks(L, J, x0, y0, rp, n=3, dy=2.4):
+    for k in range(n): L.put(Tset(J, rect(x0, y0 + k * dy, 1, 1)), rp[-1], rp[0])
+
+def draw_class2(L, J, cls):
+    base = CLASS2[cls]
+    v, side, sh, hips = J['view'], J['side'], J['sh'], J['hips']
+    y0, y1 = sh[0][1], hips[0][1]
+    gd, st, br, iv, sk, vi, rd = ramp('gold'), ramp('stone'), ramp('brown'), ramp('ivory'), ramp('sky'), ramp('violet'), ramp('red')
+    if cls == 'knight':
+        tabard(L, J, ramp('blue'), gd, 12, 3.6)
+        if v == 'S':   # gold lion-less crest: star in a shield shape + embroidered band
+            fillg(L, quad(J, [(30.2, y0 + 2.6), (33.8, y0 + 2.6), (33.8, y0 + 6.4), (32, y0 + 8.4), (30.2, y0 + 6.4)]), gd, light=4, mid=3, dark=2, edge=False)
+            L.put(Tset(J, rect(31.5, y0 + 4, 1, 2)), sk[3], sk[0])
+            line(L, J, (29, y1 + 5), (35, y1 + 5), gd[3], gd[0])
+        for i in ((0, 1) if not side else (1,)): pauldron(L, J, i, st, 4.6, 3.4, gd)
+        bracers(L, J, st, 5.0, 0.45, 0.9)
+    elif cls == 'berserker':
+        fur_collar(L, J, br)
+        belt(L, J, rd, 'gold', h=2.6)
+        if v == 'S':   # war sash across the chest + red paint stripes on the bracers
+            line(L, J, (sh[1][0] - 0.4, y0 + 1.6), (hips[0][0] - 0.6, y1 - 1.6), rd[2], rd[0]); line(L, J, (sh[1][0] - 1.4, y0 + 1.6), (hips[0][0] - 1.6, y1 - 1.6), rd[3], rd[0])
+        bracers(L, J, br, 5.2, 0.4, 0.9)
+        for i in (0, 1):
+            el, ha = J['elbows'][i], J['hands'][i]
+            for t in (0.55, 0.75): L.put(Tset(J, rect(el[0] + (ha[0] - el[0]) * t - 1, el[1] + (ha[1] - el[1]) * t, 2, 1)), st[4], st[0])   # spikes
+    elif cls in ('sharpshooter', 'beasthunter'):
+        draw_class(L, J, 'ranger')
+        if cls == 'sharpshooter':
+            if v == 'S':   # long coat tails + gold scope on the chest strap
+                for s in (-1, 1):
+                    x = 32 + s * 5.4
+                    fillg(L, quad(J, [(x - 1.0, y1 - 0.5), (x + 1.0, y1 - 0.5), (x + 1.4 + s * 2.0, y1 + 10), (x - 0.8 + s * 2.0, y1 + 10)]), ramp('green'), edge=False)
+                fillg(L, Tset(J, ellipse(34.6, y0 + 4.6, 1.2, 1.2)), gd, light=4, mid=3, edge=False)
+            elif v == 'N': fillg(L, quad(J, skirt_pts(J, 10, 1.6, 0.8)), ramp('green'))
+            else: fillg(L, quad(J, [(hips[0][0] - 3.2, y1), (hips[0][0] + 0.4, y1), (hips[0][0] - 1.8, y1 + 10), (hips[0][0] - 5.8, y1 + 9.6)]), ramp('green'))
+            i = J['oh']; el, ha = J['elbows'][i], J['hands'][i]   # archer's gauntlet on the bow arm
+            fillg(L, limb(J, el, ha, 5.0), [gd[0], br[2], br[3], br[4], gd[3]], light=4, mid=3, dark=2)
+        else:
+            fur_collar(L, J, [br[0], br[1], br[3], br[4], br[5], br[5]])
+            if v == 'S':   # claw necklace
+                for k, x in enumerate((29.6, 31, 32.4, 33.8)): L.put(Tset(J, rect(x, y0 + 3.4 + (k in (1, 2)), 1, 2)), iv[3], iv[0])
+            pauldron(L, J, 1 if not side else 1, iv, 3.6, 2.8)   # bone pauldron
+    elif cls in ('elementalist', 'warlock'):
+        draw_class(L, J, 'arcanist')
+        if cls == 'elementalist':
+            if v == 'S':   # four element gems on the sash
+                for k, (x, rp) in enumerate(((28.6, rd), (30.8, sk), (33.2, ramp('green')), (35.4, gd))): gem(L, J, x, waist_y(J) + 1.2, rp, 1.0)
+            pauldron(L, J, 0 if not side else 1, sk, 3.0, 2.2)
+            if not side: pauldron(L, J, 1, sk, 3.0, 2.2)
+        else:
+            if v == 'S':   # high collar + violet rune lines down the front
+                for s in (-1, 1): fillg(L, quad(J, [(32 + s * 2.6, y0 - 3.4), (32 + s * 5.0, y0 - 2.4), (32 + s * 4.4, y0 + 1.2), (32 + s * 2.6, y0 + 0.6)]), vi, light=3, mid=2, dark=1)
+                rune_marks(L, J, 28.4, y1 + 2, vi, 3); rune_marks(L, J, 35.4, y1 + 2, vi, 3)
+            elif v == 'N': fillg(L, quad(J, [(sh[0][0] + 1, y0 - 3.6), (sh[1][0] - 1, y0 - 3.6), (sh[1][0] - 0.4, y0 + 0.6), (sh[0][0] + 0.4, y0 + 0.6)]), vi, light=3, mid=2, dark=1)
+            else: fillg(L, quad(J, [(sh[0][0] - 2, y0 - 3.6), (sh[0][0] + 1.4, y0 - 2.6), (sh[0][0] + 1.4, y0 + 1), (sh[0][0] - 2.4, y0 + 1)]), vi, light=3, mid=2, dark=1)
+            bracers(L, J, [ramp('stone')[0], vi[0], vi[1], vi[2]], 5.4, 0.6, 0.9)
+    elif cls in ('priest', 'oracle'):
+        draw_class1b(L, J, 'cleric')
+        if cls == 'priest':
+            if v == 'S':   # gold collar + longer gold-hemmed stole tips
+                line(L, J, (28.6, y0 - 0.4), (35.4, y0 - 0.4), gd[3], gd[0]); line(L, J, (29.2, y0 + 0.6), (34.8, y0 + 0.6), gd[2], gd[0])
+                for s in (-1, 1): fillg(L, quad(J, [(32 + s * 2.6 - 1.1, y1 + 5), (32 + s * 2.6 + 1.1, y1 + 5), (32 + s * 3.0 + 1.2, y1 + 9), (32 + s * 3.0 - 1.0, y1 + 9)]), gd, light=4, mid=3, dark=2, edge=False)
+            for i in ((0, 1) if not side else (1,)): pauldron(L, J, i, iv, 3.4, 2.4, gd)
+        else:
+            if v == 'S':   # sky crystal pendant + star dots on the mantle
+                gem(L, J, 32, y0 + 7.6, sk, 1.6)
+                for x, dy in ((28.4, 1.4), (35.4, 2.0), (30, 3.4)): L.put(Tset(J, rect(x, y0 + dy, 1, 1)), gd[4], gd[0])
+            bracers(L, J, [sk[0], ramp('blue')[2], ramp('blue')[3], sk[2]], 5.0, 0.6, 0.88)
+    elif cls in ('assassin', 'shadowdancer'):
+        draw_class1b(L, J, 'rogue')
+        if cls == 'assassin':
+            if v != 'N':   # thigh sheaths
+                for i in ((0, 1) if not side else (1,)):
+                    h, k = J['hips'][i], J['knees'][i]
+                    fillg(L, limb(J, ((h[0] * 2 + k[0]) / 3, (h[1] * 2 + k[1]) / 3 + 1), ((h[0] + k[0] * 2) / 3, (h[1] + k[1] * 2) / 3 + 1), 2.2), [st[0], st[1], st[2], st[3]], edge=False)
+            if v == 'S': fillg(L, quad(J, [(28.8, y0 - 1.6), (35.2, y0 - 1.6), (35.6, y0 + 1.4), (28.4, y0 + 1.4)]), rd, light=3, mid=2, dark=1)   # red scarf at the neck
+        else:
+            if v == 'S':   # crescent emblem + violet waist ribbons
+                fillg(L, Tset(J, ellipse(32, y0 + 3.6, 2.0, 2.0)) - Tset(J, ellipse(32.9, y0 + 3.0, 1.8, 1.8)), gd, light=4, mid=3, edge=False)
+            rx = hips[1][0] + (1.6 if not side else -4)
+            for k in range(2): fillg(L, quad(J, [(rx + k * 1.2, waist_y(J) + 1), (rx + k * 1.2 + 1.2, waist_y(J) + 1), (rx + k * 1.2 + 2.0 + k, waist_y(J) + 9), (rx + k * 1.2 + 0.8 + k, waist_y(J) + 9)]), vi, edge=False)
+    elif cls in ('alchemist', 'machinist'):
+        draw_class1b(L, J, 'artisan')
+        if cls == 'alchemist':
+            if v != 'N':   # potion vials on the belt (red / green / sky)
+                xs = (29.0, 31.4, 33.8) if v == 'S' else (hips[1][0] + 0.2, hips[1][0] + 2.4)
+                for x, rp in zip(xs, (rd, ramp('green'), sk)):
+                    fillg(L, Tset(J, ellipse(x, waist_y(J) + 3.6, 1.1, 1.5)), rp, light=len(rp) - 1, mid=len(rp) - 2, dark=1, edge=False)
+                    L.put(Tset(J, rect(x - 0.5, waist_y(J) + 1.6, 1, 1)), br[3], br[0])
+        else:
+            for i in ((0, 1) if not side else (1,)): pauldron(L, J, i, ramp('copper'), 4.0, 3.0, gd)
+            if v == 'S':   # glowing teal core in a copper housing
+                fillg(L, Tset(J, ellipse(32, y0 + 4.4, 2.4, 2.4)), ramp('copper'), light=3, mid=2, dark=1, edge=False)
+                gem(L, J, 32, y0 + 4.4, ramp('teal'), 1.3)
+            i = J['wh']; el, ha = J['elbows'][i], J['hands'][i]   # mechanical brace on the weapon arm
+            fillg(L, limb(J, el, ha, 5.2), [st[0], st[2], st[3], st[4], st[5]], light=4, mid=3, dark=2)
+            L.put(Tset(J, rect((el[0] + ha[0]) / 2 - 0.5, (el[1] + ha[1]) / 2 - 0.5, 1, 1)), ramp('teal')[3], ramp('teal')[0])
+
+
+BACKS = ['adventurer', 'ranger', 'cape_blue', 'cape_red', 'cape_gold', 'cape_violet', 'cape_dusk', 'cape_star', 'fur', 'scarf_red', 'satchel', 'gearpack']
 def draw_back(L, J, kind):
     v, side, sh, hips = J['view'], J['side'], J['sh'], J['hips']
     br = ramp('brown')
@@ -654,18 +870,61 @@ def draw_back(L, J, kind):
             L.put(Tset(J, rect(fx, base[1] - 3.4 + (k % 2), 1, 3)), ramp('ivory')[3], ramp('ivory')[0])
             L.put(Tset(J, rect(fx, base[1] - 3.4 + (k % 2), 1, 1)), ramp('red')[3], ramp('red')[0])
     elif kind.startswith('cape_'):
-        c = ramp({'cape_red': 'red', 'cape_gold': 'gold', 'cape_violet': 'violet'}.get(kind, 'blue'))
+        c = ramp({'cape_red': 'red', 'cape_gold': 'gold', 'cape_violet': 'violet', 'cape_dusk': 'violet'}.get(kind, 'blue'))
+        if kind == 'cape_dusk': c = [ramp('stone')[0], c[0], c[1], c[2]]
+        trim = {'cape_blue': ramp('gold'), 'cape_star': ramp('gold'), 'cape_violet': ramp('gold'), 'cape_dusk': ramp('red'), 'cape_gold': ramp('ivory')}.get(kind)
         y0, y1 = sh[0][1], hips[0][1]
         if v == 'N':
             pix = quad(J, [(sh[0][0] - 0.8, y0 - 1), (sh[1][0] + 0.8, y0 - 1), (sh[1][0] + 3, y1 + 14), (32, y1 + 15), (sh[0][0] - 3, y1 + 14)])
             fillg(L, pix, c)
             for x in (29, 35): line(L, J, (x, y0 + 3), (x + (x - 32) * 0.4, y1 + 12), c[1])
+            if trim: line(L, J, (sh[0][0] - 2.4, y1 + 13.4), (32, y1 + 14.4), trim[3], trim[0]); line(L, J, (32, y1 + 14.4), (sh[1][0] + 2.4, y1 + 13.4), trim[3], trim[0])
+            if kind == 'cape_star':
+                for x, y in ((29, y0 + 6), (34, y0 + 9), (31, y1 + 4), (35.6, y1 + 8), (28.4, y1 + 10)): L.put(Tset(J, rect(x, y, 1, 1)), ramp('gold')[4], c[0])
+                fillg(L, Tset(J, ellipse(32, y1 + 1, 1.6, 1.6)), ramp('sky'), light=3, mid=2, edge=False)
         elif side:
-            fillg(L, quad(J, [(sh[0][0] - 3.8, y0 - 1), (sh[0][0] - 0.6, y0 - 0.4), (sh[0][0] - 3, y1 + 14), (sh[0][0] - 8.4, y1 + 12.6)]), c)
+            pix = quad(J, [(sh[0][0] - 3.8, y0 - 1), (sh[0][0] - 0.6, y0 - 0.4), (sh[0][0] - 3, y1 + 14), (sh[0][0] - 8.4, y1 + 12.6)])
+            fillg(L, pix, c)
+            if trim: line(L, J, (sh[0][0] - 8, y1 + 12.4), (sh[0][0] - 3.2, y1 + 13.6), trim[3], trim[0])
+            if kind == 'cape_star':
+                for dx, y in ((-5, y0 + 8), (-6.4, y1 + 5)): L.put(Tset(J, rect(sh[0][0] + dx, y, 1, 1)), ramp('gold')[4], c[0])
         else:
             for s in (-1, 1):
                 x = sh[0][0] if s < 0 else sh[1][0]
                 fillg(L, quad(J, [(x - 1.2 * s - 0.6, y0 - 0.6), (x + 0.6 * s, y0), (x + 3.4 * s, y1 + 13), (x + 1.2 * s, y1 + 14)]), c)
+                if trim: line(L, J, (x + 1.2 * s, y1 + 13.4), (x + 3.4 * s, y1 + 12.6), trim[3], trim[0])
+    elif kind == 'fur':   # heavy fur cloak: wide shoulders, ragged hem
+        fu = ramp('brown'); y0, y1 = sh[0][1], hips[0][1]
+        if v == 'N': pts = [(sh[0][0] - 2.6, y0 - 1.6), (sh[1][0] + 2.6, y0 - 1.6), (sh[1][0] + 3.6, y1 + 8), (34, y1 + 10), (30, y1 + 8.6), (sh[0][0] - 3.6, y1 + 9.4)]
+        elif side: pts = [(sh[0][0] - 4.6, y0 - 1.6), (sh[0][0] - 0.4, y0 - 0.8), (sh[0][0] - 2.4, y1 + 9), (sh[0][0] - 8, y1 + 8)]
+        else: pts = [(sh[0][0] - 3, y0 - 1), (sh[0][0] - 0.4, y0), (sh[0][0] - 1, y1 + 8), (sh[0][0] - 4.6, y1 + 7)]
+        pix = quad(J, pts); fillg(L, pix, [fu[0], fu[1], fu[3], fu[4], fu[5]])
+        if not side and v != 'N':
+            pix2 = quad(J, [(2 * 32 - x, y) for x, y in pts]); fillg(L, pix2, [fu[0], fu[1], fu[3], fu[4], fu[5]]); pix |= pix2
+        for (x, y) in pix:
+            if (x * 3 + y * 2) % 7 == 0: L.px[(x, y)] = fu[5]
+    elif kind == 'scarf_red':   # long red scarf tails flying behind
+        rd = ramp('red'); y0 = sh[0][1]
+        if v == 'N': tails = [((30.6, y0), (28.4, y0 + 14)), ((33.4, y0), (36.4, y0 + 12))]
+        elif side: tails = [((sh[0][0] - 1, y0), (sh[0][0] - 11, y0 + 6)), ((sh[0][0] - 1, y0 + 1), (sh[0][0] - 9, y0 + 10))]
+        else: tails = [((sh[1][0] - 1, y0), (sh[1][0] + 3.4, y0 + 10))]
+        for a, b in tails: fillg(L, limb(J, a, b, 2.4), rd, light=3, mid=2, dark=1)
+    elif kind == 'satchel':   # alchemist's satchel + rolled scroll
+        y0 = sh[0][1]
+        if v == 'N': fillg(L, quad(J, [(28.4, y0 + 2), (35.6, y0 + 2), (36, y0 + 10), (28, y0 + 10)]), br); line(L, J, (28.4, y0 + 5), (35.6, y0 + 5), br[1]); fillg(L, Tset(J, ellipse(32, y0 + 1.2, 4.6, 1.2)), ramp('cream'), light=4, mid=3, dark=2)
+        elif side: fillg(L, quad(J, [(sh[0][0] - 7, y0 + 2), (sh[0][0] - 2.4, y0 + 2), (sh[0][0] - 2.4, y0 + 10), (sh[0][0] - 7, y0 + 10)]), br)
+        else: fillg(L, Tset(J, ellipse(32, y0 - 1.0, 5.4, 1.2)), ramp('cream'), light=4, mid=3, dark=2)
+    elif kind == 'gearpack':   # copper backpack with a gear and an exhaust pipe
+        cu, st = ramp('copper'), ramp('stone'); y0 = sh[0][1]
+        if v == 'N':
+            fillg(L, quad(J, [(27.6, y0 + 1), (36.4, y0 + 1), (36.4, y0 + 11), (27.6, y0 + 11)]), cu)
+            g = Tset(J, ellipse(32, y0 + 6, 3.0, 3.0)); fillg(L, g, st, light=4, mid=3, dark=2); L.put(Tset(J, rect(31.5, y0 + 5.5, 1, 1)), ramp('teal')[3], ramp('teal')[0])
+            fillg(L, limb(J, (35, y0 + 1), (35, y0 - 4), 2.0), st, light=4, mid=3, dark=2)
+        elif side:
+            fillg(L, quad(J, [(sh[0][0] - 7.6, y0 + 1), (sh[0][0] - 2.4, y0 + 1), (sh[0][0] - 2.4, y0 + 11), (sh[0][0] - 7.6, y0 + 11)]), cu)
+            fillg(L, limb(J, (sh[0][0] - 6, y0 + 1), (sh[0][0] - 6, y0 - 4), 2.0), st, light=4, mid=3, dark=2)
+        else:
+            fillg(L, limb(J, (sh[1][0] + 1.6, y0 + 1), (sh[1][0] + 1.6, y0 - 4), 2.0), st, light=4, mid=3, dark=2)
     elif kind == 'adventurer':
         if v == 'N':
             fillg(L, quad(J, [(28, sh[0][1] + 0.5), (36, sh[0][1] + 0.5), (36.4, sh[0][1] + 9), (27.6, sh[0][1] + 9)]), br)
@@ -679,10 +938,57 @@ def draw_back(L, J, kind):
             fillg(L, Tset(J, ellipse(32, sh[0][1] - 1.4, 6.6, 1.6)), ramp('red'), light=3, mid=2, dark=1)   # bedroll over the shoulders
 
 # ================================================================ NPC outfits (replace armor for NPCs)
-NPC_OUTFITS = ['guard', 'merchant', 'blacksmith']
+NPC_OUTFITS = ['guard', 'merchant', 'blacksmith', 'bard', 'citizen', 'elder', 'farmer', 'healer', 'innkeeper', 'mage', 'miner', 'noble',
+               'scholar', 'storage', 'traveler']
+def apron(L, J, rp, top=2.4, length=8):
+    v, side, sh, hips = J['view'], J['side'], J['sh'], J['hips']; y0 = sh[0][1]
+    if v == 'S': ap = quad(J, [(28.6, y0 + top), (35.4, y0 + top), (36.6, hips[0][1] + length), (27.4, hips[0][1] + length)])
+    elif side: ap = quad(J, [(sh[1][0] + 1.8, y0 + top), (sh[1][0] + 4.2, y0 + top), (hips[1][0] + 5, hips[1][1] + length), (hips[1][0] + 1.4, hips[1][1] + length)])
+    else: return set()
+    fillg(L, ap, rp); return ap
+
 def draw_outfit(L, J, role):
     v, side = J['view'], J['side']
-    if role == 'guard':
+    sh, hips = J['sh'], J['hips']; y0 = sh[0][1]
+    if role in ('bard', 'citizen', 'farmer', 'innkeeper', 'miner', 'storage', 'traveler'):
+        base = {'bard': 'red', 'citizen': 'blue', 'farmer': 'green', 'innkeeper': 'brown', 'miner': 'brown', 'storage': 'blue', 'traveler': 'green'}[role]
+        tunic(L, J, base, 6)
+        if role == 'bard':   # gold doublet trim + feathered sash
+            fillg(L, quad(J, torso_pts(J, 1.0, 0.6, -1)) - (quad(J, [(30.4, 30), (33.6, 30), (33.6, 60), (30.4, 60)]) if v == 'S' else set()), ramp('violet'), light=3, mid=2, dark=1)
+            line(L, J, (sh[0][0] + 0.6, y0 + 1), (hips[1][0] + 0.6, hips[1][1] - 1), ramp('gold')[3], ramp('gold')[0])
+        elif role == 'farmer': apron(L, J, ramp('cream'), 5, 6)
+        elif role == 'innkeeper': apron(L, J, ramp('ivory'), 3, 8)
+        elif role == 'miner':
+            sleeves(L, J, ramp('stone'), 5.2)
+            if v == 'S':
+                for x in (29.2, 34.8): line(L, J, (x, y0 - 0.4), (x, hips[0][1] - 1), ramp('brown')[1])   # suspenders
+        elif role == 'storage':
+            apron(L, J, ramp('brown'), 3, 6)
+            if v == 'S': fillg(L, Tset(J, ellipse(34.4, hips[0][1] + 2, 1.6, 1.6)), ramp('gold'), light=4, mid=3, edge=False)   # key ring
+        elif role == 'traveler':
+            mantle(L, J, ramp('brown'), 4.6, 7.0)
+            if v == 'S': fillg(L, Tset(J, ellipse(32, y0 + 0.2, 1.2, 1.2)), ramp('stone'), light=4, mid=3, edge=False)
+        belt(L, J, buckle='gold' if role in ('bard', 'citizen') else 'stone')
+    elif role in ('elder', 'healer', 'mage', 'scholar', 'noble'):
+        robe_col = {'elder': 'brown', 'healer': 'ivory', 'mage': 'violet', 'scholar': 'blue', 'noble': 'red'}[role]
+        draw_armor(L, J, 'robe', robe_col)
+        if role == 'elder': mantle(L, J, ramp('cream'), 4.4, 6.6)
+        elif role == 'healer':
+            stole(L, J, ramp('sky'), ramp('gold'), 14)
+            if v == 'S': fillg(L, Tset(J, ellipse(32, y0 + 3.4, 1.8, 1.8)), ramp('red'), light=3, mid=2, edge=False)   # healer's red mark
+        elif role == 'mage':
+            mantle(L, J, ramp('blue'), 4.0, 6.0, ramp('gold'))
+            if v == 'S': gem(L, J, 32, y0 + 5.6, ramp('sky'), 1.4)
+        elif role == 'scholar':
+            if v == 'S':   # book held at the hip
+                hx, hy = J['hands'][0]
+                fillg(L, quad(J, [(hx - 2.6, hy - 3), (hx + 1.6, hy - 3), (hx + 1.6, hy + 2.4), (hx - 2.6, hy + 2.4)]), ramp('red'), light=3, mid=2, dark=1)
+                line(L, J, (hx - 2.4, hy - 0.4), (hx + 1.4, hy - 0.4), ramp('gold')[3], ramp('gold')[0])
+            fillg(L, Tset(J, ellipse(32, y0 - 0.2, 4.6, 1.2)), ramp('ivory'), light=3, mid=2, dark=1, edge=False)   # collar
+        else:
+            mantle(L, J, ramp('gold'), 3.6, 5.6, ramp('ivory'))
+            if v == 'S': gem(L, J, 32, y0 + 4.6, ramp('violet'), 1.4)
+    elif role == 'guard':
         draw_armor(L, J, 'chain')
         tabard(L, J, ramp('blue'), ramp('ivory'), 8, 3.4)
         if v == 'S': fillg(L, quad(J, [(31, J['sh'][0][1] + 3), (33, J['sh'][0][1] + 3), (33, J['sh'][0][1] + 6.4), (31, J['sh'][0][1] + 6.4)]), ramp('ivory'), light=3, mid=3, edge=False)
@@ -838,9 +1144,12 @@ def draw_shield(L, J, kind='round'):
             L.put(poly([(hx - 3.6, hy - 1.6), (hx + 3.6, hy - 1.6), (hx + 3.6, hy - 0.4), (hx - 3.6, hy - 0.4)]), g[3], g[0])
 
 # ================================================================ headgear (head-local: head spans x -9..9, y 0..16; hair top y -3)
-HEADGEAR = ['cap', 'traveler', 'iron', 'knight', 'hood_green', 'hood', 'ironcrown', 'jelcrown', 'band_red', 'band_moon', 'mask_shadow', 'wizard']
+HEADGEAR = ['cap', 'traveler', 'iron', 'knight', 'hood_green', 'hood', 'ironcrown', 'jelcrown', 'band_red', 'band_moon', 'mask_shadow', 'wizard',
+            'straw', 'party', 'witch', 'leather', 'miner', 'circlet', 'feather', 'flower', 'catears', 'antler']
 HEADGEAR_KIND = {'cap': 'Cap', 'traveler': 'Hat', 'iron': 'Helmet', 'knight': 'Helmet', 'hood_green': 'Ranger Hood', 'hood': 'Hood',
-                 'ironcrown': 'Crown', 'jelcrown': 'Crown', 'band_red': 'Headband', 'band_moon': 'Headband', 'mask_shadow': 'Mask', 'wizard': 'Wizard Hat'}
+                 'ironcrown': 'Crown', 'jelcrown': 'Crown', 'band_red': 'Headband', 'band_moon': 'Headband', 'mask_shadow': 'Mask', 'wizard': 'Wizard Hat',
+                 'straw': 'Hat', 'party': 'Hat', 'witch': 'Wizard Hat', 'leather': 'Helmet', 'miner': 'Helmet', 'circlet': 'Circlet',
+                 'feather': 'Ornament', 'flower': 'Ornament', 'catears': 'Ornament', 'antler': 'Ornament'}
 def hdome(J, y0, y1, hw, cx=0.0, k=12):
     pts = [(cx + math.cos(math.pi + i / k * math.pi) * hw, y1 + math.sin(math.pi + i / k * math.pi) * (y1 - y0)) for i in range(k + 1)]
     return Hpoly(J, pts + [(cx + hw, y1 + 0.6), (cx - hw, y1 + 0.6)])
@@ -916,8 +1225,8 @@ def draw_head(L, J, vis):
         fillg(L, Hpoly(J, pts), c, light=4 if vis == 'jelcrown' else 5, mid=3, dark=2)
         hline(L, J, (-w + 0.6, -1.4), (w - 0.6, -1.4), c[1], c[0])
         if v == 'S':
-            gem = ramp('red') if vis == 'jelcrown' else ramp('violet')
-            fillg(L, Hell(J, 0, -3, 1.6, 1.6), gem, light=3, mid=2, dark=1, edge=False); hdot(L, J, -1, -4, ramp('white')[2], gem[0])
+            gc = ramp('red') if vis == 'jelcrown' else ramp('violet')
+            fillg(L, Hell(J, 0, -3, 1.6, 1.6), gc, light=3, mid=2, dark=1, edge=False); hdot(L, J, -1, -4, ramp('white')[2], gc[0])
             for x in (-6, 6): hdot(L, J, x, -2, ramp('sky')[2], ramp('sky')[0])
     elif vis in ('band_red', 'band_moon'):
         c = ramp('red') if vis == 'band_red' else ramp('blue')
@@ -939,6 +1248,68 @@ def draw_head(L, J, vis):
             hline(L, J, (-8, 13.4), (8, 13.4), st[2], dk[0])
         elif side: fillg(L, Hpoly(J, [(2, 12), (9.6, 12), (9.2, 15), (4, 16.6), (2, 15.6)]), dk, light=3, mid=2, dark=1); hline(L, J, (-6, 10), (2, 12.2), st[1], dk[0])
         else: hline(L, J, (-10, 9.6), (10, 9.6), st[1], dk[0]); fillg(L, Hpoly(J, [(-1.4, 9), (1.4, 9), (2.6, 15), (-2.6, 15)]), dk, edge=False)
+    elif vis in ('straw', 'party', 'witch'):
+        if vis == 'straw':
+            c = ramp('cream')
+            fillg(L, Hell(J, 0 if not side else 1.5, 3.0, 16 if not side else 14, 3.0 if not side else 1.8), c, light=4, mid=3, dark=2)
+            fillg(L, hdome(J, -6.4, 2.8, 8.6), c, light=4, mid=3, dark=2)
+            fillg(L, hrect(J, -8.6, 0.6, 8.6, 2.6), ramp('red'), light=3, mid=2, dark=1, edge=False)
+            for x in (-12, -6, 6, 12) if not side else (-10, 8): hdot(L, J, x, 3, c[1], c[0])   # weave
+        elif vis == 'party':
+            c, gd = ramp('violet'), ramp('gold')
+            fillg(L, Hpoly(J, [(-6.4, 2), (6.4, 2), (0.4, -14), (-0.4, -14)]), c, light=3, mid=2, dark=1)
+            for k, y in enumerate((-2, -7)): hline(L, J, (-5 + k * 2, y + 2), (5 - k * 2, y + 2), gd[3], gd[0])
+            fillg(L, Hell(J, 0, -14.6, 1.8, 1.8), ramp('red'), light=3, mid=2, edge=False)
+        else:
+            c = [hexrgb('#1a1420'), ramp('violet')[0], ramp('violet')[1], ramp('violet')[2]]
+            fillg(L, Hell(J, 0 if not side else 1, 3.2, 16, 2.8 if not side else 1.8), c, light=3, mid=2, dark=1)
+            tipx = 9 if v != 'N' else -9
+            if side: tipx = -11
+            fillg(L, Hpoly(J, [(-8.4, 2.6), (8.4, 2.6), (5, -7), (tipx * 0.7, -13), (tipx, -15), (tipx * 0.3, -10.6), (-5.4, -6)]), c, light=3, mid=2, dark=1)
+            fillg(L, hrect(J, -8.2, 0.2, 8.2, 2.4), ramp('gold'), light=4, mid=3, dark=2, edge=False)
+            if v == 'S': fillg(L, Hell(J, 0, 1.2, 1.4, 1.2), ramp('violet'), light=3, mid=2, edge=False)
+    elif vis in ('leather', 'miner'):
+        c = ramp('brown')
+        fillg(L, hdome(J, -5.4, 4.6, 10.8), c, light=4, mid=3, dark=2)
+        fillg(L, hrect(J, -11, 3.6, 11, 5.6) if not side else hrect(J, -11, 3.6, 12, 5.6), c, light=3, mid=2, dark=1)
+        hline(L, J, (0 if not side else -2, -5), (0 if not side else -2, 3.6), c[1], c[0])
+        if vis == 'miner':   # lamp on the brow
+            if v == 'S': fillg(L, Hell(J, 0, -0.6, 2.4, 2.2), ramp('stone'), light=4, mid=3, dark=2); fillg(L, Hell(J, 0, -0.6, 1.4, 1.3), ramp('gold'), light=4, mid=4, edge=False)
+            elif side: fillg(L, Hell(J, 7.6, 0, 1.8, 2.0), ramp('gold'), light=4, mid=3, dark=2)
+        else:
+            for x in ((-6, 6) if not side else (-4,)): hline(L, J, (x, 0), (x, 3.4), c[4], c[0])   # stitched panels
+    elif vis == 'circlet':
+        gd = ramp('gold')
+        if v == 'S': fillg(L, Hpoly(J, [(-10.8, 2.0), (10.8, 2.0), (10.6, 3.6), (-10.6, 3.6)]), gd, light=4, mid=3, dark=2, edge=False); gem(L, J, J['head'][0], J['head'][1] + 2.4, ramp('sky'), 1.4)
+        elif v == 'N': fillg(L, Hpoly(J, [(-10.8, 2.4), (10.8, 2.4), (10.6, 4), (-10.6, 4)]), gd, light=4, mid=3, dark=2, edge=False)
+        else: fillg(L, Hpoly(J, [(-10.6, 2.6), (10, 1.8), (10, 3.4), (-10.6, 4.2)]), gd, light=4, mid=3, dark=2, edge=False); hdot(L, J, 8, 2, ramp('sky')[3], ramp('sky')[0])
+    elif vis in ('feather', 'flower', 'catears', 'antler'):
+        if vis == 'feather':   # single long feather behind the ear
+            fx = 8 if v == 'S' else -8 if side else -6
+            fillg(L, Hpoly(J, [(fx, 4), (fx + 1.6, 3.4), (fx + 4.4 * (1 if fx > 0 else -1), -9), (fx + 2.6 * (1 if fx > 0 else -1), -9.6)]), ramp('sky'), light=3, mid=2, dark=1)
+            hline(L, J, (fx + 0.6, 3), (fx + 3.2 * (1 if fx > 0 else -1), -8.6), ramp('sky')[3], ramp('sky')[0])
+        elif vis == 'flower':
+            fx, fy = (7, 0) if v == 'S' else (-7, 0) if v == 'N' else (-3, -1)
+            for a in range(5):
+                ang = a / 5 * 2 * math.pi
+                fillg(L, Hell(J, fx + math.cos(ang) * 1.8, fy + math.sin(ang) * 1.8, 1.4, 1.4), ramp('rose'), light=3, mid=2, dark=1, edge=False)
+            fillg(L, Hell(J, fx, fy, 1.0, 1.0), ramp('gold'), light=4, mid=4, edge=False)
+            fillg(L, Hpoly(J, [(fx + 1.4, fy + 1.4), (fx + 4.4, fy + 2.4), (fx + 2.4, fy + 3.6)]), ramp('green'), light=4, mid=3, edge=False)
+        elif vis == 'catears':
+            c = ramp('hair')   # ears in the hair key ramp: they follow the chosen hair colour
+            for s in ((-1, 1) if not side else (-1,)):
+                x = 6.2 * s if not side else -2
+                pts = [(x - 3.6, -1), (x + 3.6, -1), (x + 1.2 * s if not side else x + 1, -8.6)]
+                fillg(L, Hpoly(J, pts), c, light=3, mid=2, dark=1)
+                if v != 'N': fillg(L, Hpoly(J, [(x - 1.6, -1.6), (x + 1.6, -1.6), (x + 0.6 * s if not side else x + 0.6, -6)]), ramp('rose'), light=2, mid=2, edge=False)
+        else:   # antlers
+            c = ramp('brown')
+            for s in ((-1, 1) if not side else (-1,)):
+                x0 = 6 * s if not side else -3
+                tine = [((x0, 0), (x0 + 3 * s, -7)), ((x0 + 3 * s, -7), (x0 + 2 * s, -12)), ((x0 + 2.4 * s, -5), (x0 + 6 * s, -7)), ((x0 + 2.6 * s, -9.6), (x0 + 5.4 * s, -12))]
+                for a, b in tine:
+                    (x1, y1), (x2, y2) = H(J, *a), H(J, *b)
+                    fillg(L, capsule((x1, y1), (x2, y2), 1.8), c, light=5, mid=4, dark=3, edge=False)
     elif vis == 'wizard':
         c = ramp('blue')
         fillg(L, Hell(J, 0 if not side else 1, 3.2, 15.5, 2.8 if not side else 1.8), c, light=4, mid=3, dark=2)

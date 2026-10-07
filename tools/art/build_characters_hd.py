@@ -15,7 +15,7 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'assets', '
 SEXES = ['male', 'female']
 ARMORS = [('tunic_' + c, 'tunic', c) for c in TUNIC_COLORS] + [('leather', 'leather', None), ('chain', 'chain', None), ('plate', 'plate', None)] + \
          [('robe_' + c, 'robe', c) for c in ('blue', 'violet', 'ivory', 'brown')]
-CLASSES = ['adventurer', 'vanguard', 'ranger', 'arcanist']
+CLASSES = ['adventurer', 'vanguard', 'ranger', 'arcanist', 'cleric', 'rogue', 'artisan'] + list(CLASS2)
 # A = idle/walk/sit/interact, B = attack/cast/hit/death, C = B posed for a bow (both arms draw the string)
 GROUPS = {'a': ['idle', 'walk', 'sit', 'interact'], 'b': ['attack', 'cast', 'hit', 'death'], 'c': ['attack', 'cast', 'hit', 'death']}
 STORE_DIRS = ['N', 'S', 'E']
@@ -85,8 +85,8 @@ if __name__ == '__main__':
          'dirs8': 'reserved: diagonals use the nearest stored direction', 'groups': groups, 'anims': anims,
          'variants': {'bow': {'b': 'c'}}, 'height': 50, 'head': [18, 16], 'scale_vs_v1': round(50 / 42, 3),
          'layers': {os.path.basename(p): 'chr_hd/' + p for p, g in done}, 'bowGroups': sorted(os.path.basename(p) for p, g in done if 'c' in g),
-         'keys': {'hair': RAMPS['hair'], 'skin': RAMPS['skin']}, 'tint': ['hair', 'face'],
+         'keys': {'hair': RAMPS['hair'], 'skin': RAMPS['skin']}, 'tint': ['hair', 'face', 'head'],
          'tunic': TUNIC_COLORS, 'hair': HAIR_STYLES, 'headgear': HEADGEAR, 'headgearKind': HEADGEAR_KIND, 'weapons': WEAPONS,
-         'outfits': NPC_OUTFITS, 'classes': CLASSES, 'order': ORDER, 'slots': SLOTS, 'sexed': ['weapon', 'shield']}
+         'outfits': NPC_OUTFITS, 'classes': CLASSES, 'classBack': CLASS_BACK, 'classBase': CLASS2, 'order': ORDER, 'slots': SLOTS, 'sexed': ['weapon', 'shield']}
     with open(os.path.join(ROOT, 'chars.json'), 'w') as f: json.dump(m, f, indent=1)
     print(len(done), 'HD layers in', round(time.time() - t, 1), 's')
