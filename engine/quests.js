@@ -14,13 +14,14 @@ module.exports = function createQuests(C, api) {
     const qd = QUESTS[id], s = st(c); if (!qd || s.a[id] || done(c, id)) return false;
     const r = qd.req || {};
     if (r.lv && c.lv < r.lv) return false; if (r.max && c.lv > r.max) return false;
+    if (r.jlv && (c.jlv | 0) < r.jlv) return false;
     if (r.quest && !s.d[r.quest]) return false;
     if (r.cls && (c.cls || 'adventurer') !== r.cls) return false;
     if (r.oneOf === 'class' && Object.keys(s.a).some(k => QUESTS[k] && QUESTS[k].type === 'class')) return false;
     return true;
   }
   // can the quest be picked up but not yet (for "Lv X needed" hints)
-  const blockedByLevel = (c, id) => { const qd = QUESTS[id], s = st(c); if (!qd || s.a[id] || done(c, id)) return 0; const r = qd.req || {}; if (r.quest && !s.d[r.quest]) return 0; if (r.cls && (c.cls || 'adventurer') !== r.cls) return 0; return r.lv && c.lv < r.lv ? r.lv : 0; };
+  const blockedByLevel = (c, id) => { const qd = QUESTS[id], s = st(c); if (!qd || s.a[id] || done(c, id)) return 0; const r = qd.req || {}; if (r.quest && !s.d[r.quest]) return 0; if (r.cls && (c.cls || 'adventurer') !== r.cls) return 0; return (r.lv && c.lv < r.lv) || (r.jlv && (c.jlv | 0) < r.jlv) ? Math.max(r.lv || 0, c.lv + 1) : 0; };
   function accept(p, id) {
     const c = p.c; if (!available(c, id)) return false;
     st(c).a[id] = { s: 0, k: 0, f: [] }; if (!st(c).t) st(c).t = id;

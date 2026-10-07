@@ -16,6 +16,8 @@ const PD_ROWS = ['N', 'W', 'S', 'E'];
 const ARMOR_LOOK = { 30: 'tunic', 300: 'tunic', 31: 'leather', 302: 'leather', 306: 'leather', 310: 'leather', 303: 'chain', 307: 'chain', 304: 'plate', 309: 'plate', 311: 'plate', 301: 'robe_blue', 305: 'robe_violet', 308: 'robe_ivory' };
 const BY_TYPE = { light: 'leather', medium: 'chain', heavy: 'plate', robe: 'robe_blue' };
 const ONE_HAND = { sword: 1, mace: 1, dagger: 1, wand: 1 };
+const CLS_BASE = { knight: 'vanguard', berserker: 'vanguard', sharpshooter: 'ranger', beasthunter: 'ranger', elementalist: 'arcanist', warlock: 'arcanist', priest: 'cleric', oracle: 'cleric', assassin: 'rogue', shadowdancer: 'rogue', alchemist: 'artisan', machinist: 'artisan',
+  aegis: 'vanguard', warbringer: 'vanguard', skypiercer: 'ranger', wildlord: 'ranger', prismsage: 'arcanist', voidcaller: 'arcanist', luminary: 'cleric', fateweaver: 'cleric', nightblade: 'rogue', eclipse: 'rogue', transmuter: 'artisan', artificer: 'artisan' };
 function hdWanted() { return !(typeof HUD !== 'undefined' && HUD.S && HUD.S.chrHD === false) && !/[?&]chr=v1\b/.test(location.search); }
 // what layers a character wears in set S. look: {sex, hair, hc, cc}; gear: {wpn, arm, head, cls} (item ids / class id)
 // NPC looks may name an outfit / weapon type / shield / back item / head visual / costume directly.
@@ -32,11 +34,12 @@ function paperLayers(look, gear, S = CHR, strict = false) {
   if (look.outfit) L.armor = pick('npc_outfit_' + look.outfit + '_' + sx);
   else if (look.arm) L.armor = pick('eq_armor_' + (look.arm === 'tunic' ? tunic : look.arm) + '_' + sx); // NPC: armor look by name
   else { const it = gear.arm && ITEMS[gear.arm]; let a = it ? ARMOR_LOOK[it.id] || it.av || BY_TYPE[it.at] || 'tunic' : 'tunic'; if (a === 'tunic') a = tunic; L.armor = pick('eq_armor_' + a + '_' + sx); }
-  const cls = look.cls || gear.cls || (look.outfit ? null : 'adventurer');
+  // second / third classes wear their first-class outfit until they get art of their own
+  const cls0 = look.cls || gear.cls || (look.outfit ? null : 'adventurer'), cls = CLS_BASE[cls0] || cls0;
   if (cls) L.class = pick('chr_class_' + cls + '_' + sx);
   const wt = look.wpn || (gear.wpn && ITEMS[gear.wpn] && ITEMS[gear.wpn].wt) || null;
   if (wt) { if (S.weapons.includes(wt)) L.weapon = pick('eq_weapon_' + wt); else miss = true; }
-  const shield = look.shield || (cls === 'vanguard' && ONE_HAND[wt] ? 'kite' : null);
+  const shield = look.shield || (cls === 'vanguard' && cls0 !== 'berserker' && ONE_HAND[wt] ? 'kite' : null);
   if (shield) L.shield = pick('eq_shield_' + shield);
   const back = look.back || (cls === 'ranger' || wt === 'bow' ? 'ranger' : cls === 'adventurer' ? 'adventurer' : null);
   if (back) L.back = pick('chr_back_' + back + '_' + sx);

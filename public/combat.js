@@ -18,12 +18,14 @@ const SKART = { bash: 'sk_bash', heal: 'sk_heal', bolt: 'sk_bolt', focus: 'sk_fo
 const SKHUE = { vanguard: 'hue-rotate(200deg) saturate(1.3)', ranger: 'hue-rotate(80deg)', arcanist: 'hue-rotate(250deg) saturate(1.4)', cleric: 'hue-rotate(30deg) brightness(1.15)', rogue: 'hue-rotate(290deg) saturate(.8) brightness(.9)', artisan: 'hue-rotate(150deg) saturate(1.2)' };
 // draw a skill's icon on an element: art orb when the atlas is loaded, pixel icon otherwise
 function skillIcon(el, sid) {
+  el.classList.toggle('card', !!(SK[sid] && SK[sid].icon));
+  if (SK[sid] && SK[sid].icon) { el.style.filter = ''; el.style.backgroundImage = `url(${SK[sid].icon})`; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; return true; } // second-class card art
   el.style.filter = (SK[sid] && SKHUE[SK[sid].cls]) || '';
   if (HUD.sprite(el, SKART[sid])) return true;
   el.style.backgroundSize = el.style.backgroundPosition = ''; el.style.backgroundImage = `url(${HUD.iconURL(SKICON[sid] || 'skill')})`; return false;
 }
-const SK_TYPE = { target: 'เป้าหมาย', self: 'ใช้กับตัวเอง', area: 'รอบตัว' };
-const FAIL_MSG = { sp: 'SP ไม่เพียงพอ', range: 'อยู่นอกระยะ (Out of range)', los: 'มีสิ่งกีดขวางบังอยู่', target: 'เป้าหมายไม่ถูกต้อง', own: 'ยังไม่ได้เรียนสกิลนี้', dead: 'หมดสติอยู่', notarget: 'ไม่มีศัตรูในระยะ', bad: 'สกิลไม่ถูกต้อง' };
+const SK_TYPE = { target: 'เป้าหมาย', self: 'ใช้กับตัวเอง', area: 'รอบตัว', party: 'ตัวเอง + ปาร์ตี้', ground: 'วางที่พื้น', revive: 'ชุบชีวิตผู้เล่น', passive: 'ติดตัว (ทำงานเอง)' };
+const FAIL_MSG = { sp: 'SP ไม่เพียงพอ', range: 'อยู่นอกระยะ (Out of range)', los: 'มีสิ่งกีดขวางบังอยู่', target: 'เป้าหมายไม่ถูกต้อง', own: 'ยังไม่ได้เรียนสกิลนี้', dead: 'หมดสติอยู่', notarget: 'ไม่มีศัตรูในระยะ', bad: 'สกิลไม่ถูกต้อง', passive: 'สกิลติดตัว ทำงานเองอัตโนมัติ', weapon: 'อาวุธที่ถืออยู่ใช้สกิลนี้ไม่ได้' };
 const slotEl = [1, 2, 3, 4, 5, 6].map(i => $('sk' + i));
 const myEnt = () => ents.get(myId);
 const cheb = (a, b) => Math.max(Math.abs(a.tx - b.tx), Math.abs(a.ty - b.ty)); // server positions, same metric as the server
@@ -84,6 +86,8 @@ function placeTarget() {
   for (const el of [$('mm'), $('bMap') && $('bMap').parentElement]) { if (!el || !el.offsetParent) continue; const r = el.getBoundingClientRect(); if (r.right > vw - w - 8 && r.width > 0) { bottom = Math.max(bottom, r.bottom); } if (el.id === 'mm') right = r.right; }
   P.style.left = 'auto'; P.style.transform = 'none'; P.style.right = Math.max(4, vw - right) + 'px'; P.style.top = Math.round(bottom + 6) + 'px';
 }
+// monster status bits from the server snapshot (engine/status.js BIT)
+const STATUS_CHIPS = [[1, '💫', 'มึนงง'], [2, '❄', 'ช้าลง'], [4, '☠', 'ติดพิษ'], [8, '🩸', 'เลือดไหล'], [16, '🔥', 'ติดไฟ'], [32, '🌑', 'คำสาป'], [64, '🧪', 'กรด'], [128, '🎯', 'ถูกทำเครื่องหมาย'], [256, '⬇', 'อ่อนแอ']];
 function updTarget() {
   const e = selected && ents.get(selected), P = $('tgt');
   if (!e || e.kind !== 'm') { P.classList.remove('on'); tgPic = 0; return; }
@@ -95,7 +99,8 @@ function updTarget() {
   const st = [info.boss ? 'บอส' : info.elite ? 'อีลิท ★' : info.aggro ? 'ดุร้าย' : 'ไม่ก้าวร้าว'];
   if (e.tg === myId) st.unshift('<span class="hot">กำลังโจมตีคุณ</span>');
   st.push(d <= ((me && me.rng) || MELEE_R) ? 'ในระยะโจมตี' : `<span class="far">ห่าง ${Math.round(d)} ช่อง</span>`);
-  $('tgSt').innerHTML = st.join(' · ');
+  const chips = STATUS_CHIPS.filter(([b]) => e.st & b).map(([, ic, th]) => `<i class="stc" title="${th}">${ic}</i>`).join('');
+  $('tgSt').innerHTML = chips + st.join(' · ');
   if (tgPic !== selected && drawMobPic(e.type)) tgPic = selected;
 }
 $('tgX').onclick = clearTarget;
@@ -122,7 +127,8 @@ function useSlot(i) {
   const sid = me.hot && me.hot[i], b = slotEl[i];
   if (!sid) { openSkills(i); return; }
   const sk = SK[sid]; if (!sk) return;
-  if (!me.sk || !me.sk[sid]) { toast(`ปลดล็อกที่ Lv ${sk.lv}`); shake(b); return; }
+  if (!me.sk || !me.sk[sid]) { toast(sk.tier === 2 ? 'ยังไม่ได้เรียนสกิลนี้ (หน้าต่างสกิล)' : `ปลดล็อกที่ Lv ${sk.lv}`); shake(b); return; }
+  if (sk.type === 'passive') { toast(FAIL_MSG.passive); return; }
   if (performance.now() < Math.max(cdEnd[sid] || 0, gcdEnd)) { shake(b); return; } // server would refuse it anyway
   if (me.sp < sk.sp) { toast('SP ไม่เพียงพอ'); shake(b); return; }
   let id = 0;
@@ -185,6 +191,7 @@ function combatFrame() { // cooldown overlays; cheap, only touches slots that ar
 let assignPick = null, assignSlot = -1;
 function assignSkill(sid, slot) {
   if (!me || !SK[sid] || !(me.sk && me.sk[sid])) { toast('ใส่ได้เฉพาะสกิลที่เรียนแล้ว'); return; }
+  if (SK[sid].type === 'passive') { toast(FAIL_MSG.passive); return; }
   const h = me.hot.slice(); for (let i = 0; i < 6; i++) if (h[i] === sid) h[i] = null; // one slot per skill
   h[slot] = sid; me.hot = h; renderHotbar(); send({ t: 'hot', h });
   assignPick = null; assignSlot = -1;
@@ -192,6 +199,7 @@ function assignSkill(sid, slot) {
 }
 function clearSlot(slot) { const h = me.hot.slice(); h[slot] = null; me.hot = h; renderHotbar(); send({ t: 'hot', h }); renderSkills(); }
 function openSkills(slot) { closeWins(); assignSlot = slot ?? -1; assignPick = null; renderSkills(); $('wSkill').style.display = 'block'; }
+const UP_TH = { mult: 'ความเสียหาย +10%', heal: 'พลังรักษา/บาเรีย +12%', dur: 'ระยะเวลา +15%', buff: 'ค่าบัฟ +15%' };
 function renderSkills() {
   const body = $('skillbody'); body.innerHTML = '';
   const hint = document.createElement('div'); hint.className = 'note'; hint.style.marginBottom = '6px';
@@ -208,15 +216,34 @@ function renderSkills() {
     row.appendChild(b);
   }
   body.appendChild(row);
+  // sections: basics / first class / second class (skill points)
   const l = document.createElement('div'); l.className = 'list';
-  for (const sid in SK) {
+  const tierOf = sk => sk.tier === 2 ? 2 : sk.cls ? 1 : 0, ids = Object.keys(SK);
+  const [pts, spent] = me.skp || [0, 0], free = pts - spent;
+  for (const tier of [0, 1, 2]) {
+    const list = ids.filter(id => tierOf(SK[id]) === tier); if (!list.length) continue;
+    const cls2 = tier === 2 && CLSDEF[SK[list[0]].cls];
+    const h = document.createElement('div'); h.className = 'sksec';
+    h.innerHTML = tier === 2 ? `<b>อาชีพขั้นที่ 2${cls2 ? ' · ' + esc(cls2.th) : ''}</b><span class="skp">แต้มสกิล <b class="num">${free}</b> / ${pts}</span>` : `<b>${tier === 1 ? 'อาชีพขั้นที่ 1' : 'สกิลพื้นฐาน'}</b>`;
+    l.appendChild(h);
+    for (const sid of list) {
     const sk = SK[sid], lv = me.sk && me.sk[sid], d = document.createElement('div');
-    d.className = 'li skli' + (lv ? '' : ' locked') + (assignPick === sid ? ' on' : '');
-    d.draggable = !!lv; d.addEventListener('dragstart', e => e.dataTransfer.setData('text/skill', sid));
+    const passive = sk.type === 'passive', t2 = sk.tier === 2, jobOk = !t2 || me.cls !== sk.cls || me.jlv >= sk.job;
+    d.className = 'li skli' + (lv ? '' : ' locked') + (assignPick === sid ? ' on' : '') + (sk.sig ? ' sig' : '');
+    d.draggable = !!lv && !passive; d.addEventListener('dragstart', e => e.dataTransfer.setData('text/skill', sid));
     const ic = document.createElement('i'); ic.className = 'pi'; skillIcon(ic, sid); d.appendChild(ic);
     const slot = me.hot.indexOf(sid);
-    d.insertAdjacentHTML('beforeend', `<div class="grow"><b>${esc(sk.th)}</b> <small>${esc(sk.n)}</small>${sk.cls && CLSDEF[sk.cls] ? `<span class="tag class">${CLSDEF[sk.cls].th}</span>` : ''} ${lv ? `<small class="num" style="color:#ffe39a">Lv${lv}</small>` : `<small style="color:#ff8b8b">ปลดล็อก Lv ${sk.lv}</small>`}<br><small style="color:var(--dim)">${esc(sk.d)}<br>${SK_TYPE[sk.type]}${sk.range ? ` · ระยะ ${sk.range < 2 ? 'ประชิด' : sk.range + ' ช่อง'}` : ''} · SP ${sk.sp} · คูลดาวน์ ${sk.cd / 1000} วิ${slot >= 0 ? ` · อยู่ช่อง ${slot + 1}` : ''}</small></div>`);
-    d.onclick = () => { if (!lv) { toast(`ปลดล็อกที่ Lv ${sk.lv}`); return; } if (assignSlot >= 0) assignSkill(sid, assignSlot); else { assignPick = assignPick === sid ? null : sid; renderSkills(); } };
+    const lvTxt = t2 ? `<small class="num" style="color:${lv ? '#ffe39a' : '#9aa3c0'}">Lv${lv || 0}/${sk.maxLv}</small>` : lv ? `<small class="num" style="color:#ffe39a">Lv${lv}</small>` : `<small style="color:#ff8b8b">ปลดล็อก Lv ${sk.lv}</small>`;
+    const req = t2 && !jobOk ? `<small style="color:#ff8b8b"> · ต้องการ Job ${sk.job}</small>` : '';
+    const meta = passive ? SK_TYPE.passive : `${SK_TYPE[sk.type] || ''}${sk.range ? ` · ระยะ ${sk.range < 2 ? 'ประชิด' : sk.range + ' ช่อง'}` : ''} · SP ${sk.sp} · คูลดาวน์ ${sk.cd / 1000} วิ${sk.cast ? ` · ร่าย ${sk.cast / 1000} วิ` : ''}`;
+    d.insertAdjacentHTML('beforeend', `<div class="grow"><b>${esc(sk.th)}</b> <small>${esc(sk.n)}</small>${sk.sig ? '<span class="tag sig">สกิลประจำอาชีพ</span>' : ''} ${lvTxt}${req}<br><small style="color:var(--dim)">${esc(sk.d)}<br>${meta}${t2 && sk.up ? ` · ต่อเลเวล: ${UP_TH[sk.up] || ''}` : ''}${slot >= 0 ? ` · อยู่ช่อง ${slot + 1}` : ''}</small></div>`);
+    if (t2 && me.cls === sk.cls || (t2 && lv)) { // learn / raise
+      const can = jobOk && free > 0 && (lv || 0) < sk.maxLv, bt = document.createElement('button'); bt.className = 'learn';
+      bt.textContent = (lv || 0) >= sk.maxLv ? 'MAX' : lv ? 'อัปสกิล' : 'เรียน'; bt.disabled = !can;
+      bt.onclick = e => { e.stopPropagation(); send({ t: 'learn', s: sid }); };
+      d.appendChild(bt);
+    }
+    d.onclick = () => { if (!lv) { toast(t2 ? (jobOk ? 'ใช้แต้มสกิลเพื่อเรียน' : `ต้องการ Job Lv ${sk.job}`) : `ปลดล็อกที่ Lv ${sk.lv}`); return; } if (passive) { toast(FAIL_MSG.passive); return; } if (assignSlot >= 0) assignSkill(sid, assignSlot); else { assignPick = assignPick === sid ? null : sid; renderSkills(); } };
     l.appendChild(d);
     if (assignPick === sid) { // "set as slot" picker
       const pick = document.createElement('div'); pick.className = 'slotpick';
@@ -224,6 +251,7 @@ function renderSkills() {
       for (let i = 0; i < 6; i++) { const b = document.createElement('button'); b.className = 'num'; b.textContent = i + 1; b.onclick = e => { e.stopPropagation(); assignSkill(sid, i); }; pick.appendChild(b); }
       if (slot >= 0) { const b = document.createElement('button'); b.textContent = 'เอาออก'; b.onclick = e => { e.stopPropagation(); assignPick = null; clearSlot(slot); }; pick.appendChild(b); }
       l.appendChild(pick);
+    }
     }
   }
   body.appendChild(l);

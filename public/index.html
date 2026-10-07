@@ -120,6 +120,10 @@ input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;bord
 #login.gchar #accflds{display:none}
 #linfo{position:fixed;display:none;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,88vw);box-sizing:border-box;padding:22px;font-size:15px;color:var(--txt);background:#0f1634f8;border:2px solid #e8c46a;border-radius:12px;box-shadow:0 0 0 3px #0a0d1c,0 20px 40px #000c;z-index:30;line-height:1.5}
 #linfo h3{margin:0 0 8px;color:#ffe39a;font-family:Cinzel,Mitr,serif}#linfo button{margin-top:12px;font-size:15px;padding:6px 22px}
+.sksec{display:flex;justify-content:space-between;align-items:center;margin:.8rem 0 .3rem;padding:.3rem .5rem;border-bottom:1px solid #e8c46a55;color:var(--gold);font-size:1.15rem}.sksec .skp{color:#cfd6f5;font-size:1rem}.sksec .skp b{color:#9fe7ff}
+.skli .learn{flex:none;align-self:center;min-width:5.2rem;padding:.35rem .6rem;font-size:1rem;background:linear-gradient(180deg,#3d6fd8,#1f3f9a);border:1px solid #e8c46a;color:#fff;border-radius:6px}.skli .learn:disabled{background:#2a3050;border-color:#4a5280;color:#8088aa}
+.skli.sig{box-shadow:inset 3px 0 0 #e8c46a}.tag.sig{background:#5a3a10;color:#ffd98a;border:1px solid #e8c46a88;margin-left:.3rem}
+#tgSt .stc{font-style:normal;margin-right:.2rem;font-size:.95em}
 #login .sel{font-size:.85em;margin-top:.35em}#login .sel span{font-size:1em}#login .sel small{width:4.2em;font-size:.85em}#login #preview{width:6em;height:6em;margin:.4em auto .2em}
 #preview{display:block;margin:8px auto 4px;width:144px;height:144px;image-rendering:pixelated;background:radial-gradient(ellipse at 50% 78%,#6fb04f 0 38%,#3f7a33 39% 62%,#0000 63%);border-radius:8px}
 .sel{display:flex;gap:6px;align-items:center;margin-top:6px}.sel button{padding:4px 12px}.sel span{flex:1;text-align:center;font-size:15px}.sel small{width:44px;color:var(--dim);font-size:12px}
@@ -219,6 +223,8 @@ body.cs-dead #acts .rb{opacity:.35;pointer-events:none}
 #hud .rb.skinned.on>i.pi{filter:drop-shadow(0 0 .5rem #7dff8a) drop-shadow(0 0 .25rem #7dff8a)}
 #hud .rb.skinned:active>i.pi{filter:brightness(1.3) drop-shadow(0 .1rem .2rem #000c)}
 #hud .rb.sk.skinned .cdo{inset:16%}
+#hud .rb.skinned>i.pi.card{inset:13%;border-radius:50%;box-shadow:0 0 0 .22rem #c9a24e,0 0 0 .38rem #0a0d1c,0 .2rem .45rem #000c;filter:none}
+.pi.card{border-radius:.5rem;box-shadow:0 0 0 1px #c9a24e88}
 #hud .rb .key,#hud .rb .ssp,#hud .rb .slv,#hud .rb .q,#hud .rb .cdt{z-index:3} /* badges stay above neighbouring orbs' art */  /* cooldown wedge sits on the orb glass, not the gold ring */
 #hud .rb.sk.skinned.oor>i.pi{filter:drop-shadow(0 0 .35rem #ff4d4d) drop-shadow(0 0 .2rem #ff4d4d)}
 #hud .rb.sk.skinned.empty::after{position:relative;z-index:1}

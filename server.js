@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 const C = require('./content');
 const createQuests = require('./engine/quests');
+const createStatus = require('./engine/status');
 
 const PORT = +process.env.PORT || 3400;
 const DATA_ENV = process.env.ELYNDRA_DATA || process.env.LUMIRA_DATA;
@@ -30,9 +31,18 @@ const MELEE = 1.6; // basic attack reach (tiles, Chebyshev)
 const HOT_DEFAULT = ['bash', 'heal', null, null, null, null];
 const clsOf = c => CLASSES[c.cls] || CLASSES.adventurer;
 const lineOf = c => C.lineage(clsOf(c).id);
-// class skills level with the job level, the six basics with the base level (as before)
-const skLv = (c, sk) => sk.cls ? Math.min(10, 1 + Math.floor(((c.jlv || 1) - 1) / 4)) : Math.min(10, 1 + Math.floor((c.lv - sk.lv) / 4));
-const ownsSkill = (c, id) => Object.hasOwn(SKILLS, id) && c.lv >= SKILLS[id].lv && (!SKILLS[id].cls || lineOf(c).includes(SKILLS[id].cls));
+// first-class skills level with the job level, the six basics with the base level (as before);
+// second-class skills (tier 2) are learned and raised with skill points (c.sk2 = { id: level })
+const sk2 = c => (c.sk2 && typeof c.sk2 === 'object' ? c.sk2 : (c.sk2 = {}));
+const skLv = (c, sk) => sk.tier === 2 ? (sk2(c)[sk.id] | 0) : sk.cls ? Math.min(10, 1 + Math.floor(((c.jlv || 1) - 1) / 4)) : Math.min(10, 1 + Math.floor((c.lv - sk.lv) / 4));
+const ownsSkill = (c, id) => Object.hasOwn(SKILLS, id) && (SKILLS[id].tier === 2 ? lineOf(c).includes(SKILLS[id].cls) && (sk2(c)[id] | 0) > 0 : c.lv >= SKILLS[id].lv && (!SKILLS[id].cls || lineOf(c).includes(SKILLS[id].cls)));
+// skill points: one per job level of the second class (Job 1 = 1 point). Third class will add its own pool.
+const skPoints = c => (clsOf(c).tier === 2 ? c.jlv | 0 : clsOf(c).tier > 2 ? 50 : 0);
+const skSpent = c => Object.entries(sk2(c)).reduce((n, [id, l]) => n + (SKILLS[id] && SKILLS[id].tier === 2 ? l | 0 : 0), 0);
+// passives of learned second-class skills: summed per level ({ defPct, hpPct, atkPct, ... })
+function passiveOf(c, k) { let v = 0; for (const [id, l] of Object.entries(sk2(c))) { const S = SKILLS[id]; if (S && S.passive && S.passive[k] && l > 0 && lineOf(c).includes(S.cls)) v += S.passive[k] * l; } return v; }
+// reset (prepared for a future NPC / item): refunds every point, keeps nothing on the hotbar that is gone
+function resetSkills2(c) { c.sk2 = {}; c.hot = c.hot.map(id => (id && SKILLS[id] && SKILLS[id].tier === 2 ? null : id)); }
 const skillsFor = c => SKILL_IDS.filter(id => !SKILLS[id].cls || lineOf(c).includes(SKILLS[id].cls));
 
 // ---------------------------------------------------------------- maps
@@ -116,19 +126,20 @@ function derive(c) {
   const add = k => gear.reduce((s, it) => s + (it[k] || 0), 0);
   const st = {}; for (const k of STATS) st[k] = c.st[k] + add(k); // accessories add stats without touching the base stats
   const w = ITEMS[eq.wpn], wt = w && w.id >= 200 ? WEAPON_TYPES[w.wt] : null; // original items keep their original feel
-  c.maxhp = Math.round((40 + st.vit * 8 + c.lv * 12) * K.hp) + add('hp');
+  c.maxhp = Math.round(((40 + st.vit * 8 + c.lv * 12) * K.hp + add('hp')) * (1 + passiveOf(c, 'hpPct') / 100));
   c.maxsp = Math.round((12 + st.int * 4 + c.lv * 2) * K.sp) + add('sp');
-  c.atk = Math.round((4 + st.str * 2 + c.lv + add('atk')) * K.atk * (1 + buffSum(c, 'atk')));
-  c.matk = Math.round((st.int * 3 + c.lv * 2 + 12 + add('matk')) * K.matk * (1 + buffSum(c, 'matk')));
-  c.def = Math.round((Math.floor(st.vit / 2) + add('def')) * (1 + buffSum(c, 'def')));
+  const low = c.hp > 0 && c.maxhp && c.hp < c.maxhp * 0.5 ? passiveOf(c, 'lowAtk') : 0;
+  c.atk = Math.round((4 + st.str * 2 + c.lv + add('atk')) * K.atk * (1 + buffSum(c, 'atk')) * (1 + (passiveOf(c, 'atkPct') + low) / 100));
+  c.matk = Math.round((st.int * 3 + c.lv * 2 + 12 + add('matk')) * K.matk * (1 + buffSum(c, 'matk')) * (1 + passiveOf(c, 'matkPct') / 100));
+  c.def = Math.round((Math.floor(st.vit / 2) + add('def')) * (1 + buffSum(c, 'def')) * (1 + passiveOf(c, 'defPct') / 100));
   c.mdef = Math.floor(st.int / 2) + add('mdef');
-  c.hit = c.lv + st.dex * 2;
+  c.hit = c.lv + st.dex * 2 + passiveOf(c, 'hit') + buffSum(c, 'hit');
   const arm = ITEMS[eq.arm], at = arm && ARMOR_TYPES[arm.at];
-  c.flee = Math.round((c.lv + st.agi * 2 + add('flee') + (at && arm.id >= 300 ? at.flee || 0 : 0)) * (1 + buffSum(c, 'flee')));
+  c.flee = Math.round((c.lv + st.agi * 2 + add('flee') + passiveOf(c, 'flee') + (at && arm.id >= 300 ? at.flee || 0 : 0)) * (1 + buffSum(c, 'flee')));
   // gear modifiers (item identity): flee / crit flat, aspdPct = attack interval shortened by that percent (capped)
-  c.aspd = Math.round(Math.max(380, 1400 - st.agi * 14 - st.dex * 4 + (wt ? wt.aspd || 0 : 0)) * (1 - buffSum(c, 'aspd')) * (1 - Math.min(0.2, add('aspdPct') / 100)));
-  c.crit = Math.floor(st.luk * 0.4) + 1 + (K.crit || 0) + (wt ? wt.crit || 0 : 0) + add('crit');
-  c.range = w && w.range ? w.range : MELEE;
+  c.aspd = Math.round(Math.max(380, 1400 - st.agi * 14 - st.dex * 4 + (wt ? wt.aspd || 0 : 0)) * (1 - buffSum(c, 'aspd')) * (1 - Math.min(0.3, (add('aspdPct') + passiveOf(c, 'aspdPct')) / 100)));
+  c.crit = Math.floor(st.luk * 0.4) + 1 + (K.crit || 0) + (wt ? wt.crit || 0 : 0) + add('crit') + passiveOf(c, 'crit') + buffSum(c, 'crit');
+  c.range = (w && w.range ? w.range : MELEE) + (w && w.range > MELEE ? Math.min(4, buffSum(c, 'range')) : 0); // Eagle Eye: ranged weapons only
   if (c.hp > c.maxhp) c.hp = c.maxhp;
   if (c.sp > c.maxsp) c.sp = c.maxsp;
 }
@@ -157,6 +168,7 @@ function fixChar(c) {
   if (!CLASSES[c.cls] || CLASSES[c.cls].status !== 'open') c.cls = 'adventurer';
   c.jlv = Math.max(1, Math.min(LV.JOB_CAP[clsOf(c).tier] || 50, c.jlv | 0 || 1)); c.jexp = Math.max(0, +c.jexp || 0);
   c.hot = Array.from({ length: 6 }, (_, i) => (Array.isArray(c.hot) ? c.hot : HOT_DEFAULT)[i] || null).map(id => (id && Object.hasOwn(SKILLS, id) ? id : null));
+  { const S2 = sk2(c); for (const id in S2) { const S = SKILLS[id]; if (!S || S.tier !== 2) { delete S2[id]; continue; } S2[id] = Math.max(0, Math.min(S.maxLv, S2[id] | 0)); if (!S2[id]) delete S2[id]; } if (skSpent(c) > skPoints(c) && clsOf(c).tier === 2) resetSkills2(c); }
   if (typeof c.hp !== 'number' || isNaN(c.hp)) c.hp = 1;
   if (typeof c.sp !== 'number' || isNaN(c.sp)) c.sp = 0;
   if (!validSpot(c.save)) c.save = { ...OLD_HOME };
@@ -173,6 +185,7 @@ let NID = 1;
 const players = new Map(); // id -> player
 const mobs = new Map();
 const drops = new Map();
+const ST = createStatus({ now: () => Date.now(), dotHit: (m, o, d, k) => dotHit(m, o, d, k), MOBS });
 const nameTaken = n => Object.values(db.accounts).some(a => a.char && a.char.name.toLowerCase() === n.toLowerCase());
 
 function walkable(m, x, y) { return !SOLID.has(get(m, x, y)); }
@@ -240,7 +253,7 @@ function me(p) {
   const now = Date.now(), B = buffsOf(c);
   send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit,
     matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
-    cls: clsOf(c).id, guest: !!(db.accounts[p.acct] || {}).guest, guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
+    skp: [skPoints(c), skSpent(c)], cls: clsOf(c).id, guest: !!(db.accounts[p.acct] || {}).guest, guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
     buffs: Object.entries(B).filter(([, b]) => b.until > now).map(([id, b]) => ({ id, th: b.th, ms: b.until - now })) } });
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
@@ -299,7 +312,13 @@ function changeClass(p, id) {
   bcastAll({ t: 'sys', m: `🎉 ${c.name} ได้เปลี่ยนอาชีพเป็น ${K.th} (${K.en})!`, col: '#ffd34d' });
   send(p, { t: 'skills', skills: skillDefs(c) });
 }
-const skillDefs = c => Object.fromEntries(skillsFor(c).map(id => { const S = SKILLS[id], { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound } = S; return [id, { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound, heal: S.heal ? 1 : 0, spRestore: S.spRestore ? 1 : 0, buff: S.buff ? { id: S.buff.id } : undefined }]; })); // heal/buff/spRestore: kind only (AUTO settings)
+const skillDefs = c => Object.fromEntries(skillsFor(c).map(id => {
+  const S = SKILLS[id], { n, th, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound, tier, job, maxLv, up, r, sig, cast, auto, needs } = S;
+  // area-at-target skills behave like target skills on the client (they need a monster in range); heal/buff/spRestore: kind only (AUTO settings)
+  const type = S.at === 'target' ? 'target' : S.type;
+  return [id, { n, th, type, range, sp, cd, lv, d, cls, fx, element, castSound, hitSound, tier, job, maxLv, up, r, sig, cast, auto, needs, icon: tier === 2 ? 'assets/skills/' + id + '.webp' : undefined,
+    heal: S.heal ? 1 : 0, spRestore: S.spRestore ? 1 : 0, buff: S.buff ? { id: S.buff.id } : undefined, aoe: S.at === 'target' ? 1 : 0 }];
+}));
 
 // ---------------------------------------------------------------- combat
 function gainExp(p, e) {
@@ -373,18 +392,20 @@ function mobDie(mob, killer) {
     setTimeout(() => spawnMob(mob.map, mob.type), d.respawn ? d.respawn * 1000 * (0.8 + Math.random() * 0.4) : 8000 + Math.random() * 8000);
   }
 }
-const ELEM = { holy: { undead: 2, void: 2, demon: 1.6, spirit: 0.6 }, fire: { plant: 1.5, insect: 1.3, ice: 1.5, aquatic: 0.6 }, water: { desert: 1.4, elemental: 1.2, aquatic: 0.5 } };
+const ELEM = { holy: { undead: 2, void: 2, demon: 1.6, spirit: 0.6 }, fire: { plant: 1.5, insect: 1.3, ice: 1.5, aquatic: 0.6 }, water: { desert: 1.4, elemental: 1.2, aquatic: 0.5 },
+  wind: { aquatic: 1.4, machine: 1.3, insect: 1.2, elemental: 0.8 }, shadow: { spirit: 1.4, holy: 1.3, beast: 1.1, undead: 0.5, void: 0.5, demon: 0.6 } };
 // skill=true marks the hit as a skill for the client; opts.sure (default = skill) skips the hit roll, opts.magic uses MATK
 function playerAttack(p, mob, mult = 1, skill = false, opts = {}) {
   const c = p.c, d = MOBS[mob.type], sure = opts.sure ?? skill;
   const hitc = Math.min(97, Math.max(10, 82 + c.hit - d.flee - d.lv));
   let dmg = 0, crit = false;
   const el = (opts.element && ELEM[opts.element] && ELEM[opts.element][d.family]) || 1;
+  const mk = ST.marked(mob), taken = 1 + (mk ? mk.taken : 0), def = d.def * (1 + ST.deb(mob, 'def')); // Hunter Mark / Soul Mark, Curse / Acid
   if (opts.magic) {
-    dmg = Math.max(1, Math.round(c.matk * (0.9 + Math.random() * 0.2) * mult * el - (d.mdef || d.def) * 0.5));
+    dmg = Math.max(1, Math.round(c.matk * (0.9 + Math.random() * 0.2) * mult * el * taken - (d.mdef || d.def) * 0.5));
   } else if (sure || Math.random() * 100 < hitc) {
-    crit = opts.crit || (!skill && Math.random() * 100 < c.crit);
-    dmg = Math.max(1, Math.round(c.atk * (0.85 + Math.random() * 0.3) * mult * el * (crit ? 1.5 : 1) - (crit ? 0 : d.def)));
+    crit = opts.crit || !!(mk && mk.crit) || (!skill && Math.random() * 100 < c.crit);
+    dmg = Math.max(1, Math.round(c.atk * (0.85 + Math.random() * 0.3) * mult * el * taken * (crit ? 1.5 : 1) - (crit ? 0 : def)));
   }
   if (d.dummy && !Q.st(c).a.cls_ranger && !mob.hitOk) dmg = Math.min(dmg, Math.max(0, mob.hp - 1)); // training targets only fall for the Ranger trial
   mob.hp -= dmg;
@@ -394,6 +415,14 @@ function playerAttack(p, mob, mult = 1, skill = false, opts = {}) {
   if (d.assist) callHelp(mob, p);
   bcast(c.map, { t: 'fx', k: 'hit', from: p.id, to: mob.id, dmg, crit, skill });
   if (mob.hp <= 0) { mobDie(mob, p); p.target = null; }
+  return dmg;
+}
+// damage over time ticks (poison / burn / curse ...): credited to the player who applied it
+function dotHit(mob, owner, dmg, kind) {
+  if (!mobs.has(mob.id)) return; const p = players.get(owner); dmg = Math.min(dmg, mob.hp);
+  mob.hp -= dmg; if (p) mob.dmg.set(p.id, (mob.dmg.get(p.id) || 0) + dmg);
+  bcast(mob.map, { t: 'fx', k: 'hit', from: owner, to: mob.id, dmg, dot: kind });
+  if (mob.hp <= 0) { mobDie(mob, p && p.c.map === mob.map ? p : null); if (p && p.target === mob.id) p.target = null; }
 }
 // assist / pack: same-family monsters nearby join the fight
 function callHelp(mob, p) {
@@ -426,61 +455,161 @@ function failMsg(p, s, r, extra) { // throttled so packet spam can't turn into r
   const now = Date.now(); if (now - (p.failAt || 0) < 150) return false;
   p.failAt = now; send(p, { t: 'castfail', s, r, ...extra }); return false;
 }
-// all skill rules live here: alive, owned, cooldown, SP, target, range, line of sight
+// all skill rules live here: alive, owned, class line, weapon, cooldown, SP, target, range, line of sight
+const UP = { mult: 0.1, heal: 0.12, dur: 0.15, buff: 0.15 }; // second-class skill growth per level (one thing only)
+const growth = (sk, lv, key) => (sk.tier === 2 && sk.up === key ? 1 + UP[key] * (lv - 1) : 1);
+// party members on the same map within r tiles (always includes the caster)
+function partyNear(p, r) { const out = [p]; if (p.party) for (const o of players.values()) if (o !== p && o.party === p.party && !o.dead && o.c.map === p.c.map && Math.hypot(o.c.x - p.c.x, o.c.y - p.c.y) <= r) out.push(o); return out; }
 function castSkill(p, sid, tid, legacy) {
   const c = p.c, now = Date.now();
   sid = String(sid);
   if (!Object.hasOwn(SKILLS, sid)) return failMsg(p, sid.slice(0, 16), 'bad');
   const sk = SKILLS[sid];
   if (p.dead || c.hp <= 0) return failMsg(p, sid, 'dead');
-  if (!ownsSkill(c, sid)) return failMsg(p, sid, 'own', { lv: sk.lv });
+  if (sk.type === 'passive') return failMsg(p, sid, 'passive');
+  if (!ownsSkill(c, sid)) return failMsg(p, sid, 'own', { lv: sk.lv, job: sk.job });
+  if (sk.needs) { const w = ITEMS[c.eq.wpn]; if (!w || !sk.needs.includes(w.wt)) return failMsg(p, sid, 'weapon', { need: sk.needs }); }
   const ready = Math.max(p.cd[sid] || 0, p.gcd || 0);
   if (now < ready) return failMsg(p, sid, 'cd', { ms: ready - now });
-  if (c.sp < sk.sp) return failMsg(p, sid, 'sp');
-  const lvm = 1 + 0.05 * (skLv(c, sk) - 1);
-  let mob = null, area = null;
-  if (sk.type === 'target') {
+  const spCost = Math.max(0, Math.round(sk.sp * (1 - Math.min(0.5, buffSum(c, 'spCut')))));
+  if (c.sp < spCost) return failMsg(p, sid, 'sp');
+  const lv = skLv(c, sk), lvm = sk.tier === 2 ? growth(sk, lv, 'mult') : 1 + 0.05 * (lv - 1);
+  let mob = null, area = null, allies = null, fallen = null;
+  if (sk.type === 'target' || (sk.type === 'area' && sk.at === 'target')) {
     mob = mobs.get(tid); if (legacy && !mob) mob = mobs.get(p.target);
     const why = hitBlock(c, mob, sk.range);
     if (why === 'range' && legacy) { p.target = mob.id; p.pendingSkill = true; return false; } // old client: walk in, then cast
     if (why) return failMsg(p, sid, why);
+    if (sk.type === 'area') { area = [...mobs.values()].filter(mb => mb.map === c.map && mb.hp > 0 && Math.hypot(mb.x - mob.x, mb.y - mob.y) <= sk.r); mob = null; }
   } else if (sk.type === 'area') {
     area = [...mobs.values()].filter(mb => !hitBlock(c, mb, sk.range));
     if (!area.length) return failMsg(p, sid, 'notarget');
+  } else if (sk.type === 'party') allies = partyNear(p, sk.r || 6);
+  else if (sk.type === 'revive') {
+    let best = 1e9; for (const o of players.values()) if (o.dead && o !== p && o.c.map === c.map) { const d = Math.hypot(o.c.x - c.x, o.c.y - c.y); if (d <= sk.range && d < best) { best = d; fallen = o; } }
+    if (!fallen) return failMsg(p, sid, 'notarget');
+  } else if (sk.type === 'ground') {
+    const mine = [...devices.values()].filter(d => d.owner === p.id && d.skill === sid);
+    if (mine.length >= (sk.turret ? 1 : 2)) removeDevice(mine[0]); // oldest one goes
   }
-  c.sp -= sk.sp; p.cd[sid] = now + sk.cd; p.gcd = now + GCD;
-  bcast(c.map, { t: 'fx', k: 'cast', id: p.id, s: sid, to: mob ? mob.id : 0 });
+  c.sp -= spCost; p.cd[sid] = now + sk.cd; p.gcd = now + GCD;
+  bcast(c.map, { t: 'fx', k: 'cast', id: p.id, s: sid, to: mob ? mob.id : 0, x: sk.at === 'target' && tid ? (mobs.get(tid) || {}).x : undefined, y: sk.at === 'target' && tid ? (mobs.get(tid) || {}).y : undefined, ms: sk.cast || 0 });
   send(p, { t: 'cd', s: sid, ms: sk.cd, g: GCD });
-  const opts = { magic: sk.magic, element: sk.element, crit: sk.crit };
-  if (mob) {
-    p.nextAtk = now + c.aspd;
-    if (sk.dash) { const dx = c.x - mob.x, dy = c.y - mob.y, l = Math.hypot(dx, dy) || 1, tx = Math.round(mob.x + dx / l), ty = Math.round(mob.y + dy / l); if (walkable(MAPS[c.map], tx, ty)) { c.x = tx; c.y = ty; p.path = null; } }
-    for (let i = 0; i < (sk.hits || 1) && mobs.has(mob.id); i++) playerAttack(p, mob, (sk.mult || 1) * lvm, true, { sure: !sk.hits, ...opts });
-    if (sk.taunt) for (const o of mobs.values()) if (o.map === c.map && Math.hypot(o.x - c.x, o.y - c.y) < 4 && !MOBS[o.type].dummy) o.target = p.id;
-    if (sk.slow && mobs.has(mob.id)) mob.slowUntil = now + sk.slow;
-  } else if (area) {
-    p.nextAtk = now + c.aspd;
-    for (const mb of area) if (mobs.has(mb.id)) playerAttack(p, mb, sk.mult * lvm, true, opts);
-  }
-  if (sk.heal) {
-    const before = c.hp; c.hp = Math.min(c.maxhp, c.hp + Math.round((c.maxhp * sk.heal.pct + c.st.int * sk.heal.int) * lvm));
-    bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: c.hp - before });
-  }
-  if (sk.spRestore) {
-    const before = c.sp; c.sp = Math.min(c.maxsp, c.sp + Math.round(c.maxsp * sk.spRestore * lvm));
-    bcast(c.map, { t: 'fx', k: 'heal', id: p.id, sp: c.sp - before });
-  }
-  if (sk.buff) {
-    buffsOf(c)[sk.buff.id] = Object.assign({}, sk.buff, { until: now + sk.buff.ms });
-    if (sk.buff.stealth) for (const o of mobs.values()) if (o.target === p.id && !MOBS[o.type].boss) { o.target = null; o.path = null; }
-    bcast(c.map, { t: 'fx', k: 'buff', id: p.id, s: sid });
-  }
-  me(p);
+  const resolve = () => {
+    if (!players.has(p.id) || p.dead || c.hp <= 0) return;
+    if (sk.cast) { // charged skills land only if the target is still there
+      if (mob && hitBlock(c, mob, sk.range + 1)) return send(p, { t: 'castfail', s: sid, r: 'target' });
+      if (area) area = area.filter(mb => mobs.has(mb.id) && mb.map === c.map);
+    }
+    const opts = { magic: sk.magic, element: sk.element, crit: sk.crit };
+    if (mob) {
+      p.nextAtk = now + c.aspd;
+      if (sk.dash) { const dx = c.x - mob.x, dy = c.y - mob.y, l = Math.hypot(dx, dy) || 1, tx = Math.round(mob.x + dx / l), ty = Math.round(mob.y + dy / l); if (walkable(MAPS[c.map], tx, ty)) { c.x = tx; c.y = ty; p.path = null; } }
+      if (sk.mult || sk.tier !== 2) skillHit(p, mob, sk, lv, lvm, { sure: !sk.hits, ...opts });
+      else if (sk.tier === 2) applyOnHit(p, mob, sk, lv, 0);
+      if (sk.pierce) for (const mb of [...mobs.values()]) if (mb !== mob && mb.map === c.map && mb.hp > 0 && onLine(c, mob, mb, sk.range)) skillHit(p, mb, sk, lv, lvm * 0.8, opts);
+      if (sk.chain) { let from = mob, f = 1; const hit = new Set([mob.id]); for (let i = 0; i < sk.chain.n; i++) { f *= sk.chain.fall; let nx = null, nd = sk.chain.r; for (const mb of mobs.values()) if (!hit.has(mb.id) && mb.map === c.map && mb.hp > 0) { const d = Math.hypot(mb.x - from.x, mb.y - from.y); if (d <= nd) { nd = d; nx = mb; } } if (!nx) break; hit.add(nx.id); bcast(c.map, { t: 'fx', k: 'chain', from: from.id, to: nx.id }); skillHit(p, nx, sk, lv, lvm * f, opts); from = nx; } }
+      if (sk.taunt) for (const o of mobs.values()) if (o.map === c.map && Math.hypot(o.x - c.x, o.y - c.y) < 4 && !MOBS[o.type].dummy) o.target = p.id;
+      if (sk.slow && mobs.has(mob.id) && sk.tier !== 2) mob.slowUntil = now + sk.slow;
+    } else if (area) {
+      p.nextAtk = now + c.aspd;
+      for (const mb of area) if (mobs.has(mb.id)) {
+        if (sk.mult || sk.tier !== 2) for (let i = 0; i < (sk.tier === 2 ? sk.hits || 1 : 1) && mobs.has(mb.id); i++) skillHit(p, mb, sk, lv, lvm, { ...opts, element: sk.elements ? sk.elements[i % sk.elements.length] : sk.element }, i > 0);
+        else applyOnHit(p, mb, sk, lv, 0);
+        if (sk.taunt && mobs.has(mb.id) && !MOBS[mb.type].dummy) mb.target = p.id;
+      }
+    }
+    for (const o of allies || [p]) {
+      const oc = o.c, healMul = growth(sk, lv, 'heal') * (1 + passiveOf(c, 'healPct') / 100);
+      if (sk.lowest && allies && o !== allies.reduce((a, b) => (b.c.hp / b.c.maxhp < a.c.hp / a.c.maxhp ? b : a))) continue;
+      if (sk.heal) { const before = oc.hp; oc.hp = Math.min(oc.maxhp, oc.hp + Math.round((oc.maxhp * sk.heal.pct + c.st.int * sk.heal.int) * (sk.tier === 2 ? healMul : lvm))); bcast(c.map, { t: 'fx', k: 'heal', id: o.id, v: oc.hp - before }); }
+      if (sk.barrier) { const v = Math.round((oc.maxhp * sk.barrier.pct + c.st.int * sk.barrier.int) * healMul); buffsOf(oc)['barrier_' + sid] = { id: 'barrier_' + sid, th: 'บาเรีย', absorb: v, until: now + sk.barrier.ms }; bcast(c.map, { t: 'fx', k: 'buff', id: o.id, s: sid }); }
+      if (sk.buff) giveBuff(o, sk, lv, c);
+      if (o !== p) me(o);
+    }
+    if (sk.spRestore) { const before = c.sp; c.sp = Math.min(c.maxsp, c.sp + Math.round(c.maxsp * sk.spRestore * lvm)); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, sp: c.sp - before }); }
+    if (sk.cleanse) ST.cleanse(c, buffsOf);
+    if (fallen && fallen.dead) { const fc = fallen.c; fallen.dead = false; derive(fc); fc.hp = Math.max(1, Math.round(fc.maxhp * sk.revive * growth(sk, lv, 'heal'))); fc.sp = Math.max(fc.sp, Math.round(fc.maxsp * 0.2)); bcast(c.map, { t: 'fx', k: 'revive', id: fallen.id, by: p.id }); sys(fallen, `${c.name} ชุบชีวิตคุณ!`, '#ffe39a'); me(fallen); }
+    if (sk.trap || sk.turret) placeDevice(p, sk, lv);
+    me(p);
+  };
+  if (sk.cast) { setTimeout(resolve, sk.cast); me(p); } else resolve();
   return true;
+}
+// one damaging hit of a skill with every second-class modifier (rage, execute, backstab, drain, statuses)
+function skillHit(p, mob, sk, lv, mult, opts, repeat) {
+  const c = p.c, d = MOBS[mob.type];
+  if (sk.tier !== 2) { for (let i = 0; i < (sk.hits || 1) && mobs.has(mob.id); i++) playerAttack(p, mob, (sk.mult || 1) * mult, true, opts); return; }
+  let m = sk.mult * mult;
+  if (sk.rage) m *= 1 + sk.rage * Math.max(0, 1 - c.hp / c.maxhp);
+  if (sk.backstab && mob.target && mob.target !== p.id) m *= sk.backstab;
+  const hits = sk.type === 'area' ? 1 : sk.hits || 1;
+  for (let i = 0; i < hits && mobs.has(mob.id); i++) {
+    let mm = m; if (sk.execute && mob.hp / mob.maxhp < sk.execute.below) mm *= sk.execute.mult;
+    const dmg = playerAttack(p, mob, mm, true, { ...opts, sure: true, dot: sk.dot ? 1 : 0 });
+    if (sk.drain && dmg > 0) { const heal = Math.round(dmg * (sk.drain + passiveOf(c, 'drainPct') / 100)); const b = c.hp; c.hp = Math.min(c.maxhp, c.hp + heal); if (c.hp > b) bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: c.hp - b }); }
+    if (!repeat && i === 0 && mobs.has(mob.id)) applyOnHit(p, mob, sk, lv, dmg);
+  }
+}
+// statuses a second-class skill leaves on a monster (durations grow with 'dur' skills)
+function applyOnHit(p, mob, sk, lv, dmg) {
+  if (!mobs.has(mob.id) || MOBS[mob.type].dummy) return;
+  const g = growth(sk, lv, 'dur'), base = dmg || Math.round(p.c.atk * (sk.mult || 1));
+  if (sk.stun) ST.stun(mob, sk.stun * g);
+  if (sk.slow) ST.slow(mob, sk.slow * g);
+  if (sk.dot) ST.dot(mob, p.id, sk.dot.k, sk.dot.ms * g, Math.max(1, Math.round(base * sk.dot.pct)));
+  if (sk.debuff) ST.debuff(mob, sk.debuff.atk, sk.debuff.def, sk.debuff.ms * g);
+  if (sk.mark) ST.mark(mob, p.id, sk.mark.taken, sk.mark.crit, sk.mark.ms * g);
+  if (sk.taunt) mob.target = p.id;
+}
+// is mb near the line from the caster through the target (Piercing Shot)?
+function onLine(c, t, mb, range) {
+  const dx = t.x - c.x, dy = t.y - c.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  const px = mb.x - c.x, py = mb.y - c.y, along = px * ux + py * uy, off = Math.abs(px * uy - py * ux);
+  return along > 0 && along <= range && off <= 1.0;
+}
+function giveBuff(o, sk, lv, caster) {
+  const g = growth(sk, lv, 'buff'), dur = growth(sk, lv, 'dur') * (1 + passiveOf(caster, 'durPct') / 100), b = Object.assign({}, sk.buff);
+  for (const k in b) if (typeof b[k] === 'number' && !['ms', 'stealth', 'evade', 'range'].includes(k)) b[k] = +(b[k] * g).toFixed(3);
+  b.until = Date.now() + Math.round(sk.buff.ms * dur);
+  buffsOf(o.c)[sk.buff.id] = b;
+  if (b.stealth) for (const m of mobs.values()) if (m.target === o.id && !MOBS[m.type].boss) { m.target = null; m.path = null; }
+  derive(o.c); bcast(o.c.map, { t: 'fx', k: 'buff', id: o.id, s: sk.id });
+}
+// ---- devices: traps / mines / turrets (lightweight: a position, an owner, a timer)
+const devices = new Map();
+function placeDevice(p, sk, lv) {
+  const c = p.c, T = sk.trap || sk.turret, id = NID++;
+  const dv = { id, skill: sk.id, owner: p.id, map: c.map, x: Math.round(c.x), y: Math.round(c.y), until: Date.now() + T.ms * growth(sk, lv, 'dur'), lv, kind: sk.turret ? 'turret' : T.k, next: Date.now() + 600 };
+  devices.set(id, dv); bcast(c.map, { t: 'fx', k: 'dev', id, kind: dv.kind, x: dv.x, y: dv.y, ms: dv.until - Date.now(), by: p.id });
+}
+function removeDevice(dv, boom) { devices.delete(dv.id); bcast(dv.map, { t: 'fx', k: 'devx', id: dv.id, boom: boom ? 1 : 0 }); }
+function deviceTick(now) {
+  for (const dv of [...devices.values()]) {
+    const p = players.get(dv.owner), sk = SKILLS[dv.skill];
+    if (!p || p.c.map !== dv.map || now > dv.until) { removeDevice(dv); continue; }
+    const devMul = 1 + passiveOf(p.c, 'devicePct') / 100, lvm = growth(sk, dv.lv, 'mult') * devMul;
+    if (sk.turret) {
+      if (now < dv.next) continue; dv.next = now + sk.turret.every;
+      let best = null, bd = sk.turret.range; for (const mb of mobs.values()) if (mb.map === dv.map && mb.hp > 0 && !MOBS[mb.type].dummy) { const d = Math.max(Math.abs(mb.x - dv.x), Math.abs(mb.y - dv.y)); if (d <= bd && los(MAPS[dv.map], dv.x, dv.y, mb.x, mb.y)) { bd = d; best = mb; } }
+      if (best) { bcast(dv.map, { t: 'fx', k: 'devshot', id: dv.id, to: best.id }); playerAttack(p, best, sk.turret.mult * lvm, true, { sure: true }); }
+      continue;
+    }
+    const T = sk.trap, hit = [...mobs.values()].filter(mb => mb.map === dv.map && mb.hp > 0 && !MOBS[mb.type].dummy && Math.hypot(mb.x - dv.x, mb.y - dv.y) <= T.r);
+    if (!hit.length || now < dv.next) continue;
+    removeDevice(dv, 1);
+    const g = growth(sk, dv.lv, 'dur');
+    for (const mb of hit) {
+      const dmg = T.mult ? playerAttack(p, mb, T.mult * lvm, true, { sure: true }) : 0;
+      if (!mobs.has(mb.id)) continue;
+      if (T.stun) ST.stun(mb, T.stun * g);
+      if (T.dot) ST.dot(mb, p.id, T.dot.k, T.dot.ms * g, Math.max(1, Math.round((dmg || p.c.atk) * T.dot.pct)));
+    }
+  }
 }
 const stealthed = c => buffSum(c, 'stealth') > 0;
 function mobAttack(mob, p, magic) {
-  const d = MOBS[mob.type], c = p.c, mul = mob.atkMul || 1;
+  const d = MOBS[mob.type], c = p.c, mul = (mob.atkMul || 1) * (1 + ST.deb(mob, 'atk')); // Curse of Weakness / Taunt / Smoke Veil
   const hitc = Math.min(95, Math.max(5, 80 + d.lv * 2 - c.flee));
   let dmg = 0;
   if (magic) dmg = Math.max(1, Math.round(d.matk * mul * (0.9 + Math.random() * 0.2) - c.mdef * 0.5));
@@ -489,8 +618,9 @@ function mobAttack(mob, p, magic) {
 }
 function hurtPlayer(p, dmg, from, magic) {
   const c = p.c; if (p.dead) return;
+  const [d2, how] = ST.incoming(c, dmg, buffsOf, buffSum); dmg = d2;
   c.hp -= dmg;
-  bcast(c.map, { t: 'fx', k: 'hit', from, to: p.id, dmg, magic: magic ? 1 : 0 });
+  bcast(c.map, { t: 'fx', k: 'hit', from, to: p.id, dmg, magic: magic ? 1 : 0, how: how || undefined });
   if (c.hp <= 0) {
     c.hp = 0; p.dead = true; p.path = null; p.target = null;
     const loss = c.lv <= 5 ? 0 : Math.floor(expNext(c.lv) * 0.01); c.exp = Math.max(0, c.exp - loss); // beginner protection: no exp loss up to Lv5
@@ -583,9 +713,10 @@ function npcTalk(p, npcId, act, arg, arg2) {
       return dlg(`กระดานประกาศ — เควสประจำวัน (รีเซ็ตทุกวัน)\n${lines || 'ยังไม่มีประกาศ'}`, qopts);
     }
     case 'master': {
-      const K = CLASSES[npc.cls];
+      const K = CLASSES[npc.cls], kids = C.childrenOf(K.id).map(id => CLASSES[id]);
       const head = `${say}\n\nอาชีพ: ${K.th} (${K.en}) — ${K.role}\n${K.d}\nเงื่อนไข: Lv ${K.reqLv}+ และยังเป็นนักผจญภัย`;
-      if (c.cls === npc.cls) return dlg(`${say}\nเจ้าคือ ${K.th} แล้ว ฝึกฝนต่อไป! (อาชีพขั้นที่ 2 ปลดที่ Lv ${CLASSES[C.childrenOf(K.id)[0]].reqLv} — เร็วๆ นี้)`, qopts);
+      if (c.cls === npc.cls) return dlg(`${say}\nเจ้าคือ ${K.th} แล้ว — อาชีพขั้นที่ 2 (เลือกได้ 1 ทาง):\n${kids.map(k => `• ${k.th} (${k.en}) — ${k.role}\n  ${k.d}`).join('\n')}\nเงื่อนไข: Lv ${kids[0].reqLv}+ และ Job Lv ${kids[0].reqJob}+ (ตอนนี้ Lv ${c.lv} / Job ${c.jlv})`, qopts);
+      if (kids.some(k => k.id === c.cls)) return dlg(`${say}\nเจ้าเป็น ${CLASSES[c.cls].th} แล้ว — ฝึกสกิลด้วยแต้มสกิลในหน้าต่างสกิล`, qopts);
       if (c.cls !== 'adventurer') return dlg(`${say}\nเจ้าเลือกเส้นทางอื่นไปแล้ว`, qopts);
       return dlg(head, qopts);
     }
@@ -879,10 +1010,21 @@ function handle(p, m) {
     }
     case 'skill': castSkill(p, 'bash', m.id, true); break; // legacy Bash message
     case 'cast': castSkill(p, m.s, m.id); break;
+    case 'learn': { // learn / raise a second-class skill with a skill point
+      const sid = String(m.s || ''), S = Object.hasOwn(SKILLS, sid) ? SKILLS[sid] : null;
+      const why = !S || S.tier !== 2 ? 'bad' : !lineOf(c).includes(S.cls) ? 'class' : (c.jlv | 0) < S.job && clsOf(c).id === S.cls ? 'job' : (sk2(c)[sid] | 0) >= S.maxLv ? 'max' : skSpent(c) >= skPoints(c) ? 'points' : '';
+      if (why) return send(p, { t: 'learnfail', s: sid.slice(0, 20), r: why, job: S && S.job });
+      const first = !sk2(c)[sid]; sk2(c)[sid] = (sk2(c)[sid] | 0) + 1;
+      if (first && S.type !== 'passive' && !c.hot.includes(sid)) { const free = c.hot.indexOf(null); if (free >= 0) c.hot[free] = sid; }
+      p.knows = new Set(skillsFor(c).filter(id => ownsSkill(c, id)));
+      derive(c); dirty = true; send(p, { t: 'skills', skills: skillDefs(c) }); me(p);
+      sys(p, `${first ? 'เรียน' : 'อัป'}สกิล ${S.th} Lv ${sk2(c)[sid]}`, '#9fe7ff');
+      return;
+    }
     case 'hot': { // hotbar: 6 slots of owned-or-locked skill ids / null
       if (!Array.isArray(m.h)) return;
       const seen = new Set(); // learned skills only, each in at most one slot
-      c.hot = Array.from({ length: 6 }, (_, i) => { const id = m.h[i]; if (typeof id !== 'string' || !ownsSkill(c, id) || seen.has(id)) return null; seen.add(id); return id; });
+      c.hot = Array.from({ length: 6 }, (_, i) => { const id = m.h[i]; if (typeof id !== 'string' || !ownsSkill(c, id) || SKILLS[id].type === 'passive' || seen.has(id)) return null; seen.add(id); return id; });
       dirty = true; me(p);
       break;
     }
@@ -1078,7 +1220,7 @@ setInterval(() => {
       }
     }
     const tile0 = Math.round(c.x) + ',' + Math.round(c.y);
-    stepToward(pe, 4.6 + c.st.agi * 0.02, dt);
+    stepToward(pe, (4.6 + c.st.agi * 0.02) * (1 + Math.max(-0.5, Math.min(0.6, buffSum(c, 'spd')))), dt);
     c.x = pe.x; c.y = pe.y; p.path = pe.path; if (pe.dir != null) c.dir = pe.dir;
     if (tile0 !== Math.round(c.x) + ',' + Math.round(c.y)) Q.onMove(p);
     // arrived at npc / node
@@ -1115,6 +1257,8 @@ setInterval(() => {
       c.sp = Math.min(c.maxsp, c.sp + Math.max(1, Math.floor(c.maxsp * 0.04)));
       if (c.hp + c.sp !== before) me(p);
     }
+    // regeneration buffs (Healing Mist, Repair Drone): % of MaxHP every second
+    if (now >= (p.rgAt || 0)) { p.rgAt = now + 1000; const rg = buffSum(c, 'regen'); if (rg > 0 && c.hp < c.maxhp) { const b = c.hp; c.hp = Math.min(c.maxhp, c.hp + Math.max(1, Math.round(c.maxhp * rg))); bcast(c.map, { t: 'fx', k: 'heal', id: p.id, v: c.hp - b, regen: 1 }); p.meDue = true; } }
     if (p.meDue) { p.meDue = false; me(p); }
   }
   // mobs (maps nobody is on are frozen: they just heal back up)
@@ -1122,6 +1266,7 @@ setInterval(() => {
     const d = MOBS[mob.type];
     if (!busy.has(mob.map)) { mob.target = null; mob.path = null; mob.hp = mob.maxhp; continue; }
     if (d.dummy) { if (mob.hp < mob.maxhp && now - (mob.hitAt || 0) > 8000) mob.hp = mob.maxhp; continue; }
+    if (ST.tick(mob)) continue; // stunned (or just died to a damage-over-time tick)
     let tgt = mob.target ? players.get(mob.target) : null;
     if (!tgt) mob.target = null; // target logged out: let the next attacker re-aggro it
     const leash = d.boss ? 16 : 14;
@@ -1168,6 +1313,7 @@ setInterval(() => {
     }
     stepToward(mob, (tgt ? d.spd * 1.25 : d.spd * 0.6) * spdMul, dt);
   }
+  deviceTick(now);
   // boss respawn
   for (const id in MAPS) for (const bs of MAPS[id].bosses) {
     const k = id + ':' + bs.mob;
@@ -1184,7 +1330,7 @@ setInterval(() => {
   // same 8x8 block share one serialized snapshot.
   const per = {};
   for (const p of players.values()) { const k = p.c.map; (per[k] = per[k] || { p: [], m: [], d: [] }).p.push([p.id, p.c.name, +p.c.x.toFixed(2), +p.c.y.toFixed(2), p.c.dir | 0, p.c.hp, p.c.maxhp, p.c.lv, p.c.look, p.c.eq.wpn || 0, p.c.eq.chead || p.c.eq.head || 0, p.dead ? 1 : 0, p.c.cls, p.c.eq.arm || 0, p.c.guild || '', p.party || 0]); }
-  for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp, mob.target || 0]); }
+  for (const mob of mobs.values()) { const s = per[mob.map]; if (s) s.m.push([mob.id, mob.type, +mob.x.toFixed(2), +mob.y.toFixed(2), mob.dir | 0, mob.hp, mob.maxhp, mob.target || 0, ST.bits(mob)]); }
   for (const d of drops.values()) { const s = per[d.map]; if (s) s.d.push([d.id, d.item, d.x, d.y]); }
   snapCache.clear();
   for (const p of players.values()) {

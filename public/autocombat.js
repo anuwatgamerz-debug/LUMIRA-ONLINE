@@ -14,14 +14,15 @@ const AC = { loaded: false, lastSkill: '', lastCastT: 0, skip: {}, potT: 0, potW
 const HP_ITEMS = [1, 2, 5], SP_ITEMS = [3, 6], POT_HUE = { sp: 'hue-rotate(200deg) saturate(1.3)' };
 
 // ---- skill kinds -> which conditions make sense
-function skKind(sk) { return sk.heal ? 'heal' : sk.buff ? 'buff' : sk.spRestore ? 'sp' : sk.type === 'area' ? 'area' : sk.type === 'target' ? 'attack' : 'self'; }
+function skKind(sk) { if (sk.auto && KIND_COND[sk.auto]) return sk.auto; return sk.heal ? 'heal' : sk.buff ? 'buff' : sk.spRestore ? 'sp' : sk.type === 'area' ? 'area' : sk.type === 'target' ? 'attack' : 'self'; }
 const COND = {
   ready: 'ทุกครั้งที่พร้อม', tgtHp: 'HP เป้าหมายต่ำกว่า X%', myHp: 'HP เราต่ำกว่า X%', mySp: 'SP เรามากกว่า X%', spLow: 'SP เราต่ำกว่า X%',
   enemies: 'ศัตรูรอบตัว ≥ X', buff: 'เมื่อบัฟหมด', boss: 'เฉพาะบอส', nonboss: 'ไม่ใช่บอส', quest: 'เฉพาะมอนเควส',
 };
-const KIND_COND = { attack: ['ready', 'tgtHp', 'mySp', 'boss', 'nonboss', 'quest'], area: ['enemies', 'mySp', 'ready'], heal: ['myHp'], buff: ['buff', 'ready'], sp: ['spLow'], self: ['ready'] };
-const KIND_DEF = { attack: ['ready', 50], area: ['enemies', 2], heal: ['myHp', 50], buff: ['buff', 50], sp: ['spLow', 30], self: ['ready', 50] };
-const KIND_TH = { attack: 'โจมตี', area: 'โจมตีรอบตัว', heal: 'ฟื้นฟู', buff: 'บัฟ', sp: 'ฟื้น SP', self: 'ใช้กับตัวเอง' };
+const KIND_COND = { attack: ['ready', 'tgtHp', 'mySp', 'boss', 'nonboss', 'quest'], area: ['enemies', 'mySp', 'ready'], heal: ['myHp'], buff: ['buff', 'ready'], sp: ['spLow'], self: ['ready'],
+  execute: ['tgtHp', 'boss', 'ready'], defense: ['myHp', 'ready'], debuff: ['ready', 'boss', 'nonboss', 'tgtHp'], trap: ['enemies', 'ready'] };
+const KIND_DEF = { attack: ['ready', 50], area: ['enemies', 2], heal: ['myHp', 50], buff: ['buff', 50], sp: ['spLow', 30], self: ['ready', 50], execute: ['tgtHp', 30], defense: ['myHp', 50], debuff: ['ready', 50], trap: ['enemies', 1] };
+const KIND_TH = { attack: 'โจมตี', area: 'โจมตีวงกว้าง', heal: 'ฟื้นฟู', buff: 'บัฟ', sp: 'ฟื้น SP', self: 'ใช้กับตัวเอง', execute: 'ปิดฉาก', defense: 'ป้องกัน', debuff: 'ดีบัฟ', trap: 'กับดัก/อุปกรณ์' };
 function skCfg(sid) { // every owned skill has an entry; new ones start OFF (the player turns them on)
   const sk = SK[sid]; if (!sk) return null;
   let c = ACFG.skills[sid]; const k = skKind(sk);
@@ -29,7 +30,7 @@ function skCfg(sid) { // every owned skill has an entry; new ones start OFF (the
   if (!KIND_COND[k].includes(c.cond)) c.cond = KIND_DEF[k][0];
   return c;
 }
-const ownedSkills = () => Object.keys((me && me.sk) || {}).filter(id => SK[id]);
+const ownedSkills = () => Object.keys((me && me.sk) || {}).filter(id => SK[id] && SK[id].type !== 'passive' && SK[id].type !== 'revive');
 
 // ---- load / save (per character, on the server)
 function acLoad() { if (AC.loaded || !me) return; AC.loaded = true; if (me.auto) ACFG = Object.assign(JSON.parse(JSON.stringify(AC_DEF)), me.auto, { skills: Object.assign({}, me.auto.skills || {}) }); acPanel(); }
@@ -62,7 +63,7 @@ function acSkillTick() {
       case 'myHp': pass = hp < c.val; break;
       case 'mySp': pass = sp > c.val; break;
       case 'spLow': pass = sp < c.val; break;
-      case 'enemies': pass = enemiesNear(Math.max(1.5, sk.range || 1.8)) >= c.val; break;
+      case 'enemies': pass = (sk.aoe ? (tg ? [...ents.values()].filter(e => e.kind === 'm' && e.hp > 0 && Math.hypot(e.tx - tg.tx, e.ty - tg.ty) <= (sk.r || 2)).length : 0) : enemiesNear(sk.type === 'ground' ? 4 : Math.max(1.5, sk.range || 1.8))) >= c.val; break;
       case 'buff': pass = !(me.buffs || []).some(b => sk.buff && b.id === sk.buff.id); break;
       case 'tgtHp': pass = !!tg && tg.hp / tg.maxhp * 100 < c.val; break;
       case 'boss': pass = !!tg && !!(MOBN[tg.type] && MOBN[tg.type].boss); break;
@@ -74,6 +75,7 @@ function acSkillTick() {
     let id = 0;
     if (sk.type === 'target') { if (!tg || tg.kind !== 'm' || tg.hp <= 0) continue; if (cheb(m, tg) > sk.range + 0.15) continue; id = selected; }
     if (sk.type === 'area' && !enemiesNear(Math.max(1.5, sk.range || 1.8))) continue;
+    if (sk.type === 'ground' && !enemiesNear(4)) continue; // traps / turrets only when something is around
     AC.lastSkill = sid; AC.lastCastT = t; AC.skip[sid] = t + 700; // never re-ask before the server answered
     send({ t: 'cast', s: sid, id }); return true;
   }

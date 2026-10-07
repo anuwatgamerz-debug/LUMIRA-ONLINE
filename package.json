@@ -14,7 +14,8 @@
     "test:auto": "node tests/run.js auto",
     "test:social": "node tests/run.js social",
     "test:verdant": "node tests/run.js verdant",
-    "test:brand": "node tests/run.js brand"
+    "test:brand": "node tests/run.js brand",
+    "test:skills2": "node tests/run.js skills2"
   },
   "keywords": [],
   "author": "",

@@ -39,4 +39,19 @@ const SKILLS = {
 // sound ids (public/audio-registry.js) per skill: castSound when used, hitSound when it lands
 const SOUNDS = { bash: ['skill_slash_cast', 'skill_slash_hit'], heal: ['skill_heal_cast'], bolt: ['skill_lightning_cast', 'skill_lightning_hit'], focus: ['skill_buff_cast'], cleave: ['skill_slash_cast', 'skill_bomb_hit'], twin: ['skill_slash_cast', 'skill_slash_hit'], v_wall: ['skill_buff_cast'], v_strike: ['skill_slash_cast', 'skill_slash_hit'], v_charge: ['skill_teleport', 'skill_slash_hit'], r_pierce: ['bow_shoot', 'arrow_hit'], r_volley: ['bow_shoot', 'arrow_hit'], r_step: ['skill_wind_cast'], a_ember: ['skill_fire_cast', 'skill_fire_hit'], a_frost: ['skill_ice_cast', 'skill_ice_hit'], a_nova: ['skill_fire_cast', 'skill_bomb_hit'], c_mend: ['skill_heal_cast'], c_smite: ['skill_holy_cast', 'skill_holy_hit'], c_bless: ['skill_holy_cast'], g_back: ['dagger_swing', 'skill_slash_hit'], g_venom: ['dagger_swing', 'skill_poison_hit'], g_veil: ['skill_stealth'], t_hammer: ['mace_swing', 'heavy_hit'], t_bomb: ['skill_fire_cast', 'skill_bomb_hit'], t_repair: ['skill_buff_cast'] };
 for (const id in SKILLS) { SKILLS[id].id = id; if (SOUNDS[id]) { SKILLS[id].castSound = SOUNDS[id][0]; if (SOUNDS[id][1]) SKILLS[id].hitSound = SOUNDS[id][1]; } }
+// ---- second-class skills (content/skills2.js): sounds picked from what the skill does
+const { SKILLS2 } = require('./skills2');
+const EL_SND = { fire: ['skill_fire_cast', 'skill_fire_hit'], water: ['skill_ice_cast', 'skill_ice_hit'], wind: ['skill_lightning_cast', 'skill_lightning_hit'], shadow: ['skill_dark_cast', 'skill_dark_hit'], holy: ['skill_holy_cast', 'skill_holy_hit'] };
+for (const [id, S2] of Object.entries(SKILLS2)) {
+  if (S2.type === 'passive') { S2.castSound = 'skill_buff_cast'; }
+  else if (S2.needs && S2.needs.includes('bow')) [S2.castSound, S2.hitSound] = ['bow_shoot', 'arrow_hit'];
+  else if (S2.cls === 'machinist' && S2.mult) [S2.castSound, S2.hitSound] = ['device_shot', 'arrow_hit'];
+  else if (S2.element || S2.elements) [S2.castSound, S2.hitSound] = EL_SND[S2.element || 'fire'];
+  else if (S2.dot && !S2.mult) [S2.castSound, S2.hitSound] = ['skill_slash_cast', 'skill_poison_hit'];
+  else if (S2.trap || S2.turret) [S2.castSound, S2.hitSound] = ['skill_slash_cast', S2.turret ? 'skill_bomb_hit' : 'skill_poison_hit'];
+  else if (S2.heal || S2.barrier || S2.revive) S2.castSound = 'skill_heal_cast';
+  else if (S2.mult) [S2.castSound, S2.hitSound] = S2.dot ? ['skill_slash_cast', 'skill_poison_hit'] : S2.dash ? ['skill_teleport', 'skill_slash_hit'] : ['skill_slash_cast', 'skill_slash_hit'];
+  else S2.castSound = S2.buff && S2.buff.stealth ? 'skill_stealth' : 'skill_buff_cast';
+  SKILLS[id] = S2;
+}
 module.exports = { SKILLS };

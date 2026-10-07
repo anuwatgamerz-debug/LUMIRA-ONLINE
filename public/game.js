@@ -303,6 +303,7 @@ const now = () => performance.now() / 1000;
 function onMsg(m) {
   snd('msg', m);
   switch (m.t) {
+    case 'learnfail': toast({ points: 'แต้มสกิลไม่พอ', job: `ต้องการ Job Lv ${m.job}`, max: 'สกิลนี้เลเวลสูงสุดแล้ว', class: 'อาชีพนี้เรียนสกิลนี้ไม่ได้' }[m.r] || 'เรียนสกิลไม่ได้'); break;
     case 'session': store.set(m.guest ? 'ely_guest' : 'ely_session', { u: m.u, tok: m.tok }); break;
     case 'needchar': setMode('gchar'); loginErr('บัญชี Google นี้ยังไม่มีตัวละคร — ตั้งชื่อและเลือกหน้าตาได้เลย'); break;
     case 'bindres': $('bindMsg').textContent = m.m; if (m.ok) { store.set('ely_guest', null); $('bindP').value = ''; } break;
@@ -340,10 +341,10 @@ function snap(m) {
     if (dead && !e.dead) e.dieT = now();
     Object.assign(e, { name, tx: x, ty: y, sdir: dir, hp, maxhp, lv, look, wpn, head, dead, cls, arm, guild: guild || '', party: party || 0 });
   }
-  for (const [id, type, x, y, dir, hp, maxhp, tg] of m.m) {
+  for (const [id, type, x, y, dir, hp, maxhp, tg, st] of m.m) {
     seen.add(id); let e = ents.get(id);
     if (!e) { e = { kind: 'm', x, y, row: SRV2ROW[dir] ?? 2, ph: Math.random() * 3 }; ents.set(id, e); }
-    Object.assign(e, { type, tx: x, ty: y, sdir: dir, hp, maxhp, tg: tg | 0 });
+    Object.assign(e, { type, tx: x, ty: y, sdir: dir, hp, maxhp, tg: tg | 0, st: st | 0 });
   }
   for (const [id, item, x, y] of m.d) { seen.add(id); let e = ents.get(id); if (!e) { e = { kind: 'd', x, y, born: performance.now() }; ents.set(id, e); } Object.assign(e, { item, tx: x, ty: y }); }
   for (const id of [...ents.keys()]) if (!seen.has(id)) ents.delete(id);
@@ -362,6 +363,24 @@ function addNum(e, id, v, col, big) {
   if (n >= MAX_NUMS && oldest >= 0) fxFree(oldest);
   fx.push(fxNew({ k: 'num', id, x: e.x, y: e.y, v, col, t, big, stack: Math.min(stack, 3) })); // stack: lift numbers that land together
 }
+// ---- second-class skill visuals (placeholders until the VFX system): devices on the ground, skill areas, beams
+const DEVS = new Map(), DEV_COL = { snare: '#c8a86a', poison: '#7ddc5a', mine: '#7fd4ff', turret: '#ffd27a' };
+const SKCOL = { fire: '#ff9f43', water: '#7fd4ff', wind: '#bfe8ff', shadow: '#b07bff', holy: '#fff3a0' };
+const DOT_COL = { poison: '#8fe05a', burn: '#ff9f43', curse: '#c49bff', acid: '#e8e05a', bleed: '#ff5a5a' };
+function drawSkillArea(f, age) {
+  const e = f.on && ents.get(f.on), cx = e ? e.x : f.x, cy = e ? e.y : f.y, x = (cx + 0.5) * TP, y = (cy + 0.5) * TP + 8, R = f.r * TP, p = Math.min(1, age / Math.max(1, f.ms));
+  ctx.globalAlpha = 0.28 * (1 - p * 0.6); ctx.fillStyle = f.col;
+  for (let yy = -R * 0.5; yy <= R * 0.5; yy += 2) { const w = R * Math.sqrt(Math.max(0, 1 - (yy / (R * 0.5)) ** 2)); ctx.fillRect(Math.round(x - w), Math.round(y + yy), Math.round(w * 2), 2); }
+  ctx.globalAlpha = 0.9 * (1 - p); for (let j = 0; j < 36; j++) { const a = j / 36 * 6.283; ctx.fillRect(Math.round(x + Math.cos(a) * R * (0.4 + 0.6 * p)), Math.round(y + Math.sin(a) * R * 0.5 * (0.4 + 0.6 * p)), 2, 1); }
+  ctx.globalAlpha = 1;
+}
+function drawDevice(d, tn) {
+  const x = (d.x + 0.5) * TP, y = (d.y + 0.5) * TP + 6, c = DEV_COL[d.kind] || '#fff', pulse = 0.6 + Math.sin(tn * 5) * 0.3;
+  if (d.kind === 'turret') { shadow(x, y, 9); R(ctx, x - 6, y - 8, 12, 8, '#7a5a2a'); R(ctx, x - 5, y - 9, 10, 2, '#c8a86a'); R(ctx, x - 1, y - 14, 3, 6, '#5a4020'); R(ctx, x + 1, y - 13, 9, 3, '#a8884a'); ctx.globalAlpha = pulse; R(ctx, x - 2, y - 7, 4, 3, '#7fd4ff'); ctx.globalAlpha = 1; return; }
+  ctx.globalAlpha = 0.35 * pulse; ctx.fillStyle = c; for (let yy = -3; yy <= 3; yy++) { const w = 9 * Math.sqrt(1 - (yy / 3.5) ** 2); ctx.fillRect(Math.round(x - w), Math.round(y + yy), Math.round(w * 2), 1); }
+  ctx.globalAlpha = 1; ctx.fillStyle = c; for (let j = 0; j < 8; j++) { const a = j / 8 * 6.283; ctx.fillRect(Math.round(x + Math.cos(a) * 7), Math.round(y + Math.sin(a) * 3), 2, 2); }
+  R(ctx, x - 2, y - 2, 4, 3, d.kind === 'mine' ? '#e8fbff' : '#5a4020');
+}
 function onFx(m) {
   const t = performance.now();
   if (fx.length > 300) fx.splice(0, fx.length - 300);
@@ -372,12 +391,17 @@ function onFx(m) {
     if (m.from === myId) { lastHit = m.to; lastMyHitT = t; }
     if (!e) return;
     e.hitT = now();
+    if (m.dot) { addNum(e, m.to, '' + m.dmg, DOT_COL[m.dot] || '#9fe07a', false); return; } // damage over time: small coloured numbers, no slash
+    if (m.how === 'evade') { addNum(e, m.to, 'หลบ!', '#9fe7ff', true); return; }
     addNum(e, m.to, m.dmg ? (m.crit ? 'CRIT ' + m.dmg : '' + m.dmg) : 'MISS', m.to === myId ? '#ff6b6b' : m.crit ? '#ffd34d' : m.skill ? '#ff9f43' : m.dmg ? '#ffffff' : '#b9c3d6', m.crit || m.skill);
     if (m.dmg) { e.hurtT = now(); fx.push(fxNew({ k: 'slash', x: e.x, y: e.y, t, skill: m.skill, crit: m.crit, r: Math.random() })); }
   } else if (m.k === 'cast') {
     const a = ents.get(m.id), e = ents.get(m.to), sk = SK[m.s];
     if (a) { a.atkT = a.castT = now(); if (e) face(a, e); fx.push(fxNew({ k: 'sname', id: m.id, v: sk ? sk.th : m.s, t })); }
     const kind = sk && sk.fx || (m.s === 'bolt' ? 'bolt' : m.s === 'cleave' ? 'ring' : '');
+    if (m.x != null) fx.push(fxNew({ k: 'aoe2', x: m.x, y: m.y, r: (sk && sk.r) || 2, ms: Math.max(350, m.ms || 0), t, col: SKCOL[sk && sk.element] || '#7fd4ff' })); // area on the target
+    else if (sk && sk.tier === 2 && sk.type === 'area') fx.push(fxNew({ k: 'aoe2', x: a ? a.x : 0, y: a ? a.y : 0, r: sk.range || 2, ms: 380, t, col: SKCOL[sk.element] || '#ffd34d', on: m.id }));
+    if (m.ms && a) fx.push(fxNew({ k: 'ring', id: m.id, t, col: '#9fe7ff' })); // charging
     if (a && e && (kind === 'bolt' || kind === 'arrow')) fx.push(fxNew({ k: 'proj', from: m.id, to: m.to, x: a.x, y: a.y, t, col: kind === 'arrow' ? '#e8d9a8' : sk && sk.element === 'fire' ? '#ff9f43' : sk && sk.element === 'holy' ? '#fff3a0' : null }));
     if (a && kind === 'ring') fx.push(fxNew({ k: 'ring', id: m.id, t }));
   } else if (m.k === 'die') { const e = ents.get(m.id); if (e) { if (ghosts.length > 60) ghosts.shift(); ghosts.push({ ...e, dieT: now() }); ents.delete(m.id); if (selected === m.id) selected = 0; } }
@@ -393,6 +417,11 @@ function onFx(m) {
     if (e && m.v > 0) addNum(e, m.id, '+' + m.v, '#7dff8a', false);
     if (e && m.sp > 0) addNum(e, m.id, '+' + m.sp + ' SP', '#8fc8ff', false);
   }
+  else if (m.k === 'dev') DEVS.set(m.id, { kind: m.kind, x: m.x, y: m.y, until: t + m.ms, t });
+  else if (m.k === 'devx') { const d = DEVS.get(m.id); DEVS.delete(m.id); if (d && m.boom) fx.push(fxNew({ k: 'aoe2', x: d.x, y: d.y, r: 1.6, ms: 350, t, col: DEV_COL[d.kind] })); }
+  else if (m.k === 'devshot') { const d = DEVS.get(m.id), e = ents.get(m.to); if (d && e) fx.push(fxNew({ k: 'beam', x: d.x, y: d.y - 0.4, to: m.to, t, col: '#ffd27a' })); }
+  else if (m.k === 'chain') { const a = ents.get(m.from); if (a) fx.push(fxNew({ k: 'beam', x: a.x, y: a.y - 0.4, to: m.to, t, col: '#9fe7ff', zig: 1 })); }
+  else if (m.k === 'revive') { fx.push(fxNew({ k: 'lvup', id: m.id, t })); const e = ents.get(m.id); if (e) e.dead = false; if (m.id === myId) $('dead').style.display = 'none'; }
   else if (m.k === 'pdie') { const e = ents.get(m.id); if (e) e.dieT = now(); if (m.id === myId) { $('dead').style.display = 'block'; setAuto(false); clearTarget(); } }
 }
 
@@ -907,6 +936,8 @@ function frame(t) {
     list.push({ y: y - 1, f: () => { const sc = mobScale(g.type), nm = mobSprite(g.type) || 'm_' + g.type; if (sc !== 1) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); drawChar(nm, 'hurt', age, g.row ?? 2, 0, 0, Math.min(1, (1.4 - age) / 0.5)); ctx.restore(); } else drawChar(nm, 'hurt', age, g.row ?? 2, x, y, Math.min(1, (1.4 - age) / 0.5)); } });
   }
   for (const f of fx) if (f.k === 'aoe') drawAoe(f, t - f.t); // boss slam warnings lie on the ground, under everyone
+  for (const f of fx) if (f.k === 'aoe2') drawSkillArea(f, t - f.t);
+  for (const [id, d] of DEVS) { if (t > d.until) { DEVS.delete(id); continue; } drawDevice(d, tn); }
   list.sort((a, b) => a.y - b.y);
   for (const o of list) o.f();
   // fx in art space
@@ -935,6 +966,13 @@ function frame(t) {
       const a = ents.get(f.from), b = ents.get(f.to); if (!a || !b) continue; const p = age / 260;
       const x = ((a.x + (b.x - a.x) * p) + 0.5) * TP, y = ((a.y + (b.y - a.y) * p) + 0.5) * TP - 10;
       ctx.fillStyle = f.col || '#a8d0ff'; ctx.fillRect(Math.round(x) - 3, Math.round(y) - 2, 6, 4); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+    } else if (f.k === 'aoe2') { if (age > f.ms + 200) fxFree(i);
+    } else if (f.k === 'beam') { // chain lightning / turret shot: a short line to the target
+      if (age > 220) { fxFree(i); continue; }
+      const b = ents.get(f.to); if (!b) continue; const x0 = (f.x + 0.5) * TP, y0 = (f.y + 0.5) * TP, x1 = (b.x + 0.5) * TP, y1 = (b.y + 0.5) * TP - 10;
+      ctx.globalAlpha = 1 - age / 220; ctx.fillStyle = f.col; const n = Math.max(4, Math.round(Math.hypot(x1 - x0, y1 - y0) / 4));
+      for (let j = 0; j <= n; j++) { const q = j / n, jx = f.zig ? (Math.sin(j * 2.7 + age) * 3) : 0; ctx.fillRect(Math.round(x0 + (x1 - x0) * q + jx), Math.round(y0 + (y1 - y0) * q), 2, 2); }
+      ctx.globalAlpha = 1;
     } else if (f.k === 'aoe') { // drawn under the characters (see drawAoe); only expires here
       if (age > f.ms + 250) { fxFree(i); continue; }
     } else if (f.k === 'aoe_') {
