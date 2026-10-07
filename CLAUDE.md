@@ -21,8 +21,7 @@ so work continues from where the previous sessions stopped.
 - Don't commit secrets (`.env`, `data/.session-secret`, `data/admins.txt`).
 - Assets: only CC0 / CC-BY (commercial) or the owner's own art. No ripped game assets (no Ragnarok etc.).
   Record every new asset in `docs/ASSET_LICENSES.md` or `docs/VFX_ASSET_LICENSES.md`.
-- Not started on purpose (wait for the owner): Market UI, PvP, Guild War, World Boss, Endgame, second-class VFX
-  (VFX Phase 2), M4 Region 3.
+- Not started on purpose (wait for the owner): Market UI, PvP, Guild War, World Boss, Endgame, M4 Region 3.
 
 ## Project map
 
@@ -46,10 +45,18 @@ characters store `portraitId` only; 1 account = up to 3 characters; roles PLAYER
 Done: M1 cleanup · M2 Verdant Wilds (Lv20-45) · M3 second-class skills · rebrand to ELYNDRA + new login ·
 VFX Phase 1 (basic + first-class skills) · character portraits · Pre-Public Foundation (SQLite, bcrypt, sessions,
 rate limits, GM/ADMIN + ban/mute + audit log, multi-character + character select, mail/friend/market foundation,
-backups, /health, HTTPS-ready). Last commit: see `git log`. 677 tests pass.
+backups, /health, HTTPS-ready) · second-class LPC outfits (12 classes, own class layer + back item: capes,
+wings, packs; `tools/art/lpc/build_chars.py`, LPC_ROOT = blobless clone of the Universal LPC repo) · VFX Phase 2
+(all 60 active second-class skills + level-up / monster death / walk dust; effects drawn 1.7x) — deployed 2026-10-07.
+Last commit: see `git log`.
+
+Art direction notes from the owner (2026-10-07): likes the LPC look extended with library parts; procedurally drawn
+art (tools/art/characters_hd.py, the HD set) was judged too simple — keep it only as a fallback. No free asset pack
+found that matches "HD anime MMORPG" with all classes (reviewed list: ElyndraArt Assets/Art/HD_Pixel_Assets/ASSET_LICENSES.md).
+Monsters still reuse 24 LPC sheets for 91 monsters (open item).
 
 Waiting on the owner:
-1. Review VFX Phase 1, then VFX Phase 2 (72 second-class skills).
+1. Review VFX Phase 1 + 2 in game.
 2. A domain for HTTPS (Caddy + `.env` production — steps in `docs/PRODUCTION_SETUP.md`). Until then the game runs
    as http://168.222.28.53:3400 in development mode — don't open it to the public yet.
 3. Next milestone from the roadmap: M4 Region 3 Ashen Frontier (Lv40-65), then Market (M6).
