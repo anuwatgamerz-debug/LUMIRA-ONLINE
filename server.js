@@ -100,6 +100,10 @@ function tokenOk(a, tok) { const h = sha(tok), now = Date.now(); return !!(a && 
 const guestBy = new Map(), GUEST_PER_HOUR = 6;
 const cleanLook = m => ({ hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(8, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 });
 const validName = n => /^[A-Za-z0-9ก-๙ _]{2,14}$/.test(n);
+// portraits (public/portraits.js — same registry as the client): only listed ids, never a URL
+const POR = require('./public/portraits.js');
+// chosen portrait for a new character: a valid id, or a default for its body type; undefined = invalid id sent
+const pickPortrait = (m, look, name) => m.portrait == null || m.portrait === '' ? POR.portraitFallback(look, name) : POR.portraitAllowed(String(m.portrait), null) ? String(m.portrait) : undefined;
 function guestName() { for (let i = 0; i < 50; i++) { const n = 'Guest' + (1000 + Math.floor(Math.random() * 9000)); if (!nameTaken(n)) return n; } return 'Guest' + Date.now() % 1e6; }
 // ---- Google sign-in: enabled only when a client id is configured (env GOOGLE_CLIENT_ID or data/google-client-id.txt);
 // the ID token is verified by Google's tokeninfo endpoint, the account key is google:<subject>
@@ -143,9 +147,9 @@ function derive(c) {
   if (c.hp > c.maxhp) c.hp = c.maxhp;
   if (c.sp > c.maxsp) c.sp = c.maxsp;
 }
-function newChar(name, look) {
+function newChar(name, look, portraitId) {
   const c = {
-    name, look, lv: 1, exp: 0, zeny: 300, pts: 10, st: { str: 5, agi: 5, vit: 5, int: 5, dex: 5, luk: 5 },
+    name, look, portraitId: portraitId || POR.portraitFallback(look, name), lv: 1, exp: 0, zeny: 300, pts: 10, st: { str: 5, agi: 5, vit: 5, int: 5, dex: 5, luk: 5 },
     map: SPAWN.map, x: SPAWN.x, y: SPAWN.y, inv: [{ id: 1, q: 10 }], eq: { wpn: 20, arm: 30 }, q: { step: 0, k: 0 }, hp: 1, sp: 1, hot: HOT_DEFAULT.slice(),
     cls: 'adventurer', jlv: 1, jexp: 0, save: { ...SPAWN }, store: [], bank: 0, qs: { a: { mq1: { s: 0, k: 0, f: [] } }, d: {}, t: 'mq1', fl: {} },
   };
@@ -155,6 +159,7 @@ function newChar(name, look) {
 const validSpot = (s) => s && MAPS[s.map] && walkable(MAPS[s.map], Math.round(s.x), Math.round(s.y));
 // fill anything an older/hand-edited save may be missing, so the game loop never trips on it
 function fixChar(c) {
+  if (!POR.portraitAllowed(c.portraitId, c)) c.portraitId = POR.portraitFallback(c.look, c.name); // saves from before portraits: a stable default, no new character needed
   const st = c.st = Object.assign({ str: 5, agi: 5, vit: 5, int: 5, dex: 5, luk: 5 }, c.st);
   for (const k in st) st[k] = Math.max(1, Math.min(LV.STAT_CAP, +st[k] || 5));
   c.lv = Math.max(1, Math.min(MAX_LV, c.lv | 0 || 1)); c.exp = c.lv >= MAX_LV ? 0 : Math.max(0, +c.exp || 0);
@@ -252,7 +257,7 @@ function me(p) {
   const c = p.c; derive(c);
   const now = Date.now(), B = buffsOf(c);
   send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit,
-    matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
+    matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, portraitId: c.portraitId, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
     skp: [skPoints(c), skSpent(c)], cls: clsOf(c).id, guest: !!(db.accounts[p.acct] || {}).guest, guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
     buffs: Object.entries(B).filter(([, b]) => b.until > now).map(([id, b]) => ({ id, th: b.th, ms: b.until - now })) } });
 }
@@ -907,6 +912,7 @@ function handle(p, m) {
         if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
         const salt = crypto.randomBytes(12).toString('hex');
         const look = { hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(8, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 };
+        const portrait = pickPortrait(m, look, name); if (!portrait) return send(p, { t: 'err', m: 'ภาพตัวละครไม่ถูกต้อง เลือกใหม่อีกครั้ง' });
         p.authBusy = true;
         hashPw(pw, salt, (e, hash) => {
           p.authBusy = false;
@@ -914,7 +920,7 @@ function handle(p, m) {
           // re-check: another connection may have taken the id/name while we were hashing
           if (db.accounts[u]) return send(p, { t: 'err', m: 'ไอดีนี้มีคนใช้แล้ว' });
           if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
-          db.accounts[u] = { salt, hash, char: newChar(name, look), created: Date.now() };
+          db.accounts[u] = { salt, hash, char: newChar(name, look, portrait), created: Date.now() };
           dirty = true; saveDb();
           enterWorld(p, u); if (m.rem) issueToken(p, u);
         });
@@ -945,9 +951,10 @@ function handle(p, m) {
       const ip = p.ip || '?', now = Date.now(), list = (guestBy.get(ip) || []).filter(t => now - t < 3600000);
       if (list.length >= GUEST_PER_HOUR) return send(p, { t: 'err', m: 'สร้างบัญชี Guest บ่อยเกินไป ลองใหม่ภายหลัง' });
       let name = String(m.name || '').trim(); if (!validName(name) || nameTaken(name)) name = guestName();
+      const gPortrait = pickPortrait(m, cleanLook(m), name); if (!gPortrait) return send(p, { t: 'err', m: 'ภาพตัวละครไม่ถูกต้อง เลือกใหม่อีกครั้ง' });
       list.push(now); guestBy.set(ip, list);
       let u; do { u = 'guest:' + crypto.randomBytes(8).toString('hex'); } while (db.accounts[u]);
-      db.accounts[u] = { salt: '', hash: '', guest: 1, char: newChar(name, cleanLook(m)), created: now }; dirty = true; saveDb();
+      db.accounts[u] = { salt: '', hash: '', guest: 1, char: newChar(name, cleanLook(m), gPortrait), created: now }; dirty = true; saveDb();
       enterWorld(p, u); issueToken(p, u);
     } else if (m.t === 'glogin') {
       if (!googleId()) return send(p, { t: 'err', m: 'ยังไม่ได้เปิดใช้การเข้าสู่ระบบด้วย Google บนเซิร์ฟเวอร์นี้' });
@@ -961,7 +968,8 @@ function handle(p, m) {
           if (!name) return send(p, { t: 'needchar', via: 'google', email: j.email || '' });
           if (!validName(name)) return send(p, { t: 'err', m: 'ชื่อตัวละคร 2-14 ตัวอักษร (ไทย/อังกฤษ/ตัวเลข)' });
           if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
-          db.accounts[u] = { salt: '', hash: '', google: j.email || 1, char: newChar(name, cleanLook(m)), created: Date.now() }; dirty = true; saveDb();
+          const gp = pickPortrait(m, cleanLook(m), name); if (!gp) return send(p, { t: 'err', m: 'ภาพตัวละครไม่ถูกต้อง เลือกใหม่อีกครั้ง' });
+          db.accounts[u] = { salt: '', hash: '', google: j.email || 1, char: newChar(name, cleanLook(m), gp), created: Date.now() }; dirty = true; saveDb();
         }
         enterWorld(p, u); if (m.rem) issueToken(p, u);
       });
@@ -1022,6 +1030,11 @@ function handle(p, m) {
       derive(c); dirty = true; send(p, { t: 'skills', skills: skillDefs(c) }); me(p);
       sys(p, `${first ? 'เรียน' : 'อัป'}สกิล ${S.th} Lv ${sk2(c)[sid]}`, '#9fe7ff');
       return;
+    }
+    case 'portrait': { // change portrait (free for now; locked ones need an unlock). Only registry ids are accepted.
+      const id = String(m.id || '').slice(0, 40);
+      if (!POR.portraitAllowed(id, c)) { send(p, { t: 'portraitfail', m: POR.portraitOf(id) ? 'ภาพนี้ยังไม่ปลดล็อก' : 'ไม่พบภาพนี้' }); break; }
+      c.portraitId = id; dirty = true; me(p); break;
     }
     case 'hot': { // hotbar: 6 slots of owned-or-locked skill ids / null
       if (!Array.isArray(m.h)) return;

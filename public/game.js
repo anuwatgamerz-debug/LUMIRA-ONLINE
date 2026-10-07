@@ -305,6 +305,7 @@ function onMsg(m) {
   switch (m.t) {
     case 'learnfail': toast({ points: 'แต้มสกิลไม่พอ', job: `ต้องการ Job Lv ${m.job}`, max: 'สกิลนี้เลเวลสูงสุดแล้ว', class: 'อาชีพนี้เรียนสกิลนี้ไม่ได้' }[m.r] || 'เรียนสกิลไม่ได้'); break;
     case 'session': store.set(m.guest ? 'ely_guest' : 'ely_session', { u: m.u, tok: m.tok }); break;
+    case 'portraitfail': toast(m.m); $('portmsg').textContent = m.m; break;
     case 'needchar': setMode('gchar'); loginErr('บัญชี Google นี้ยังไม่มีตัวละคร — ตั้งชื่อและเลือกหน้าตาได้เลย'); break;
     case 'bindres': $('bindMsg').textContent = m.m; if (m.ok) { store.set('ely_guest', null); $('bindP').value = ''; } break;
     case 'err': if (m.code === 'session') { const g = store.get('ely_guest'); if (mode === 'guest' && g) store.set('ely_guest', null); else store.set('ely_session', null); }
@@ -312,7 +313,7 @@ function onMsg(m) {
     case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; { const L = $('login'); setBusy(true, 'กำลังเข้าสู่โลก Elyndra...'); L.classList.add('leaving'); setTimeout(() => { L.style.display = 'none'; }, 560); loginBusy = false; } $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked && mode === 'login') localStorage.setItem('lmo_u', $('u').value.trim().toLowerCase()); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6; if (V) V.bind(m.vfx);
       QDEF = m.quests || {}; GUIDE = m.guide || null; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
     case 'map': { const first = !map; map = m.map; snd('map', map, first); } ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
-    case 'me': { const prev = me; me = m.c; updHud(); snd('me', prev, me); break; }
+    case 'me': { const prev = me; me = m.c; updHud(); snd('me', prev, me); if (prev && prev.portraitId !== me.portraitId && $('wPort').style.display === 'block') { $('portmsg').textContent = 'บันทึกภาพตัวละครแล้ว ✔'; $('portSave').disabled = true; } break; }
     case 's': snap(m); break;
     case 'fx': snd('fx', m); onFx(m); break; // sound first: a 'die' removes the entity
     case 'sys': log(m.m, m.col || '#ffe9a8'); break;
@@ -553,6 +554,7 @@ function drawNpcBadge(n, x, y) {
 let portraitT = 0;
 const portC = mkCanvas(64, 64);
 function drawPortrait() {
+  if (window.PORTRAIT && me) { PORTRAIT.setImg($('pimg'), me.portraitId, 'hud'); $('pport').classList.add('hasimg'); } // the chosen portrait (cosmetic); the sprite canvas below stays as a fallback
   const n = heroOf(me.look), L = META.lpc[n], im = img(n), g = $('portrait').getContext('2d');
   if (!L || !im || !anchorsFor(me.look.sex)) { if (!portraitT) portraitT = setTimeout(() => { portraitT = 0; drawPortrait(); }, 400); return; }
   const pg = portC.getContext('2d'); pg.imageSmoothingEnabled = false; pg.clearRect(0, 0, 64, 64);
@@ -665,15 +667,27 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const pct = (a, b) => Math.max(0, Math.min(100, a / b * 100));
 function renderStat() {
   const N = { str: 'STR พลัง', agi: 'AGI ว่องไว', vit: 'VIT อึด', int: 'INT ปัญญา', dex: 'DEX แม่นยำ', luk: 'LUK โชค' };
-  let h = `<div class="chead"><canvas id="cport" width="32" height="32"></canvas><div><div style="font-size:1.6rem;font-weight:500">${esc(me.name)}</div><div style="color:var(--dim)">${(CLSDEF[me.cls] && CLSDEF[me.cls].th) || ''} · Lv ${me.lv} · Job Lv ${me.jlv || 1}${me.jnext ? ` (${Math.floor((me.jexp || 0) / me.jnext * 100)}%)` : ' MAX'}</div>`
+  let h = `<div class="chead">${window.PORTRAIT ? '<img id="cport" class="cpimg" alt="">' : '<canvas id="cport" width="32" height="32"></canvas>'}<div><div style="font-size:1.6rem;font-weight:500">${esc(me.name)}</div><div style="color:var(--dim)">${(CLSDEF[me.cls] && CLSDEF[me.cls].th) || ''} · Lv ${me.lv} · Job Lv ${me.jlv || 1}${me.jnext ? ` (${Math.floor((me.jexp || 0) / me.jnext * 100)}%)` : ' MAX'}</div>`
     + `<div class="bar hp"><i style="width:${pct(me.hp, me.maxhp)}%"></i><b class="num">HP ${me.hp} / ${me.maxhp}</b></div><div class="bar sp"><i style="width:${pct(me.sp, me.maxsp)}%"></i><b class="num">SP ${me.sp} / ${me.maxsp}</b></div></div></div>`;
   h += `<div style="margin-bottom:8px">แต้มเหลือ: <b class="num" style="color:var(--gold)">${me.pts}</b></div><div class="stats">`;
   for (const k in N) h += `<div class="s"><span>${N[k]}</span><span class="num">${me.st[k]} <button data-s="${k}" ${me.pts ? '' : 'disabled'}>+</button></span></div>`;
   h += `</div><div class="stats" style="margin-top:10px;color:var(--dim)"><div>ATK ${me.atk}</div><div>DEF ${me.def}</div><div>HIT ${me.hit}</div><div>FLEE ${me.flee}</div><div>CRIT ${me.crit}%</div><div>ความเร็วตี ${(1000 / me.aspd).toFixed(2)}/วิ</div><div>MATK ${me.matk || 0}</div><div>MDEF ${me.mdef || 0}</div><div>ระยะตี ${me.rng || 1.6}</div><div>ธนาคาร ${(me.bank || 0).toLocaleString()}z</div></div>`;
   $('statbody').innerHTML = h;
   $('statbody').querySelectorAll('button[data-s]').forEach(b => b.onclick = () => send({ t: 'stat', s: b.dataset.s }));
-  const cp = $('cport').getContext('2d'); cp.imageSmoothingEnabled = false; cp.drawImage($('portrait'), 0, 0);
+  if (window.PORTRAIT) { PORTRAIT.setImg($('cport'), me.portraitId, 'hud'); const b = document.createElement('button'); b.id = 'bPortChange'; b.className = 'ghost'; b.style.cssText = 'width:100%;margin-bottom:8px'; b.textContent = '🖼 เปลี่ยนภาพตัวละคร'; b.onclick = openPortraitWin; $('statbody').insertBefore(b, $('statbody').children[1]); }
+  else { const cp = $('cport').getContext('2d'); cp.imageSmoothingEnabled = false; cp.drawImage($('portrait'), 0, 0); }
 }
+// ---- change portrait after creation (free for now; locked portraits show 🔒 and can't be picked)
+let portGal = null, portSel = null;
+function openPortraitWin() {
+  if (!window.PORTRAIT || !me) return;
+  closeWins(); $('wPort').style.display = 'block'; portSel = me.portraitId; $('portmsg').textContent = ''; $('portname').textContent = me.name;
+  const show = id => { PORTRAIT.setImg($('portimg'), id, 'hud'); $('portSave').disabled = id === me.portraitId; };
+  portGal = PORTRAIT.gallery($('portgal'), { sel: portSel, char: { portraits: me.portraits || [] }, onPick: id => { portSel = id; show(id); }, onPreview: id => PORTRAIT.preview(id, me.name) });
+  show(portSel);
+}
+$('portSave').onclick = () => { if (portSel && me && portSel !== me.portraitId) { send({ t: 'portrait', id: portSel }); $('portSave').disabled = true; } };
+$('portBig').onclick = () => { if (portSel) PORTRAIT.preview(portSel, me && me.name); };
 const EQS = [['wpn', 'อาวุธ'], ['head', 'หมวก'], ['arm', 'เสื้อ'], ['acc1', 'เครื่องประดับ'], ['acc2', 'เครื่องประดับ'], ['chead', 'คอสตูมหัว']];
 const ST_LAB = [['atk', 'ATK'], ['matk', 'MATK'], ['def', 'DEF'], ['mdef', 'MDEF'], ['hp', 'MaxHP'], ['sp', 'MaxSP'], ['str', 'STR'], ['agi', 'AGI'], ['vit', 'VIT'], ['int', 'INT'], ['dex', 'DEX'], ['luk', 'LUK'], ['crit', 'CRIT'], ['flee', 'FLEE'], ['aspdPct', 'ASPD%']];
 const statOf = it => it.ty === 'use' ? [it.heal ? `HP +${it.heal}` : '', it.sp ? `SP +${it.sp}` : '', it.recall ? 'กลับจุดเซฟ' : ''].filter(Boolean).join(' ') : it.cosmetic ? 'คอสตูม (เปลี่ยนรูปลักษณ์เท่านั้น)' : ST_LAB.filter(([k]) => it[k]).map(([k, l]) => `${l} +${it[k]}`).join(' ') + (it.range ? ` · ระยะ ${it.range}` : '');
@@ -1158,14 +1172,28 @@ function setMode(m) {
   $('tReg').textContent = m === 'reg' || m === 'gchar' ? '‹ กลับไปหน้าเข้าสู่ระบบ' : 'ยังไม่มีบัญชี? สร้างตัวละครใหม่';
   L.classList.toggle('reg', m === 'reg'); L.classList.toggle('gchar', m === 'gchar'); L.classList.toggle('guestm', m === 'guest');
   $('p').autocomplete = m === 'reg' ? 'new-password' : 'current-password';
+  if (m === 'reg' || m === 'gchar') crInit();
   setBusy(false); $('err').textContent = ''; loginHint(); loginLayout();
   if (m === 'google') renderGoogle();
 }
 $('tLogin').onclick = () => setMode('login'); $('tGuest').onclick = () => setMode('guest'); $('tGoogle').onclick = () => setMode('google');
 $('tReg').onclick = () => setMode(mode === 'reg' || mode === 'gchar' ? 'login' : 'reg');
 const OUTFIT_TH = ['ชุดเดินทางสีฟ้า', 'ชุดเดินทางสีน้ำตาล', 'ชุดเดินทางสีเขียว', 'ชุดเดินทางสีแดง', 'ชุดเดินทางสีม่วง']; // everyone starts as an Adventurer: the choice is the tunic colour
+// ---- portrait on the create-character screen: gallery + live HUD preview (cosmetic only; default follows the body type until the player picks one)
+let crPortrait = null, crPicked = false, crGal = null;
+function crShow() { if (!window.PORTRAIT) return; PORTRAIT.setImg($('crimg'), crPortrait, 'hud'); $('crname').textContent = $('cn').value.trim() || 'ชื่อตัวละคร'; }
+function crInit() {
+  if (!window.PORTRAIT) { $('crgal').parentNode.style.display = 'none'; $('crhud').style.display = 'none'; return; }
+  if (!crPortrait) crPortrait = PORTRAIT.fallback(look, '');
+  if (!crGal) crGal = PORTRAIT.gallery($('crgal'), { sel: crPortrait, onPick: id => { crPortrait = id; crPicked = true; crShow(); }, onPreview: id => PORTRAIT.preview(id, $('cn').value.trim()) });
+  crShow();
+}
+$('cn').addEventListener('input', () => { crShow(); $('crerr').textContent = ''; });
+// name check before sending (the server checks again, and also reports a taken name) — errors stay on this screen
+function nameErr(n) { if (!n) return 'ตั้งชื่อตัวละครก่อน'; if (n.length < 2 || n.length > 14) return 'ชื่อตัวละครต้องยาว 2-14 ตัวอักษร'; if (!/^[A-Za-z0-9ก-๙ _]+$/.test(n)) return 'ชื่อใช้ได้เฉพาะ ไทย / อังกฤษ / ตัวเลข / ช่องว่าง / _'; return ''; }
 document.querySelectorAll('.sel button').forEach(b => b.onclick = () => {
   const k = b.dataset.k, L = { cc: 5, sex: 2, hair: 6, hc: 9 }[k]; look[k] = (look[k] + +b.dataset.d + L) % L;
+  if (k === 'sex' && !crPicked && window.PORTRAIT) { crPortrait = PORTRAIT.fallback(look, ''); if (crGal) crGal.set(crPortrait); crShow(); }
   $('v_cc').textContent = OUTFIT_TH[look.cc]; $('v_sex').textContent = look.sex ? 'หญิง' : 'ชาย'; $('v_hair').textContent = HAIR_STYLE_TH[look.hair]; $('v_hc').textContent = HAIR_TH[look.hc];
 });
 (function prev() {
@@ -1183,7 +1211,7 @@ function setBusy(b, txt) {
   $('go').innerHTML = b ? `<span class="spin"></span>${txt || (mode === 'reg' || mode === 'gchar' ? 'กำลังสร้างตัวละคร...' : 'กำลังเข้าสู่ระบบ...')}` : idle;
   $('guestGo').innerHTML = b && mode === 'guest' ? '<span class="spin"></span>กำลังเข้าสู่โลก Elyndra...' : '👤 เข้าเล่นแบบ Guest';
 }
-function loginErr(t) { const e = $('err'); e.textContent = t; e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); }
+function loginErr(t) { if ((mode === 'reg' || mode === 'gchar') && /ชื่อ|ภาพ/.test(t || '')) $('crerr').textContent = t; const e = $('err'); e.textContent = t; e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); }
 function loginHint() {
   const sv = store.get('ely_session'), h = $('lhint');
   h.textContent = mode === 'login' && sv && !/^(guest|google):/.test(sv.u) && $('u').value.trim().toLowerCase() === sv.u && !$('p').value ? '✓ จดจำไว้ในอุปกรณ์นี้แล้ว — กด "เข้าเกม" ได้เลย' : '';
@@ -1192,19 +1220,20 @@ function startLogin(msg, txt) { $('err').textContent = ''; setBusy(true, txt); i
 $('go').onclick = () => {
   if (loginBusy) return;
   const u = $('u').value.trim().toLowerCase(), p = $('p').value, rem = $('rem').checked;
-  if (mode === 'gchar') { const name = $('cn').value.trim(); if (!name) return loginErr('ตั้งชื่อตัวละครก่อน'); return startLogin({ t: 'glogin', cred: gcred, name, ...look, rem: 1 }); }
+  if (mode === 'gchar') { const name = $('cn').value.trim(), ne = nameErr(name); if (ne) { $('crerr').textContent = ne; $('cn').focus(); return; } return startLogin({ t: 'glogin', cred: gcred, name, ...look, portrait: crPortrait || undefined, rem: 1 }); }
   const sv = store.get('ely_session');
   if (mode === 'login' && !p && sv && sv.u === u) return startLogin({ t: 'tlogin', u, tok: sv.tok });
+  if (mode === 'reg') { const ne = nameErr($('cn').value.trim()); if (ne) { $('crerr').textContent = ne; $('cn').focus(); return; } }
   if (!u || !p) return loginErr('กรอกอีเมล/ไอดี และรหัสผ่าน');
-  if (mode === 'reg' && !$('cn').value.trim()) return loginErr('ตั้งชื่อตัวละครก่อน');
   if (!rem) store.set('ely_session', null);
-  startLogin(mode === 'reg' ? { t: 'register', u, p, rem, name: $('cn').value.trim(), ...look } : { t: 'login', u, p, rem });
+  startLogin(mode === 'reg' ? { t: 'register', u, p, rem, name: $('cn').value.trim(), ...look, portrait: crPortrait || undefined } : { t: 'login', u, p, rem });
 };
 function guestLogin() {
   if (loginBusy) return; if (mode !== 'guest') setMode('guest');
   const g = store.get('ely_guest');
   if (g && g.u && g.tok) return startLogin({ t: 'tlogin', u: g.u, tok: g.tok, guest: 1 }, 'กำลังเข้าสู่โลก Elyndra...');
   const rnd = { sex: Math.random() < 0.5 ? 0 : 1, hair: Math.floor(Math.random() * 6), hc: Math.floor(Math.random() * 9), cc: Math.floor(Math.random() * 5) };
+  if (window.PORTRAIT) { const l = PORTRAIT.list.filter(x => x.type === 'NORMAL' && x.sex === (rnd.sex ? 'f' : 'm')); if (l.length) rnd.portrait = l[Math.floor(Math.random() * l.length)].id; }
   startLogin({ t: 'guest', ...rnd }, 'กำลังเข้าสู่โลก Elyndra...');
 }
 $('guestGo').onclick = guestLogin; $('altGuest').onclick = guestLogin;

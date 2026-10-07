@@ -107,3 +107,11 @@ python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้น�
 |---|---|---|
 | `public/assets/branding/elyndra-logo*.png/.webp`, `elyndra-emblem.png`, `favicon*`, `icon-*.png`, `apple-touch-icon.png` | โลโก้ ไอคอน favicon PWA | ภาพที่เจ้าของเกม ELYNDRA ONLINE ส่งมา (ต้นฉบับใน `tools/art/branding_source/`) ตัด/ทำความสะอาดขอบด้วย `tools/art/build_branding.py` |
 | `public/assets/branding/login-bg-desktop.webp`, `login-bg-mobile.webp`, `cover-desktop.webp`, `cover-mobile.webp`, `og-cover.jpg` | พื้นหลัง Login, ภาพปก, ภาพแชร์โซเชียล | ภาพที่เจ้าของเกมส่งมา (ต้นฉบับใน `tools/art/branding_source/`) |
+
+## Character portraits (2026-10-07)
+
+| Files | Source | License | Notes |
+|---|---|---|---|
+| `public/assets/import/portraits/portrait_001…008.png` (originals, 1254 px) | Supplied by the game owner for ELYNDRA ONLINE | Owner's own game art | Kept untouched as sources |
+| `public/assets/portraits/full|thumbnails|hud/*.webp` | Built from the originals by `tools/art/build_portraits.py` (resize 512 / 192 / 256 px, face-centred crops) | Same as originals | Registry: `public/portraits.js` |
+| `public/assets/portraits/portrait_default.png` | Navy medallion + ELYNDRA emblem (`assets/branding/elyndra-emblem.png`) | Same as branding | Fallback for old saves / missing files |

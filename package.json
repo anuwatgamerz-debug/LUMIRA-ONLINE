@@ -16,7 +16,8 @@
     "test:verdant": "node tests/run.js verdant",
     "test:brand": "node tests/run.js brand",
     "test:skills2": "node tests/run.js skills2",
-    "test:vfx": "node tests/run.js vfx"
+    "test:vfx": "node tests/run.js vfx",
+    "test:portrait": "node tests/run.js portrait"
   },
   "keywords": [],
   "author": "",

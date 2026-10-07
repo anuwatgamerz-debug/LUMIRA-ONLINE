@@ -23,9 +23,10 @@ function openPlayerMenu(id) {
 function fillPlayerMenu(id) {
   const e = ents.get(+id) || {}, info = PINFO[id] || {}, inParty = PARTY.id && e.party === PARTY.id;
   const box = $('pmenu');
-  box.innerHTML = `<div class="pmh"><b>${esc(e.name || info.name || '')}</b><small>Lv ${e.lv || info.lv || '?'} · ${esc(SOC_CLS(e.cls || info.cls))}${(e.guild || info.guild) ? ` · &lt;${esc(e.guild || info.guild)}&gt;` : ''}</small></div>
+  box.innerHTML = `<div class="pmh" style="flex-direction:row;align-items:center">${info.portraitId && window.PORTRAIT ? '<img class="pmp" alt="">' : ''}<div style="display:flex;flex-direction:column;min-width:0"><b>${esc(e.name || info.name || '')}</b><small>Lv ${e.lv || info.lv || '?'} · ${esc(SOC_CLS(e.cls || info.cls))}${(e.guild || info.guild) ? ` · &lt;${esc(e.guild || info.guild)}&gt;` : ''}</small></div></div>
     <div class="pmb"><button data-a="info">👤 ดูข้อมูล</button><button data-a="whisper">💬 กระซิบ</button><button data-a="trade">⇄ แลกเปลี่ยน / ซื้อขาย</button>
     <button data-a="party" ${inParty ? 'disabled' : ''}>⚑ ${inParty ? 'อยู่ในปาร์ตี้แล้ว' : 'ชวนเข้าปาร์ตี้'}</button><button data-a="guild" ${(e.guild || info.guild) ? 'disabled' : ''}>🛡 ชวนเข้ากิลด์</button><button data-a="x" class="ghost">ปิด</button></div>`;
+  const pim = box.querySelector('.pmp'); if (pim) PORTRAIT.setImg(pim, info.portraitId, 'hud');
   box.querySelectorAll('button').forEach(b => b.onclick = () => {
     const a = b.dataset.a; box.style.display = 'none';
     if (a === 'whisper') { openChat(false); chTab = 'whisper'; $('chtabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.ch === 'whisper')); renderChatList(); $('wto').value = e.name || info.name || ''; $('ci').focus(); }
@@ -52,9 +53,10 @@ function renderParty() {
   const B = $('partybody'); if (!B) return;
   if (!PARTY.id) { B.innerHTML = '<div class="note">ยังไม่มีปาร์ตี้ · แตะตัวละครผู้เล่นคนอื่นแล้วเลือก "ชวนเข้าปาร์ตี้" (สูงสุด 6 คน)<br>สมาชิกที่อยู่ใกล้กัน (แผนที่เดียวกัน ไม่เกิน 15 ช่อง) จะแบ่ง EXP กัน +10% ต่อสมาชิกเพิ่ม</div>'; return; }
   const lead = PARTY.leader === myId;
-  B.innerHTML = PARTY.members.map(o => `<div class="li"><div class="grow"><b style="color:${o.id === PARTY.leader ? 'var(--gold)' : '#e8e2cc'}">${o.id === PARTY.leader ? '★ ' : ''}${esc(o.name)}</b> <small>Lv ${o.lv} · ${esc(SOC_CLS(o.cls))}</small>
-    <div class="bar hp" style="height:1rem;margin-top:.2rem"><i style="width:${Math.max(0, Math.min(100, o.hp / o.maxhp * 100))}%"></i><b class="num" style="font-size:.75rem;line-height:1rem">${o.hp}/${o.maxhp}</b></div><small class="st">📍 ${esc(o.mapName)} (${o.x},${o.y})</small></div>
+  B.innerHTML = PARTY.members.map(o => `<div class="li">${window.PORTRAIT ? `<img class="pmp" data-p="${esc(o.portraitId || '')}" alt="">` : ''}<div class="grow"><b style="color:${o.id === PARTY.leader ? 'var(--gold)' : '#e8e2cc'}">${o.id === PARTY.leader ? '★ ' : ''}${esc(o.name)}</b> <small>Lv ${o.lv} · ${esc(SOC_CLS(o.cls))}</small>
+    <div class="bar hp" style="height:1rem;margin-top:.2rem"><i style="width:${Math.max(0, Math.min(100, o.hp / o.maxhp * 100))}%"></i><b class="num" style="font-size:.75rem;line-height:1rem">${o.hp}/${o.maxhp}</b></div>${o.maxsp ? `<div class="bar sp" style="height:.7rem;margin-top:.15rem"><i style="width:${Math.max(0, Math.min(100, o.sp / o.maxsp * 100))}%"></i></div>` : ''}<small class="st">📍 ${esc(o.mapName)} (${o.x},${o.y})</small></div>
     ${lead && o.id !== myId ? `<button data-k="${o.id}" class="ghost">เชิญออก</button>` : ''}</div>`).join('') + '<button id="pLeave" class="ghost" style="margin-top:.6rem;width:100%">ออกจากปาร์ตี้</button><div class="note">แชทปาร์ตี้: เปิดหน้าต่างแชท → แท็บ ปาร์ตี้</div>';
+  B.querySelectorAll('img.pmp').forEach(im => PORTRAIT.setImg(im, im.dataset.p, 'hud'));
   B.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => send({ t: 'party', a: 'kick', id: +b.dataset.k }));
   $('pLeave').onclick = () => send({ t: 'party', a: 'leave' });
 }

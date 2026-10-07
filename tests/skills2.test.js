@@ -101,9 +101,11 @@ async function run(srv, R) {
     ok((await castOk(k, 'kn_stance')) === 'cd', 'cooldown enforced');
     ok((await castOk(k, 'kn_bash', 999999)) === 'target', 'target validation: unknown monster');
     // stun + weapon rule
-    const mob = await nearMob(k, ['mossbear', 'vinesnake', 'leafgoblin']);
+    let mob = await nearMob(k, ['mossbear', 'vinesnake', 'leafgoblin']);
     if (mob) {
-      await sleep(500); const r = await castOk(k, 'kn_bash', mob.id); await sleep(300);
+      await sleep(500); let r = await castOk(k, 'kn_bash', mob.id);
+      for (let i = 0; i < 3 && r === 'range'; i++) { await sleep(700); mob = await nearMob(k, ['mossbear', 'vinesnake', 'leafgoblin']) || mob; r = await castOk(k, 'kn_bash', mob.id); } // the monster stepped away: walk up again
+      await sleep(300);
       ok(r === 'ok' && (stOf(k, mob.id) & 1), 'Shield Bash: damage + stun (status bit on the monster)', r + ' st=' + stOf(k, mob.id));
       k.send({ t: 'cast', s: 'kn_wave', id: 0 }); const hits = await k.wait(m => m.t === 'fx' && m.k === 'hit' && m.from === k.id && m.skill, 3000);
       ok(!!hits, 'AoE: Shield Wave hits the monsters around');

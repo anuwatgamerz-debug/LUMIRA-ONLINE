@@ -457,6 +457,37 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 .trlist .slot,.trbag .slot{position:relative;font-size:.8rem;text-align:center;padding:.2rem;cursor:pointer}.trlist .slot canvas,.trbag .slot canvas{width:2.6rem;height:2.6rem;display:block;margin:0 auto}
 .trx{position:absolute;top:0;right:0;padding:0 .3rem;min-height:1.4rem;font-size:.7rem}.trz{color:var(--gold);font-size:.95rem}
 .trbtn{display:flex;gap:.4rem;margin-top:.5rem}.trbtn button{flex:1;min-height:2.8rem}
+
+/* ---- character portraits (public/portraits.js) */
+#pimg{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 40%;display:none}
+#pport.hasimg #pimg{display:block}#pport.hasimg #portrait{visibility:hidden}
+.pgal .pfil{display:flex;gap:.3em;overflow-x:auto;padding-bottom:.3em;scrollbar-width:none;-webkit-overflow-scrolling:touch}.pgal .pfil::-webkit-scrollbar{display:none}
+.pgal .pfil button{flex:none;padding:.25em .7em;font-size:.72em;border-radius:99px;background:#0e1534;border:1px solid #39457a;color:#c9cfe6}
+.pgal .pfil button.on{background:linear-gradient(#e8c46a,#b8903a);color:#1a1530;border-color:#ffe59a}
+.pgal .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4em;max-height:15em;overflow-y:auto;padding:.2em}
+.pgal .pcell{position:relative;aspect-ratio:1;padding:0;border-radius:.6em;overflow:hidden;border:2px solid #2a3360;background:radial-gradient(circle at 50% 35%,#2b3a78,#0d1230);min-height:44px}
+.pgal .pcell img{width:100%;height:100%;object-fit:cover;display:block}
+.pgal .pcell.on{border-color:#ffd56a;box-shadow:0 0 0 2px #7fd4ff,0 0 14px #4fb4ff}
+.pgal .pcell.lock img{filter:grayscale(1) brightness(.45)}.pgal .pcell i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:1.3em}
+.crhud{display:flex;align-items:center;gap:.55em;padding:.45em .6em;border-radius:.8em;background:linear-gradient(180deg,#1a2452,#0c1131);border:1px solid #c9a24e;min-width:0;flex:1}
+.crhud .pc{flex:none;width:3.6em;height:3.6em;border-radius:50%;overflow:hidden;border:2px solid #e8c46a;box-shadow:0 0 0 2px #0a0d1c,0 0 10px #3d8bf0;background:radial-gradient(#3b4a8a,#151b38)}
+.crhud .pc img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
+.crhud .pnm{flex:1;min-width:0}.crhud .pnm b{display:block;font-size:.9em;color:#ffe9a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.crhud .pnm small{display:block;font-size:.65em;color:#a9b0c8}
+.phb{height:.45em;border-radius:99px;background:#0a0d1c;margin-top:.25em;overflow:hidden}.phb i{display:block;height:100%;width:86%}.phb.hp i{background:linear-gradient(90deg,#c43a3a,#ff6b6b)}.phb.sp i{background:linear-gradient(90deg,#2a6bd0,#6fb8ff);width:72%}
+.crhud.big{margin-bottom:.6rem}.crhud.big .pc{width:5.2rem;height:5.2rem}.crhud.big .pnm b{font-size:1.4rem}.crhud.big .pnm small{font-size:1rem}
+.crtop{display:flex;align-items:center;gap:.6em;margin-top:.3em}.crtop #preview{flex:none;margin:0!important}
+.crlab{font-size:.8em;color:#e8c46a;margin:.5em 0 .3em}.crlab small{color:#a9b0c8;font-size:.85em}
+.crerr{color:#ff8b8b;font-size:.78em;min-height:0;text-align:center}.crerr:empty{display:none}
+#login.land #regbox .crwrap{display:grid;grid-template-columns:1fr 1.15fr;grid-template-areas:'a b' 'c b';gap:.2em 1em;align-items:start}#login.land .crA{grid-area:a}#login.land .crB{grid-area:b}#login.land .crC{grid-area:c}#login.land #regbox .crB .crlab{margin-top:0}
+#login.land.reg .box,#login.land.gchar .box{width:min(94vw,820px)}
+#pbig{position:fixed;inset:0;z-index:90;background:#05081acc;display:none;align-items:center;justify-content:center;padding:16px}
+#pbig .pbx{position:relative;width:min(92vw,420px);background:linear-gradient(180deg,#131c44,#0a1030);border:2px solid #c9a24e;border-radius:14px;padding:14px;text-align:center;color:#f1ead8}
+#pbig .pfull{width:100%;max-height:52vh;object-fit:contain;display:block;margin:auto;filter:drop-shadow(0 0 18px #3d8bf088)}#pbig .pth{color:#e8c46a;margin:.3em 0 .5em}
+#pbig .phud{display:flex;align-items:center;gap:.6em;text-align:left;background:#0c1131;border:1px solid #39457a;border-radius:10px;padding:.5em}
+#pbig .phud .pc{width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid #e8c46a;box-shadow:0 0 10px #3d8bf0;flex:none}#pbig .phud .pc img{width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+#pbig .pnm{flex:1}#pbig .pnm b{color:#ffe9a8}#pbig .px{position:absolute;right:8px;top:8px;padding:2px 9px;z-index:2}
+.chead .cpimg{width:4.6rem;height:4.6rem;border-radius:50%;object-fit:cover;object-position:50% 40%;border:2px solid var(--gold2);flex:none}
+.pmh .pmp,.li .pmp{width:2.6rem;height:2.6rem;border-radius:50%;object-fit:cover;object-position:50% 40%;border:2px solid #c9a24e;flex:none;margin-right:.4rem;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -480,12 +511,18 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
       </div>
       <div id="regbox" style="display:none">
         <label for="cn">ชื่อตัวละคร</label><div class="fld"><i>✦</i><input id="cn" maxlength="14" placeholder="2-14 ตัวอักษร"></div>
-        <canvas id="preview" width="96" height="96"></canvas>
-        <div class="note" style="text-align:center;margin-top:4px;font-size:.7em">ทุกคนเริ่มเป็น นักผจญภัย Lv1 — เลือกอาชีพได้ที่ Lv 10</div>
+        <div id="crerr" class="crerr" role="alert"></div>
+        <div class="crwrap"><div class="crA">
+        <div class="crtop"><canvas id="preview" width="96" height="96"></canvas>
+          <div class="crhud" id="crhud"><span class="pc"><img id="crimg" alt="" src="assets/portraits/portrait_default.png"></span><div class="pnm"><b id="crname">ชื่อตัวละคร</b><small>นักผจญภัย Lv 1</small><div class="phb hp"><i></i></div><div class="phb sp"><i></i></div></div></div></div>
+        <div class="note" style="text-align:center;margin-top:4px;font-size:.7em">ทุกคนเริ่มเป็น นักผจญภัย Lv1 — เลือกอาชีพได้ที่ Lv 10 · ภาพตัวละครไม่มีผลต่อค่าสถานะ</div>
+        </div><div class="crB"><div class="crlab">เลือกภาพตัวละคร <small>(แตะภาพที่เลือกอีกครั้งเพื่อดูภาพใหญ่)</small></div><div id="crgal"></div></div>
+        <div class="crC"><div class="crlab">รูปร่างตัวละครในแผนที่</div>
         <div class="sel"><small>ชุด</small><button data-k="cc" data-d="-1">◀</button><span id="v_cc">ชุดเดินทางสีฟ้า</span><button data-k="cc" data-d="1">▶</button></div>
         <div class="sel"><small>รูปร่าง</small><button data-k="sex" data-d="-1">◀</button><span id="v_sex">ชาย</span><button data-k="sex" data-d="1">▶</button></div>
         <div class="sel"><small>ทรงผม</small><button data-k="hair" data-d="-1">◀</button><span id="v_hair">ทรงเดิม</span><button data-k="hair" data-d="1">▶</button></div>
         <div class="sel"><small>สีผม</small><button data-k="hc" data-d="-1">◀</button><span id="v_hc">ธรรมชาติ</span><button data-k="hc" data-d="1">▶</button></div>
+        </div></div>
       </div>
       <button id="go" type="button">เข้าเกม ›</button>
       <div class="row" style="justify-content:center;margin-top:.5em"><button id="tReg" class="lnk" type="button">ยังไม่มีบัญชี? สร้างตัวละครใหม่</button></div>
@@ -503,7 +540,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 <div id="credit"><a href="credits.html" target="_blank">เครดิตภาพ</a></div>
 <div id="hud">
   <div id="pstat" class="frame">
-    <button id="pport" aria-label="ข้อมูลตัวละคร"><canvas id="portrait" width="32" height="32"></canvas><span id="lvb" class="num">Lv 1</span></button>
+    <button id="pport" aria-label="ข้อมูลตัวละคร"><img id="pimg" alt="" src="assets/portraits/portrait_default.png"><canvas id="portrait" width="32" height="32"></canvas><span id="lvb" class="num">Lv 1</span></button>
     <div class="nm"><span id="hName">-</span><span id="hJob"></span></div>
     <div class="bar hp"><i id="hpb"></i><b id="hpt" class="num"></b></div>
     <div class="bar sp"><i id="spb"></i><b id="spt" class="num"></b></div>
@@ -555,6 +592,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
   <div id="wBag" class="win frame"><h3><span>กระเป๋า</span><button class="x">✕</button></h3><div class="note" style="margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด)</div><div class="grid" id="eqgrid"></div><div class="note" style="margin:8px 0 6px">ของในกระเป๋า (แตะเพื่อใช้/สวม)</div><div class="grid" id="invgrid"></div></div>
   <div id="wEquip" class="win frame"><h3><span>อุปกรณ์</span><button class="x">✕</button></h3><div id="equipbody"></div></div>
   <div id="wStat" class="win frame"><h3><span>ข้อมูลตัวละคร</span><button class="x">✕</button></h3><div id="statbody"></div></div>
+  <div id="wPort" class="win frame"><h3><span>เปลี่ยนภาพตัวละคร</span><button class="x">✕</button></h3><div class="crhud big" id="porthud"><span class="pc"><img id="portimg" alt="" src="assets/portraits/portrait_default.png"></span><div class="pnm"><b id="portname"></b><small>ภาพนี้แสดงในกรอบตัวละคร ปาร์ตี้ และข้อมูลผู้เล่น (ไม่มีผลต่อค่าสถานะ)</small></div></div><div id="portgal"></div><div class="row" style="gap:.5rem;margin-top:.6rem"><button id="portSave" style="flex:1">บันทึกภาพนี้</button><button id="portBig" class="ghost">ดูภาพใหญ่</button></div><div class="note" id="portmsg"></div></div>
   <div id="wSkill" class="win frame"><h3><span>สกิล</span><button class="x">✕</button></h3><div id="skillbody"></div></div>
   <div id="wQuest" class="win frame"><h3><span>ภารกิจ</span><button class="x">✕</button></h3><div id="questbody"></div></div>
   <div id="wParty" class="win frame"><h3><span>ปาร์ตี้</span><button class="x">✕</button></h3><div id="partybody"></div></div>
@@ -607,6 +645,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 <script src="audio-synth.js"></script>
 <script src="audio.js"></script>
 <script src="hud.js"></script>
+<script src="portraits.js"></script>
 <script src="vfx.js"></script>
 <script src="game.js"></script>
 <script src="world.js"></script>

@@ -36,7 +36,7 @@ module.exports = function social(api) {
   // ------------------------------------------------------------------ party
   const parties = new Map(); let partySeq = 1;
   const partyOf = p => p.party && parties.get(p.party);
-  function partyView(pt) { return { t: 'party', id: pt.id, leader: pt.leader, members: [...pt.members].map(byId).filter(Boolean).map(o => ({ id: o.id, name: o.c.name, lv: o.c.lv, cls: o.c.cls, hp: o.c.hp, maxhp: o.c.maxhp, map: o.c.map, mapName: (MAPS[o.c.map] || {}).name || o.c.map, x: Math.round(o.c.x), y: Math.round(o.c.y) })) }; }
+  function partyView(pt) { return { t: 'party', id: pt.id, leader: pt.leader, members: [...pt.members].map(byId).filter(Boolean).map(o => ({ id: o.id, name: o.c.name, portraitId: o.c.portraitId, maxsp: o.c.maxsp, sp: o.c.sp, lv: o.c.lv, cls: o.c.cls, hp: o.c.hp, maxhp: o.c.maxhp, map: o.c.map, mapName: (MAPS[o.c.map] || {}).name || o.c.map, x: Math.round(o.c.x), y: Math.round(o.c.y) })) }; }
   function partySync(pt) { const v = partyView(pt); for (const id of pt.members) { const o = byId(id); if (online(o)) send(o, v); } }
   function partyLeave(p, why) {
     const pt = partyOf(p); if (!pt) return; pt.members.delete(p.id); p.party = 0;
@@ -109,7 +109,7 @@ module.exports = function social(api) {
     const c = p.c;
     switch (m.t) {
       case 'rank': send(p, rankFor(p, String(m.k || 'level'))); return true;
-      case 'pinfo': { const o = byId(m.id); if (!o || !o.c) return true; send(p, { t: 'pinfo', id: o.id, name: o.c.name, lv: o.c.lv, cls: o.c.cls, guild: o.c.guild || '', party: !!(o.party && o.party === p.party), kills: o.c.kills || 0 }); return true; }
+      case 'pinfo': { const o = byId(m.id); if (!o || !o.c) return true; send(p, { t: 'pinfo', id: o.id, name: o.c.name, portraitId: o.c.portraitId, lv: o.c.lv, cls: o.c.cls, guild: o.c.guild || '', party: !!(o.party && o.party === p.party), kills: o.c.kills || 0 }); return true; }
       case 'party': {
         const a = String(m.a || '');
         if (a === 'invite') {

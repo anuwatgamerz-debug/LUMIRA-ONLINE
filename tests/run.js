@@ -13,11 +13,12 @@ const verdant = require('./verdant.test');
 const brand = require('./brand.test');
 const skills2 = require('./skills2.test');
 const vfx = require('./vfx.test');
+const portrait = require('./portrait.test');
 
 (async () => {
   const only = process.argv[2];
   const accounts = {};
-  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...aq.SEEDS, ...autocfg.SEEDS, ...social.SEEDS, ...verdant.SEEDS, ...brand.SEEDS, ...skills2.SEEDS, ...vfx.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = H.account(ch);
+  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...aq.SEEDS, ...autocfg.SEEDS, ...social.SEEDS, ...verdant.SEEDS, ...brand.SEEDS, ...skills2.SEEDS, ...vfx.SEEDS, ...portrait.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = H.account(ch);
   const srv = await H.startServer(accounts, 3400 + 100 + Math.floor(Math.random() * 400));
   const reps = [];
   try {
@@ -27,6 +28,7 @@ const vfx = require('./vfx.test');
     if (!only || only === 'server' || only === 'social') { console.log('\n=== social suite (rank / party / guild / trade) ==='); const r = H.reporter('social'); reps.push(r); await social.run(srv, r); }
     if (!only || only === 'server' || only === 'verdant') { console.log('\n=== M1 cleanup + Region 2 Verdant Wilds suite ==='); const r = H.reporter('verdant'); reps.push(r); await verdant.run(srv, r); }
     if (!only || only === 'server' || only === 'skills2') { console.log('\n=== M3 second class skills suite ==='); const r = H.reporter('skills2'); reps.push(r); await skills2.run(srv, r); }
+    if (!only || only === 'ui' || only === 'portrait') { console.log('\n=== character portrait suite ==='); const r = H.reporter('portrait'); reps.push(r); await portrait.run(srv, r); }
     if (!only || only === 'ui' || only === 'vfx') { console.log('\n=== ELYNDRA VFX Phase 1 suite ==='); const r = H.reporter('vfx'); reps.push(r); await vfx.run(srv, r); }
     if (!only || only === 'ui' || only === 'brand') { console.log('\n=== ELYNDRA ONLINE rebrand + login suite ==='); const r = H.reporter('brand'); reps.push(r); await brand.run(srv, r); }
     if (!only || only === 'ui' || only === 'auto') { console.log('\n=== AUTO settings + item art suite ==='); const r = H.reporter('auto-settings'); reps.push(r); await autocfg.run(srv, r); }
