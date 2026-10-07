@@ -68,6 +68,9 @@ function saveDb() {
 }
 setInterval(saveDb, 15000);
 // same scrypt params as the old scryptSync call, so existing hashes still match
+// failed logins per account: 10 wrong passwords within 10 minutes lock the account's login for 5 minutes
+const loginFails = new Map(), LOGIN_MAX_FAILS = 10, LOGIN_LOCK_MS = 300000;
+setInterval(() => { const now = Date.now(); for (const [u, f] of loginFails) if (now - f.t > 600000 && !(f.lock > now)) loginFails.delete(u); }, 60000);
 function hashPw(pw, salt, cb) { crypto.scrypt(pw, salt, 32, (e, k) => cb(e, k && k.toString('hex'))); }
 function samePw(a, b) { const x = Buffer.from(a, 'hex'), y = Buffer.from(String(b), 'hex'); return x.length === y.length && crypto.timingSafeEqual(x, y); }
 
@@ -91,9 +94,10 @@ function derive(c) {
   c.mdef = Math.floor(st.int / 2) + add('mdef');
   c.hit = c.lv + st.dex * 2;
   const arm = ITEMS[eq.arm], at = arm && ARMOR_TYPES[arm.at];
-  c.flee = Math.round((c.lv + st.agi * 2 + (at && arm.id >= 300 ? at.flee || 0 : 0)) * (1 + buffSum(c, 'flee')));
-  c.aspd = Math.round(Math.max(380, 1400 - st.agi * 14 - st.dex * 4 + (wt ? wt.aspd || 0 : 0)) * (1 - buffSum(c, 'aspd')));
-  c.crit = Math.floor(st.luk * 0.4) + 1 + (K.crit || 0) + (wt ? wt.crit || 0 : 0);
+  c.flee = Math.round((c.lv + st.agi * 2 + add('flee') + (at && arm.id >= 300 ? at.flee || 0 : 0)) * (1 + buffSum(c, 'flee')));
+  // gear modifiers (item identity): flee / crit flat, aspdPct = attack interval shortened by that percent (capped)
+  c.aspd = Math.round(Math.max(380, 1400 - st.agi * 14 - st.dex * 4 + (wt ? wt.aspd || 0 : 0)) * (1 - buffSum(c, 'aspd')) * (1 - Math.min(0.2, add('aspdPct') / 100)));
+  c.crit = Math.floor(st.luk * 0.4) + 1 + (K.crit || 0) + (wt ? wt.crit || 0 : 0) + add('crit');
   c.range = w && w.range ? w.range : MELEE;
   if (c.hp > c.maxhp) c.hp = c.maxhp;
   if (c.sp > c.maxsp) c.sp = c.maxsp;
@@ -291,9 +295,16 @@ function gainJob(p, e) {
   while (need && c.jexp >= need) { c.jexp -= need; c.jlv++; sys(p, `Job Lv ${c.jlv}! สกิลอาชีพแรงขึ้น`, '#9fe7ff'); need = jobNext(c); }
   if (!need) c.jexp = 0;
 }
+// timed rate events (content/events.js): refreshed every minute, announced when they start / end
+const EV = require('./content/events');
+let EVR = EV.rates(), evIds = EV.active().map(e => e.id).join();
+setInterval(() => {
+  EVR = EV.rates(); const now = EV.active(), ids = now.map(e => e.id).join(); if (ids === evIds) return; evIds = ids;
+  bcastAll({ t: 'sys', m: now.length ? `[อีเวนต์] เริ่มแล้ว: ${now.map(e => e.th).join(' · ')}` : '[อีเวนต์] อีเวนต์จบแล้ว', col: '#ffd34d' });
+}, 60000);
 function rollDrops(d) {
   const out = [];
-  for (const t of C.DROP_TIERS) for (const [id, ch] of d.drops[t] || []) if (Math.random() < ch) out.push(id);
+  for (const t of C.DROP_TIERS) for (const [id, ch] of d.drops[t] || []) if (Math.random() < Math.min(1, ch * EVR.drop)) out.push(id);
   return out;
 }
 function mobDie(mob, killer) {
@@ -304,10 +315,10 @@ function mobDie(mob, killer) {
   let total = 0; for (const v of mob.dmg.values()) total += v;
   for (const [pid, v] of mob.dmg) {
     const p = players.get(pid); if (!p || p.c.map !== mob.map) continue;
-    const share = Math.max(d.exp ? 1 : 0, Math.round(d.exp * v / total));
+    const share = Math.max(d.exp ? 1 : 0, Math.round(d.exp * EVR.exp * v / total));
     if (share) for (const [o, e] of SOC.shareExp(p, share, mob.map)) { gainExp(o, e); if (o !== p) me(o); } // party members nearby share it
     SOC.onKill(p, !!d.boss);
-    if (d.jexp) gainJob(p, Math.max(1, Math.round(d.jexp * v / total)));
+    if (d.jexp) gainJob(p, Math.max(1, Math.round(d.jexp * EVR.jexp * v / total)));
     const q = IRIS[p.c.q.step];
     if (q && q.mob === mob.type && p.c.q.k < q.n) { p.c.q.k++; sys(p, `[เควส] ${d.n} ${p.c.q.k}/${q.n}${p.c.q.k >= q.n ? ' - กลับไปหาไอริส!' : ''}`, '#8fe38f'); }
     const w = ITEMS[p.c.eq.wpn]; Q.onKill(p, mob.type, { wt: w && w.wt });
@@ -518,9 +529,11 @@ function npcTalk(p, npcId, act, arg, arg2) {
       if (act === 'go') {
         const t = (npc.dest || []).find(d => d[0] === arg); if (!t) return;
         if (t[4] && c.lv < t[4]) return dlg(`ปลายทางนี้ต้องการ Lv ${t[4]} ขึ้นไป`);
+        const fee = warpFee(c, npc, t[0]); if (c.zeny < fee) return dlg(`ค่าเดินทาง ${fee} Zeny — Zeny ไม่พอ`);
+        if (fee) { c.zeny -= fee; me(p); sys(p, `จ่ายค่าเดินทาง ${fee} Zeny`); dirty = true; }
         send(p, { t: 'dlgclose' }); return warp(p, t[0], t[1], t[2]);
       }
-      return dlg(npc.role === 'gate' ? (say || 'ประตูดันเจี้ยน') : 'จะไปที่ไหนดี? ไปส่งฟรี!', [...qopts, ...npc.dest.map(d => [`go:${d[0]}`, d[3] + (d[4] && c.lv < d[4] ? ' 🔒' : '')])]);
+      return dlg(npc.role === 'gate' ? (say || 'ประตูดันเจี้ยน') : (c.lv <= WARP_FREE_LV ? `จะไปที่ไหนดี? นักผจญภัย Lv ${WARP_FREE_LV} ลงมาไปส่งฟรี!` : 'จะไปที่ไหนดี? (มีค่าเดินทาง)'), [...qopts, ...npc.dest.map(d => { const fee = warpFee(c, npc, d[0]); return [`go:${d[0]}`, d[3] + (d[4] && c.lv < d[4] ? ' 🔒' : fee ? ` · ${fee}z` : '')]; })]);
     }
     case 'shop': case 'sell':
       if (act === 'shop' || (!turnin && act == null)) return openShop(p, npc);
@@ -545,6 +558,10 @@ function npcTalk(p, npcId, act, arg, arg2) {
       if (c.cls === npc.cls) return dlg(`${say}\nเจ้าคือ ${K.th} แล้ว ฝึกฝนต่อไป! (อาชีพขั้นที่ 2 ปลดที่ Lv ${CLASSES[C.childrenOf(K.id)[0]].reqLv} — เร็วๆ นี้)`, qopts);
       if (c.cls !== 'adventurer') return dlg(`${say}\nเจ้าเลือกเส้นทางอื่นไปแล้ว`, qopts);
       return dlg(head, qopts);
+    }
+    case 'event': {
+      const on = EV.active(), r = EVR;
+      return dlg(on.length ? `อีเวนต์ที่กำลังจัดอยู่:\n${on.map(e => '• ' + e.th).join('\n')}\n\nตัวคูณตอนนี้: EXP ×${r.exp} · Job ×${r.jexp} · ดรอป ×${r.drop}` : `${say || ''}\n\nตอนนี้ยังไม่มีอีเวนต์ที่เปิดอยู่`.trim(), qopts);
     }
     default: return dlg(say || '...', qopts);
   }
@@ -686,7 +703,7 @@ setInterval(() => SOC.tick(), 500);
 function welcomeData(c) {
   return {
     items: ITEMS, rarity: C.RARITY,
-    mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, aggro: !!v.aggro, family: v.family, fam: C.FAMILIES[v.family] ? C.FAMILIES[v.family].th : '', behavior: v.behavior, element: v.element, size: v.size, spr: v.spr, tint: v.tint, scale: v.scale, range: v.range, d: v.d, bgm: v.bgm, spawnSound: v.spawnSound, idleSound: v.idleSound, attackSound: v.attackSound, hitSound: v.hitSound, deathSound: v.deathSound }])),
+    mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, elite: !!v.elite, aggro: !!v.aggro, family: v.family, fam: C.FAMILIES[v.family] ? C.FAMILIES[v.family].th : '', behavior: v.behavior, element: v.element, size: v.size, spr: v.spr, tint: v.tint, scale: v.scale, range: v.range, d: v.d, bgm: v.bgm, spawnSound: v.spawnSound, idleSound: v.idleSound, attackSound: v.attackSound, hitSound: v.hitSound, deathSound: v.deathSound }])),
     skills: skillDefs(c), melee: MELEE,
     classes: Object.fromEntries(Object.values(CLASSES).map(k => [k.id, { th: k.th, en: k.en, tier: k.tier, parent: k.parent, reqLv: k.reqLv, status: k.status, role: k.role, d: k.d }])),
     world: { regions: C.REGIONS, maps: C.MAPS_META, links: C.LINKS },
@@ -738,17 +755,21 @@ function handle(p, m) {
           enterWorld(p, u);
         });
       } else {
-        const a = db.accounts[u];
+        const a = db.accounts[u], lf = loginFails.get(u);
+        if (lf && lf.lock > Date.now()) return send(p, { t: 'err', m: `ใส่รหัสผิดหลายครั้ง ลองใหม่ใน ${Math.ceil((lf.lock - Date.now()) / 60000)} นาที` });
         p.authBusy = true;
         // hash even for unknown ids so response time doesn't reveal which ids exist
         hashPw(pw, a ? a.salt : 'nosuchaccount', (e, hash) => {
           p.authBusy = false;
           if (e || p.ws.readyState !== 1 || p.c) return;
           if (!a || db.accounts[u] !== a || !samePw(hash, a.hash)) {
+            const f = loginFails.get(u) || { n: 0, t: Date.now() }; if (Date.now() - f.t > 600000) { f.n = 0; f.t = Date.now(); } f.n++; loginFails.set(u, f);
+            if (f.n >= LOGIN_MAX_FAILS) f.lock = Date.now() + LOGIN_LOCK_MS;
             send(p, { t: 'err', m: 'ไอดีหรือรหัสผ่านไม่ถูกต้อง' });
             if (++p.authFails >= 5) p.ws.close();
             return;
           }
+          loginFails.delete(u);
           enterWorld(p, u);
         });
       }
@@ -911,6 +932,14 @@ function stepToward(e, spd, dt) {
   e.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 3 : 2) : (dy > 0 ? 0 : 1);
   return true;
 }
+// teleport NPC fee (a money sink): free up to Lv 15 and for dungeon gates; otherwise grows with the destination's level,
+// double when it crosses into another region
+const WARP_FREE_LV = 15;
+function warpFee(c, npc, to) {
+  if (npc.role === 'gate' || c.lv <= WARP_FREE_LV) return 0;
+  const dm = MAPS[to]; if (!dm) return 0;
+  const base = 40 + dm.lv[0] * 6; return dm.region !== MAPS[c.map].region ? base * 2 : base;
+}
 // portal requirements: { lv } / { quest } / { locked } (planned maps)
 function portalBlock(c, pt) {
   const r = pt.req; if (!r) return '';
@@ -919,7 +948,8 @@ function portalBlock(c, pt) {
   if (r.quest && !Q.done(c, r.quest)) return `ต้องทำเควส "${QUESTS[r.quest].th}" ให้สำเร็จก่อน`;
   return '';
 }
-// boss actions: phases (stronger/faster), area slam with a warning circle, summoning helpers, charge
+const AOE_SKILLS = { quake: { r: 2.6, mult: 1.4, ms: 900 }, root_slam: { r: 2.0, mult: 1.8, ms: 1100 }, spore: { r: 3.4, mult: 1.0, ms: 1200, self: 1 } };
+// boss / elite actions: phases (stronger/faster), area slam with a warning circle, summoning helpers, charge
 function bossTick(mob, d, tgt, now) {
   const r = mob.hp / mob.maxhp;
   for (let i = mob.phase; i < (d.phases || []).length; i++) if (r <= d.phases[i].at) {
@@ -932,13 +962,15 @@ function bossTick(mob, d, tgt, now) {
   const sk = d.skills.filter(s => s !== 'summon'); if (!sk.length) return;
   const pick = sk[Math.floor(Math.random() * sk.length)];
   if (pick === 'charge' && Math.hypot(tgt.c.x - mob.x, tgt.c.y - mob.y) > 3) { mob.x = tgt.c.x + (mob.x > tgt.c.x ? 1 : -1); mob.y = tgt.c.y; if (!walkable(MAPS[mob.map], Math.round(mob.x), Math.round(mob.y))) { mob.x = tgt.c.x; mob.y = tgt.c.y; } mob.path = null; bcast(mob.map, { t: 'fx', k: 'charge', id: mob.id }); return; }
-  // area slam: warn first, hit everyone still inside 0.9s later
-  const ax = tgt.c.x, ay = tgt.c.y, R = 2.6;
-  bcast(mob.map, { t: 'fx', k: 'aoe', id: mob.id, x: ax, y: ay, r: R, ms: 900 });
+  // area attacks: warn first (circle on the ground), hit everyone still inside when it lands.
+  // quake: on the target, root_slam: small and heavy on the target, spore: wide ring around the monster itself
+  const S = AOE_SKILLS[pick] || AOE_SKILLS.quake, self = S.self;
+  const ax = self ? mob.x : tgt.c.x, ay = self ? mob.y : tgt.c.y, R = S.r;
+  bcast(mob.map, { t: 'fx', k: 'aoe', id: mob.id, x: ax, y: ay, r: R, ms: S.ms });
   setTimeout(() => {
     if (!mobs.has(mob.id)) return;
-    for (const p of players.values()) if (!p.dead && p.c.map === mob.map && Math.hypot(p.c.x - ax, p.c.y - ay) <= R) hurtPlayer(p, Math.max(1, Math.round(d.atk[1] * 1.4 * (mob.atkMul || 1) - p.c.def)), mob.id);
-  }, 900);
+    for (const p of players.values()) if (!p.dead && p.c.map === mob.map && Math.hypot(p.c.x - ax, p.c.y - ay) <= R) hurtPlayer(p, Math.max(1, Math.round(d.atk[1] * S.mult * (mob.atkMul || 1) - p.c.def)), mob.id);
+  }, S.ms);
 }
 const snapCache = new Map();
 let last = Date.now();
@@ -1040,7 +1072,7 @@ setInterval(() => {
     if (tgt) {
       const dist = Math.max(Math.abs(tgt.c.x - mob.x), Math.abs(tgt.c.y - mob.y)), range = d.range || 1.5;
       const ranged = range > 2;
-      if (d.boss) bossTick(mob, d, tgt, now);
+      if (d.boss || d.elite) bossTick(mob, d, tgt, now);
       if (dist <= range && (!ranged || los(MAPS[mob.map], mob.x, mob.y, tgt.c.x, tgt.c.y))) {
         mob.path = null;
         if (now >= mob.nextAtk) {

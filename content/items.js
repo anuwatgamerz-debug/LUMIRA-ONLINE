@@ -166,6 +166,63 @@ costume(451, 'มงกุฎดอกไม้ (คอสตูม)', 'crown', 
 costume(452, 'หมวกปาร์ตี้ (คอสตูม)', 'hat', 'party', { buy: 2000 });
 costume(453, 'หมวกพ่อมดราตรี (คอสตูม)', 'hat', 'witch', { buy: 4000 });
 
+// ================= Region 2: Verdant Wilds (Lv20-45) — Tier 2 gear, materials and quest items
+ITEMS[9] = { n: 'ยาเขียวป่าลึก', ty: 'use', heal: 420, sp: 20, buy: 820, req: 28, d: 'ยาสมุนไพรจากหมอผีเผ่าใบไม้' };
+for (const [id, n, sell, d, ty] of [
+  [170, 'ใบไม้ยักษ์ป่าลึก', 52], [171, 'พิษงูเถาวัลย์', 58], [172, 'น้ำผึ้งยอดไม้', 60, 'หวานหอม ใช้ทำยา'], [173, 'ขนหมีมอส', 66], [174, 'ขนนกเผ่าใบไม้', 62],
+  [175, 'สปอร์เรืองแสง', 64], [176, 'หมวกเห็ดแดง', 70], [177, 'ปีกค้างคาวสปอร์', 68], [178, 'เมือกกบเห็ด', 66], [179, 'ฝุ่นใบไม้วิญญาณ', 80],
+  [180, 'ขนหมาป่าวิญญาณ', 84], [181, 'แกนมอสโกเลม', 90], [182, 'หนังหมาป่าหุบเขา', 78], [183, 'เขี้ยวออร์ค', 86], [184, 'หนังหมีกริซลี่', 92],
+  [185, 'เมือกหนอง', 88], [186, 'เกล็ดงูหนอง', 94], [187, 'ถ่านไฟผี', 98], [188, 'ยางไม้โบราณ', 110, 'วัสดุงานช่างระดับสูงจากต้นไม้โบราณ'], [189, 'เปลือกแมงมุมไม้', 104],
+  [190, 'ไม้หัวใจป่า', 70, 'ไม้เนื้อแข็งพิเศษจากป่าลึก ใช้ตีอุปกรณ์ Tier 2'], [191, 'ตราหัวหน้าเผ่าใบไม้', 900, 'ดรอปจากอีลิทหัวหน้าเผ่าใบไม้'],
+  [192, 'แก่นสปอร์โบราณ', 1000, 'ดรอปจากอีลิทเห็ดยักษ์โบราณ'], [193, 'หัวใจศิลาสวนวิญญาณ', 1600, 'ดรอปจากผู้เฝ้าสวนวิญญาณ'], [194, 'กรงเล็บกริมพอว์', 1800, 'ดรอปจากกริมพอว์'],
+  [195, 'แกนรากเน่า', 2400, 'ดรอปจากรอทฮาร์ท'], [196, 'แผงคอขนเงิน', 1100, 'ดรอปจากอีลิทหมาป่าขนเงิน'], [197, 'เมือกราชากบ', 1200, 'ดรอปจากอีลิทราชากบหนอง'],
+  [164, 'เครื่องรางชนเผ่า', 0, 'เครื่องรางไม้ที่เผ่าใบไม้ทำหล่นไว้', 'quest'], [165, 'ตัวอย่างสปอร์', 0, 'สปอร์ที่มีประกายสีม่วงดำ', 'quest'],
+  [166, 'จดหมายถึงเวอร์แดนต์ เฮเวน', 0, 'จดหมายแนะนำตัวจากบรรณารักษ์เซลีน', 'quest'], [167, 'เมล็ดวอยด์เม็ดที่สอง', 0, 'เมล็ดสีดำที่เต้นเหมือนหัวใจ', 'quest'],
+]) ITEMS[id] = { n, ty: ty || 'etc', sell, d };
+// weapons: town shop (Lv30-32) / drops & crafting (Lv36-45). Modifiers give each piece a reason to exist besides ATK.
+weapon(229, 'ดาบเหล็กป่าลึก', 'sword', 30, 0, { buy: 7800, cls: ['vanguard', 'rogue', 'artisan', 'adventurer'] });
+weapon(230, 'ดาบใหญ่ไม้เหล็ก', 'greatsword', 32, 0, { buy: 9000, cls: ['vanguard', 'artisan'] });
+weapon(231, 'มีดสั้นเขี้ยวงู', 'dagger', 30, 0, { buy: 7200, cls: ['rogue', 'ranger', 'adventurer'], crit: 2 });
+weapon(232, 'ธนูยาวเผ่าใบไม้', 'bow', 30, 0, { buy: 8000, cls: ['ranger', 'adventurer'] });
+weapon(233, 'คทาไม้มอส', 'staff', 30, 0, { buy: 8000, cls: ['arcanist', 'cleric', 'adventurer'] });
+weapon(234, 'กระบองหินเผ่า', 'mace', 30, 0, { buy: 7800, cls: ['cleric', 'artisan', 'vanguard', 'adventurer'] });
+weapon(235, 'หอกล่าสัตว์', 'spear', 32, 0, { buy: 8600, cls: ['vanguard', 'artisan'] });
+weapon(236, 'ไม้กายสิทธิ์สปอร์', 'wand', 32, 1, { buy: 9800, cls: ['arcanist', 'cleric'], sp: 20 });
+weapon(237, 'ปืนกลไกไม้โอ๊ก', 'device', 32, 0, { buy: 9200, cls: ['artisan'] });
+weapon(238, 'ดาบพิษเถาวัลย์', 'sword', 36, 1, { sell: 2600, cls: ['vanguard', 'rogue', 'artisan', 'adventurer'], crit: 3 });
+weapon(239, 'ธนูขนเงิน', 'bow', 40, 2, { sell: 3800, cls: ['ranger'], aspdPct: 5 });
+weapon(240, 'คทาสวนวิญญาณ', 'staff', 38, 2, { sell: 3600, cls: ['arcanist', 'cleric'], int: 2, sp: 30 });
+weapon(241, 'ดาบใหญ่กรงเล็บราชา', 'greatsword', 42, 3, { sell: 7000, cls: ['vanguard', 'artisan'], str: 3, crit: 3 });
+weapon(242, 'มีดสั้นเขี้ยวหนอง', 'dagger', 40, 2, { sell: 3800, cls: ['rogue', 'ranger'], crit: 5 });
+weapon(243, 'กระบองรากเน่า', 'mace', 45, 3, { sell: 8000, cls: ['cleric', 'artisan', 'vanguard'], vit: 3, hp: 150 });
+weapon(244, 'ไม้กายสิทธิ์รากโบราณ', 'wand', 45, 3, { sell: 8000, cls: ['arcanist', 'cleric'], int: 4, sp: 50 });
+weapon(245, 'หอกเขี้ยวออร์ค', 'spear', 38, 1, { sell: 2800, cls: ['vanguard', 'artisan'], str: 2 });
+weapon(246, 'ปืนยางไม้', 'device', 40, 2, { sell: 3800, cls: ['artisan'], dex: 3, aspdPct: 4 });
+// armor
+armor(314, 'เสื้อเกราะหนังป่าลึก', 'light', 30, 0, { buy: 6500 });
+armor(315, 'เกราะโซ่ผู้พิทักษ์ป่า', 'medium', 32, 0, { buy: 8000, cls: ['vanguard', 'ranger', 'cleric', 'artisan', 'adventurer'] });
+armor(316, 'เกราะแผ่นไม้เหล็ก', 'heavy', 32, 0, { buy: 9500, cls: ['vanguard'] });
+armor(317, 'ชุดคลุมใบไม้วิญญาณ', 'robe', 32, 0, { buy: 7500, cls: ['arcanist', 'cleric', 'adventurer'] });
+armor(318, 'เสื้อหนังกริซลี่', 'medium', 38, 1, { sell: 2400, hp: 80 });
+armor(319, 'ชุดคลุมสปอร์โบราณ', 'robe', 36, 2, { sell: 3200, cls: ['arcanist', 'cleric'], sp: 40 });
+armor(320, 'เกราะเปลือกแมงมุมไม้', 'heavy', 42, 2, { sell: 4200, cls: ['vanguard', 'artisan'], vit: 2 });
+armor(321, 'เกราะแก่นไม้โบราณ', 'medium', 45, 3, { sell: 7600, vit: 3, flee: 4 });
+armor(322, 'ชุดเงาใบไม้', 'light', 36, 1, { sell: 2400, cls: ['rogue', 'ranger'], flee: 5 });
+// headgear
+head(366, 'หมวกขนนกเผ่าใบไม้', 'cap', 'feather', 30, 0, { buy: 5200 });
+head(367, 'ฮู้ดนักล่าป่าลึก', 'hood', 'hood_green', 32, 1, { buy: 7000, cls: ['ranger', 'rogue', 'adventurer'], dex: 1 });
+head(368, 'หมวกหมอผีเห็ด', 'hat', 'wizard', 34, 1, { sell: 1600, cls: ['arcanist', 'cleric', 'adventurer'], int: 2 });
+head(369, 'มงกุฎเขาหัวหน้าเผ่า', 'crown', 'antler', 34, 2, { sell: 2400, str: 2, agi: 1 });
+head(370, 'หมวกเหล็กผู้พิทักษ์ราก', 'helmet', 'knight', 42, 2, { sell: 3600, cls: ['vanguard', 'artisan', 'cleric', 'adventurer'], vit: 2 });
+// accessories
+acc(412, 'แหวนน้ำผึ้ง', 'ring', 30, 0, { buy: 4800, hp: 80 });
+acc(413, 'สร้อยเขี้ยวออร์ค', 'necklace', 36, 1, { sell: 1600, str: 3, atk: 8 });
+acc(414, 'กำไลขนเงิน', 'bracelet', 40, 2, { sell: 3000, agi: 3, dex: 3 });
+acc(415, 'เครื่องรางสปอร์', 'charm', 34, 1, { sell: 1400, int: 3, sp: 30 });
+acc(416, 'จี้หัวใจศิลา', 'necklace', 38, 3, { sell: 5000, vit: 4, int: 4, hp: 120 });
+acc(417, 'แหวนรากโบราณ', 'ring', 45, 3, { sell: 6000, str: 4, vit: 4 });
+acc(418, 'เครื่องรางเขี้ยวงู', 'charm', 32, 1, { sell: 1200, crit: 3, luk: 2 });
+
 for (const k in ITEMS) {
   const it = ITEMS[k]; it.id = +k; if (it.rar == null) it.rar = 0; if (it.req == null) it.req = 1;
   for (const f of Object.keys(it)) if (it[f] === undefined) delete it[f];

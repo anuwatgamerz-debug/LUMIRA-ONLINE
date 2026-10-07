@@ -27,6 +27,18 @@ M = {
  400: 'Ac_Ring01', 401: 'Ac_Necklace01', 402: 'Ac_Medal03', 403: 'I_Clover', 404: 'Ac_Ring02', 405: 'Ac_Necklace03', 406: ('Ac_Medal04', 120), 407: 'Ac_Necklace05',
  408: ('Ac_Ring02', 80), 409: 'Ac_Necklace06', 410: 'Ac_Necklace08', 411: ('Ac_Ring01', 200),
  450: ('C_Hat01', 300), 451: ('Ac_Medal02', 300), 452: ('C_Hat02', 300), 453: ('C_Hat02', 260),
+ # Verdant Wilds (Region 2)
+ 9: 'P_Green04', 164: 'I_Key05', 165: ('I_Bottle04', 260), 166: 'I_Scroll', 167: ('I_Opal', 250),
+ 170: ('I_Leaf', 40), 171: 'S_Poison03', 172: 'P_Yellow02', 173: ('I_WolfFur', 80), 174: ('I_Feather01', 90), 175: ('I_C_Mushroom', 250), 176: 'I_C_Mushroom',
+ 177: ('I_BatWing', 260), 178: 'I_FrogLeg', 179: ('I_Leaf', 150), 180: ('I_WolfFur', 180), 181: ('I_Rock04', 80), 182: ('I_FoxTail', 20), 183: ('I_Fang', 0),
+ 184: 'I_WolfFur', 185: ('I_Bottle01', 80), 186: ('I_SnailShell', 200), 187: 'I_Torch02', 188: ('I_Amethist', 30), 189: ('I_SolidShell', 30), 190: 'E_Wood01',
+ 191: ('Ac_Medal01', 80), 192: ('I_C_Mushroom', 280), 193: 'I_Jade', 194: ('I_ScorpionClaw', 20), 195: ('I_Ruby', 260), 196: ('I_WolfFur', 200), 197: ('I_Tentacle', 80),
+ 229: 'W_Sword005', 230: 'W_Sword011', 231: 'W_Dagger005', 232: 'W_Bow04', 233: 'W_Staff08', 234: 'W_Mace003', 235: 'W_Spear003', 236: ('W_Staff02', 260), 237: 'W_Gun003',
+ 238: ('W_Sword013', 80), 239: 'W_Bow15', 240: ('W_Staff06', 120), 241: 'W_Sword020', 242: 'W_Dagger018', 243: 'W_Mace013', 244: ('W_Staff07', 80), 245: 'W_Spear009', 246: ('W_Gun002', 40),
+ 314: ('A_Armour01', 60), 315: ('A_Armor04', 80), 316: ('A_Armour03', 40), 317: ('A_Clothing02', 120), 318: ('A_Armour02', 10), 319: ('A_Clothing01', 280), 320: ('A_Armor05', 40),
+ 321: ('A_Armour02', 90), 322: ('A_Armour01', 120),
+ 366: ('C_Hat01', 60), 367: ('C_Hat01', 110), 368: ('C_Hat02', 340), 369: ('C_Elm01', 60), 370: ('C_Elm03', 80),
+ 412: ('Ac_Ring01', 40), 413: 'Ac_Necklace02', 414: ('Ac_Medal03', 200), 415: ('Ac_Necklace04', 260), 416: 'Ac_Necklace07', 417: ('Ac_Ring02', 60), 418: ('I_Fang', 120),
 }
 def hue(im, deg):
     px = im.load()

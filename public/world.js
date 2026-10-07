@@ -281,8 +281,12 @@ const NODE_DRAW = {
   lumber: (x, y) => { drawProp('prop_lumber_01', x, y + 2) || drawProp('p_resource_lumber', x, y); },
   journal: (x, y) => { drawProp('prop_wheelbarrow_01', x, y + 2) || drawProp('p_wheelbarrow', x, y); R(ctx, x - 3, y - 18, 7, 5, '#f2efe6'); R(ctx, x - 2, y - 17, 5, 1, '#8a7a60'); },
   injured: (x, y) => { drawChar('h_knight_m', 'hurt', 9, 0, x, y); },
+  // Verdant Wilds
+  totem: (x, y) => { R(ctx, x - 3, y - 22, 6, 22, '#7a5230'); R(ctx, x - 3, y - 22, 2, 22, '#9a6a40'); R(ctx, x - 6, y - 20, 12, 3, '#5e9e4b'); R(ctx, x - 2, y - 16, 1, 2, '#ffd34d'); R(ctx, x + 1, y - 16, 1, 2, '#ffd34d'); R(ctx, x - 2, y - 11, 4, 1, '#3a2414'); },
+  sporevent: (x, y, tn) => { ctx.globalAlpha = 0.35 + Math.sin(tn * 2.2) * 0.2; disc(ctx, x, y - 6, 11, '#b07bff', 5); ctx.globalAlpha = 1; drawProp('veg_mushroom_01', x, y + 2) || disc(ctx, x, y - 6, 5, '#c0504d'); },
+  spiritstone: (x, y, tn) => { R(ctx, x - 5, y - 22, 10, 22, '#6f8c8a'); R(ctx, x - 5, y - 22, 2, 22, '#9ab8b4'); ctx.globalAlpha = 0.35 + Math.sin(tn * 3) * 0.25; disc(ctx, x, y - 14, 10, '#7fffe0', 5); ctx.globalAlpha = 1; R(ctx, x - 1, y - 16, 2, 4, '#e8fff8'); },
 };
-const NODE_ICON = { herb: 'สมุนไพร', ore: 'แร่', crystal: 'ผลึก', shrine: 'ศาล', shard: 'รูน', root: 'ราก', stash: 'หีบ', lumber: 'ไม้', journal: 'บันทึก', injured: 'ผู้บาดเจ็บ', flower: 'ดอกไม้' };
+const NODE_ICON = { totem: 'เครื่องราง', sporevent: 'สปอร์', spiritstone: 'ศิลาวิญญาณ', herb: 'สมุนไพร', ore: 'แร่', crystal: 'ผลึก', shrine: 'ศาล', shard: 'รูน', root: 'ราก', stash: 'หีบ', lumber: 'ไม้', journal: 'บันทึก', injured: 'ผู้บาดเจ็บ', flower: 'ดอกไม้' };
 const nodeCd = {}; // node id -> time it's back (performance.now ms), from the server
 function nodeWanted(nd) { // does one of my quests need this node right now?
   if (!me || !me.qs || !QDEF) return false;
@@ -311,7 +315,15 @@ PAL[ROCKW] = ['#2e2a2e', '#36313a', '#2a262a', '#3c3640'].map(hex);
 const ENV = {
   town_sand: { base: SAND, bg: '#a88850' }, desert: { base: SAND, bg: '#a88850', flowerSand: 1 }, village: { base: GRASS, bg: '#3d7a32', wallDirt: 1 },
   meadow: { base: GRASS, bg: '#3d7a32' }, forest: { base: GRASS, bg: '#24461f', treeDark: 1 }, forest_deep: { base: GRASS, bg: '#1c3a1a', treeDark: 1, shade: 'rgba(10,30,10,0.18)' },
-  night_creek: { base: GRASS, bg: '#0e1a2a', treeDark: 1, night: 'rgba(14,20,66,0.52)' }, cave: { base: CAVE, bg: '#141016', cave: 1, night: 'rgba(6,4,10,0.62)' }, snow: { base: SAND, bg: '#d8e4ee', snow: 1 },
+  night_creek: { base: GRASS, bg: '#0e1a2a', treeDark: 1, night: 'rgba(14,20,66,0.52)' },
+  // Verdant Wilds (Region 2): each map has its own light, trees and undergrowth
+  verdant_town: { base: GRASS, bg: '#2e6a34', wallDirt: 1, trees: ['tree_oak_02', 'tree_oak_03', 'tree_pine_02'], veg: ['veg_fern_01', 'veg_flowers_gold_01', 'veg_bush_small_01', 'veg_herb_01'] },
+  jungle: { base: GRASS, bg: '#123a24', treeDark: 1, shade: 'rgba(0,44,30,0.22)', trees: ['tree_oak_02', 'tree_pine_02', 'tree_oak_03', 'tree_oak_02'], veg: ['veg_fern_01', 'veg_fern_01', 'veg_bush_01', 'veg_tallgrass_01', 'veg_bush_small_01'] },
+  mushroom: { base: GRASS, bg: '#1e1430', treeDark: 1, shade: 'rgba(56,18,86,0.34)', trees: ['tree_oak_03', 'tree_pine_01'], veg: ['veg_mushroom_01', 'veg_mushroom_01', 'veg_mushroom_01', 'veg_fern_01', 'veg_flowers_violet_01'] },
+  spirit: { base: GRASS, bg: '#0c1e26', treeDark: 1, night: 'rgba(8,46,62,0.56)', trees: ['tree_pine_02', 'tree_oak_01', 'tree_pine_01'], veg: ['veg_flowers_white_01', 'veg_fern_01', 'veg_flowers_violet_01', 'veg_grass_02'] },
+  valley: { base: DIRT, bg: '#5a5426', trees: ['tree_oak_01', 'tree_pine_01'], veg: ['veg_tallgrass_01', 'veg_tallgrass_01', 'rock_small_02', 'veg_grass_01', 'veg_bush_small_01'] },
+  swamp: { base: GRASS, bg: '#1c2812', treeDark: 1, shade: 'rgba(42,52,6,0.28)', trees: ['tree_pine_01', 'tree_oak_02'], veg: ['veg_reed_01', 'veg_reed_01', 'veg_fern_01', 'veg_mushroom_01', 'veg_tallgrass_01'] },
+  heartwood: { base: CAVE, bg: '#14100a', cave: 1, night: 'rgba(10,22,6,0.58)' }, cave: { base: CAVE, bg: '#141016', cave: 1, night: 'rgba(6,4,10,0.62)' }, snow: { base: SAND, bg: '#d8e4ee', snow: 1 },
 };
 const envOf = m => ENV[m.env] || (m.id === 'woods' ? ENV.forest : m.id === 'plains' ? ENV.desert : m.town ? ENV.town_sand : ENV.desert);
 // light overlay (night / cave): dark everywhere except a soft circle around the player

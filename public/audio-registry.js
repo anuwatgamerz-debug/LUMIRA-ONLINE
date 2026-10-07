@@ -159,6 +159,11 @@
   for (const [r, P] of Object.entries(REG)) for (const [type, bpm, dens, pad] of [['town', 88, 0.45, 'sine'], ['field', 104, 0.55, 'sine'], ['dungeon', 76, 0.32, 'drone']]) {
     mus(`bgm_${r}_${type}`, type, r, { bpm: Math.round(bpm * (r === 'void' ? 0.9 : 1)), root: P.root, mode: P.mode, prog: type === 'dungeon' ? [0, 1, 0, 6, 0, 1, 4, 1] : [0, 3, 4, 0, 5, 3, 4, 4], lead: P.lead, bass: P.bass, pad, drums: Math.min(1, P.drums * (type === 'town' ? 0.6 : 1)), density: dens, delay: type === 'dungeon' ? 0.5 : 0.3, march: P.march, seed: seed += 7 }, { use: `${type} ใน region ${r}`, mood: P.mood, len: '2-3 นาที loop' });
   }
+  // Verdant Wilds map themes (on top of the region town/field/dungeon set) + its boss theme
+  mus('bgm_mushroom_hollow', 'field', 'verdant', { bpm: 84, root: 58, mode: 'dorian', prog: [0, 1, 3, 1, 0, 6, 4, 1], lead: 'bell', bass: 'sine', pad: 'sine', drums: 0.25, density: 0.4, delay: 0.5, seed: 211 }, { use: 'โพรงเห็ด', mood: 'แปลกตา เรืองแสง ฝันๆ' });
+  mus('bgm_spirit_grove', 'field', 'verdant', { bpm: 66, root: 63, mode: 'lydian', prog: [0, 4, 1, 4, 0, 5, 1, 4], lead: 'bell', vib: 1, bass: 'sine', pad: 'sine', drums: 0.05, density: 0.3, delay: 0.6, seed: 223 }, { use: 'สวนวิญญาณ', mood: 'ศักดิ์สิทธิ์ เงียบสงบ' });
+  mus('bgm_thornmire', 'field', 'verdant', { bpm: 78, root: 53, mode: 'phrygian', prog: [0, 1, 0, 5, 0, 1, 6, 5], lead: 'triangle', bass: 'sawtooth', pad: 'drone', drums: 0.45, density: 0.4, delay: 0.4, tribal: 1, seed: 227 }, { use: 'หนองหนาม', mood: 'หนองมืด อันตราย' });
+  mus('bgm_boss_verdant', 'boss', 'verdant', { bpm: 144, root: 59, mode: 'dorian', prog: [0, 0, 6, 4, 0, 0, 3, 6], lead: 'sawtooth', bass: 'sawtooth', pad: 'drone', drums: 1, density: 0.8, delay: 0.2, boss: 1, tribal: 1, seed: 233 }, { use: 'บอสป่าเขียวขจี', mood: 'กลองชนเผ่า ดุดัน' });
   mus('bgm_boss_common', 'boss', 'any', { bpm: 150, root: 57, mode: 'harmonicMinor', prog: [0, 0, 5, 4, 0, 0, 6, 4], lead: 'sawtooth', bass: 'sawtooth', pad: 'sawtooth', drums: 1, density: 0.8, delay: 0.15, boss: 1, seed: 201 }, { use: 'บอสทั่วไป', mood: 'เข้มข้น เร็ว', len: '1.5-2 นาที loop' });
   mus('bgm_boss_thornwood', 'boss', 'heartland', { bpm: 138, root: 55, mode: 'dorian', prog: [0, 0, 6, 3, 0, 0, 4, 6], lead: 'sawtooth', bass: 'sawtooth', pad: 'drone', drums: 1, density: 0.75, delay: 0.2, boss: 1, tribal: 1, seed: 211 }, { use: 'บอส Elder Thornwood', mood: 'ป่าคลั่ง กลองหนัก', len: '1.5-2 นาที loop' });
   mus('bgm_boss_ironjaw', 'boss', 'heartland', { bpm: 156, root: 52, mode: 'phrygian', prog: [0, 1, 0, 6, 0, 1, 4, 1], lead: 'square', bass: 'sawtooth', pad: 'sawtooth', drums: 1, density: 0.85, delay: 0.15, boss: 1, march: 1, seed: 223 }, { use: 'บอส Ironjaw', mood: 'เครื่องจักร ดุดัน', len: '1.5-2 นาที loop' });
@@ -181,6 +186,10 @@
   amb('amb_volcano', 'cave', { rumble: { lvl: 0.45 }, crackle: { rate: 1.2 } }, { use: 'ภูเขาไฟ', mood: 'ลาวา ไฟปะทุ' });
   amb('amb_magic', 'town', { shimmer: { rate: 0.6 }, wind: { lvl: 0.15, f: 1400 }, hum: { lvl: 0.08, f: 110 } }, { use: 'ที่ราบสูงอาร์เคน', mood: 'ประกายเวท' });
   amb('amb_void', 'cave', { hum: { lvl: 0.2, f: 55 }, rumble: { lvl: 0.3 }, wind: { lvl: 0.2, f: 300 } }, { use: 'แนวหน้าวอยด์', mood: 'ความว่างเปล่า น่ากลัว' });
+  amb('amb_jungle', 'forest', { birds: { rate: 0.7 }, leaves: { lvl: 0.2 }, crickets: { rate: 0.5 }, wind: { lvl: 0.2, f: 450 } }, { use: 'ป่าลึก', mood: 'นกป่า แมลง ใบไม้หนา' });
+  amb('amb_spores', 'forest', { drips: { rate: 0.4 }, shimmer: { rate: 0.4 }, hum: { lvl: 0.05, f: 140 } }, { use: 'โพรงเห็ด', mood: 'สปอร์ลอย น้ำหยด' });
+  amb('amb_spirit', 'forest', { shimmer: { rate: 0.5 }, wind: { lvl: 0.15, f: 600 }, crickets: { rate: 0.6 } }, { use: 'สวนวิญญาณ', mood: 'ประกายวิญญาณ ลมเย็น' });
+  amb('amb_swamp', 'forest', { water: { lvl: 0.25, f: 700 }, crickets: { rate: 1.2 }, drips: { rate: 0.3 } }, { use: 'หนองหนาม', mood: 'น้ำนิ่ง กบ จิ้งหรีด' });
   amb('amb_dungeon', 'cave', { rumble: { lvl: 0.35 }, drips: { rate: 0.3 }, hum: { lvl: 0.06, f: 70 } }, { use: 'ดันเจี้ยนทั่วไป', mood: 'ก้อง ตึงเครียด' });
 
   // ================= links used by game events (all ids above)
@@ -195,7 +204,7 @@
       dark: ['skill_dark_cast', 'skill_dark_hit'], poison: ['skill_slash_cast', 'skill_poison_hit'], buff: ['skill_buff_cast', null], teleport: ['skill_teleport', 'skill_slash_hit'], arrow: ['bow_shoot', 'arrow_hit'], area: ['skill_slash_cast', 'skill_bomb_hit'],
     },
     terrain: { 0: 'sand', 1: 'grass', 2: 'water', 4: 'dirt', 8: 'stone', 10: 'stone', 11: 'grass', 12: 'wood' }, // tile -> footstep
-    envAmbient: { village: 'amb_village', town_sand: 'amb_town', meadow: 'amb_meadow', forest: 'amb_forest', forest_deep: 'amb_forest', night_creek: 'amb_night_creek', cave: 'amb_cave', desert: 'amb_desert', snow: 'amb_snow' },
+    envAmbient: { verdant_town: 'amb_village', jungle: 'amb_jungle', mushroom: 'amb_spores', spirit: 'amb_spirit', valley: 'amb_meadow', swamp: 'amb_swamp', heartwood: 'amb_dungeon', village: 'amb_village', town_sand: 'amb_town', meadow: 'amb_meadow', forest: 'amb_forest', forest_deep: 'amb_forest', night_creek: 'amb_night_creek', cave: 'amb_cave', desert: 'amb_desert', snow: 'amb_snow' },
   };
   const R = { SFX: S, MUSIC: M, AMBIENT: A, LINKS, FAMILIES: Object.keys(FAM), base: 'assets/audio/' };
   R.all = () => Object.assign({}, S, M, A);

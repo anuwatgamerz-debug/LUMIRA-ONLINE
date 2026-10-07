@@ -27,8 +27,8 @@ const bandOf = lv => BAND_NAMES.find(b => lv >= b[0] && lv <= b[1]) || BAND_NAME
 const statPointsAt = lv => (lv <= 60 ? 5 : lv <= 120 ? 4 : 3);
 const STAT_CAP = 120;
 
-// job level: per class tier. Adventurer 1-10, first class 1-50, second class 1-70.
-const JOB_CAP = { 0: 10, 1: 50, 2: 70, 3: 70 };
+// job level: per class tier. Adventurer 1-10, first class 1-40, second class 1-50, third class 1-70 (end game).
+const JOB_CAP = { 0: 10, 1: 40, 2: 50, 3: 70 };
 const jobNext = (jlv, tier) => (jlv >= (JOB_CAP[tier] || 50) ? 0 : Math.floor((12 * Math.pow(jlv, 1.7) + 20) * (1 + tier * 0.6)));
 
 // monster exp from its level when a monster doesn't set its own: kills per level grow slowly

@@ -18,6 +18,17 @@ const RECIPES = {
   gear_gun:   { out: [223, 1], in: [[119, 8], [120, 4], [126, 2]], zeny: 2200, station: 'smith', th: 'ปืนเฟืองเหล็ก' },
   bark_armor: { out: [310, 1], in: [[123, 1], [105, 8], [125, 6]], zeny: 2500, station: 'smith', th: 'เกราะเปลือกแก่นไม้' },
   antler:     { out: [360, 1], in: [[123, 1], [110, 6]], zeny: 1200, station: 'smith', th: 'หมวกเขาเอลเดอร์' },
+  // Verdant Wilds (Tier 2)
+  forest_tonic:{ out: [9, 2], in: [[172, 2], [104, 3]], zeny: 200, station: 'craft', th: 'ยาเขียวป่าลึก ×2' },
+  spore_charm:{ out: [415, 1], in: [[175, 8], [176, 4], [192, 1]], zeny: 1800, station: 'craft', th: 'เครื่องรางสปอร์' },
+  snake_charm:{ out: [418, 1], in: [[171, 8], [186, 4]], zeny: 1500, station: 'craft', th: 'เครื่องรางเขี้ยวงู' },
+  vine_sword: { out: [238, 1], in: [[190, 6], [171, 6], [120, 4]], zeny: 3200, station: 'smith', th: 'ดาบพิษเถาวัลย์' },
+  grizzly_arm:{ out: [318, 1], in: [[184, 8], [173, 6], [190, 3]], zeny: 3400, station: 'smith', th: 'เสื้อหนังกริซลี่' },
+  bog_dagger: { out: [242, 1], in: [[186, 8], [185, 6], [121, 3]], zeny: 4200, station: 'smith', th: 'มีดสั้นเขี้ยวหนอง' },
+  sap_gun:    { out: [246, 1], in: [[188, 6], [190, 6], [119, 6]], zeny: 4200, station: 'smith', th: 'ปืนยางไม้' },
+  silver_bow: { out: [239, 1], in: [[196, 1], [182, 8], [190, 4]], zeny: 4500, station: 'smith', th: 'ธนูขนเงิน' },
+  barkplate:  { out: [320, 1], in: [[189, 8], [188, 4], [120, 6]], zeny: 4800, station: 'smith', th: 'เกราะเปลือกแมงมุมไม้' },
+  leaf_garb:  { out: [322, 1], in: [[170, 10], [174, 6], [173, 2]], zeny: 2600, station: 'craft', th: 'ชุดเงาใบไม้' },
 };
 for (const k in RECIPES) RECIPES[k].id = k;
 module.exports = { RECIPES };

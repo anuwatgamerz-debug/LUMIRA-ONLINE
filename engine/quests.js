@@ -8,7 +8,7 @@ module.exports = function createQuests(C, api) {
   const st = c => (c.qs = c.qs && typeof c.qs === 'object' ? c.qs : {}, c.qs.a = c.qs.a || {}, c.qs.d = c.qs.d || {}, c.qs.fl = c.qs.fl || {}, c.qs);
   const stageOf = (c, id) => { const a = st(c).a[id]; return a && QUESTS[id] ? QUESTS[id].stages[a.s] : null; };
   const npcOf = (c, s) => (typeof s.npc === 'string' ? s.npc : s.npc[st(c).fl[s.flagKey || 'mq4'] || Object.keys(s.npc)[0]]);
-  const sayOf = (c, s) => (s.say && typeof s.say === 'object' ? s.say[st(c).fl.mq4] || Object.values(s.say)[0] : s.say);
+  const sayOf = (c, s) => (s.say && typeof s.say === 'object' ? s.say[st(c).fl[s.flagKey || 'mq4']] || Object.values(s.say)[0] : s.say);
   const done = (c, id) => { const v = st(c).d[id]; return !!v && (QUESTS[id].repeat !== 'daily' || v >= today()); };
   function available(c, id) {
     const qd = QUESTS[id], s = st(c); if (!qd || s.a[id] || done(c, id)) return false;
@@ -50,7 +50,7 @@ module.exports = function createQuests(C, api) {
   }
   function complete(p, id) {
     const c = p.c, qd = QUESTS[id], s = st(c), R = qd.reward || {};
-    const items = [...(R.items || []), ...((R.byFlag && R.byFlag[s.fl.mq4]) || [])];
+    const items = [...(R.items || []), ...((R.byFlag && R.byFlag[s.fl[qd.flagKey || 'mq4']]) || [])];
     delete s.a[id]; s.d[id] = qd.repeat === 'daily' ? today() : 1; if (s.t === id) s.t = Object.keys(s.a)[0] || null;
     if (R.zeny) c.zeny += R.zeny;
     for (const [it, n] of items) if (!api.give(c, it, n)) api.mail(p, it, n);

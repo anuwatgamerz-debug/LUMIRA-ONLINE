@@ -2,6 +2,14 @@
 
 อัปเดต 2026-10-07 · ตรวจจาก code/data จริงที่ commit `0d658ca` · ดูตารางเนื้อหาราย Map ใน [CONTENT_MATRIX.md](CONTENT_MATRIX.md)
 
+## สถานะ Milestone
+
+| Milestone | สถานะ | สิ่งที่ทำ |
+|---|---|---|
+| M1 Audit + Cleanup | ✅ เสร็จ | Job cap ขั้น 1 = 40 / ขั้น 2 = 50 / ขั้น 3 = 70 · ล็อก login 5 นาทีเมื่อผิด 10 ครั้ง · ค่าวาร์ป (ฟรีถึง Lv15, ข้าม Region ×2) · `content/events.js` (Double EXP/Drop ไม่ hardcode) + NPC อีเวนต์แสดงอีเวนต์ที่เปิด · ระบบ Elite (วงทองใต้เท้า, ชื่อ ★, สกิลพิเศษ, เกิดน้อย) · สกิลบอส 3 แบบ (quake / root_slam / spore) · modifier อุปกรณ์ crit / aspdPct / flee · NPC placeholder ติดป้าย [เร็วๆ นี้] · เปลี่ยนชื่อรูปต้นฉบับภาษาไทยเป็น ASCII |
+| M2 Region 2 Verdant Wilds | ✅ เสร็จ | เมืองเวอร์แดนต์ เฮเวน + field 5 (ป่าลึก, โพรงเห็ด, สวนวิญญาณ, หุบเขาสัตว์ป่า, หนองหนาม) + dungeon ต้นไม้โบราณ · มอน 24 + elite 4 + บอส 3 · เนื้อเรื่องบท 2 (mq10–mq15) + side 7 + daily 2 · อุปกรณ์ Tier 2 39 ชิ้น + ยาใหม่ · สูตร 10 · ร้าน 4 · env/ทรี/แสง/เพลง/เสียงบรรยากาศเฉพาะแต่ละแผนที่ · test `tests/verdant.test.js` 30 ข้อ |
+| M3 Second Class Skills | ⏭ ถัดไป | |
+
 กติกา: ขยายจากระบบเดิม ห้ามรื้อระบบที่ทำงานแล้ว (Login, Character, Paperdoll, Movement, Joystick, Combat, Target, Skill, Cooldown, AUTO/Auto Skill/Auto Potion, Quest/Auto Quest/Navigation, Inventory, Equipment, Shop, Crafting, Party, Guild, Trade, Chat, Ranking, Minimap, World Map, Audio, Server Authority, Save, Tests)
 
 ---

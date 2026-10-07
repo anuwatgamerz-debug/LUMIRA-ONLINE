@@ -209,8 +209,8 @@ function genGround(m) {
   for (let i = 0; i < w * h; i++) { let c = MC[cls[i]]; const v = m.t[i]; if (v === 5) c = [30, 90, 40]; if (v === 6 && !envOf(m).cave) c = [130, 130, 130]; if (v === 7) c = [60, 140, 70]; if (v === 9 || v === 3) c = [150, 80, 50]; if (v === 8) c = [150, 220, 255]; mi.data.set([...c, 255], i * 4); }
   mg.putImageData(mi, 0, 0);
 }
-const treeOf = (E, r) => E.snow ? (r < 0.6 ? 'tree_pine_snow_01' : 'tree_pine_01') : E.treeDark ? ['tree_pine_01', 'tree_oak_02', 'tree_pine_02', 'tree_oak_01', 'tree_oak_03'][Math.floor(r * 5)] : ['tree_oak_01', 'tree_oak_02', 'tree_oak_03', 'tree_oak_01', 'tree_pine_01'][Math.floor(r * 5)];
-const vegOf = (E, r) => E.base === SAND ? (r < 0.6 ? 'veg_grass_02' : 'rock_small_01') : E.treeDark ? ['veg_fern_01', 'veg_bush_small_01', 'veg_mushroom_01', 'veg_tallgrass_01', 'veg_grass_02'][Math.floor(r * 5)]
+const treeOf = (E, r) => E.trees ? E.trees[Math.floor(r * E.trees.length)] : E.snow ? (r < 0.6 ? 'tree_pine_snow_01' : 'tree_pine_01') : E.treeDark ? ['tree_pine_01', 'tree_oak_02', 'tree_pine_02', 'tree_oak_01', 'tree_oak_03'][Math.floor(r * 5)] : ['tree_oak_01', 'tree_oak_02', 'tree_oak_03', 'tree_oak_01', 'tree_pine_01'][Math.floor(r * 5)];
+const vegOf = (E, r) => E.veg ? E.veg[Math.floor(r * E.veg.length)] : E.base === SAND ? (r < 0.6 ? 'veg_grass_02' : 'rock_small_01') : E.treeDark ? ['veg_fern_01', 'veg_bush_small_01', 'veg_mushroom_01', 'veg_tallgrass_01', 'veg_grass_02'][Math.floor(r * 5)]
   : ['veg_grass_01', 'veg_grass_02', 'veg_tallgrass_01', 'veg_flowers_red_01', 'veg_flowers_gold_01', 'veg_flowers_white_01', 'veg_flowers_violet_01', 'veg_bush_small_01', 'veg_bush_01', 'veg_grass_01'][Math.floor(r * 10)];
 function bakeMap(m) {
   genGround(m);
@@ -604,7 +604,7 @@ function renderStat() {
   const cp = $('cport').getContext('2d'); cp.imageSmoothingEnabled = false; cp.drawImage($('portrait'), 0, 0);
 }
 const EQS = [['wpn', 'อาวุธ'], ['head', 'หมวก'], ['arm', 'เสื้อ'], ['acc1', 'เครื่องประดับ'], ['acc2', 'เครื่องประดับ'], ['chead', 'คอสตูมหัว']];
-const ST_LAB = [['atk', 'ATK'], ['matk', 'MATK'], ['def', 'DEF'], ['mdef', 'MDEF'], ['hp', 'MaxHP'], ['sp', 'MaxSP'], ['str', 'STR'], ['agi', 'AGI'], ['vit', 'VIT'], ['int', 'INT'], ['dex', 'DEX'], ['luk', 'LUK']];
+const ST_LAB = [['atk', 'ATK'], ['matk', 'MATK'], ['def', 'DEF'], ['mdef', 'MDEF'], ['hp', 'MaxHP'], ['sp', 'MaxSP'], ['str', 'STR'], ['agi', 'AGI'], ['vit', 'VIT'], ['int', 'INT'], ['dex', 'DEX'], ['luk', 'LUK'], ['crit', 'CRIT'], ['flee', 'FLEE'], ['aspdPct', 'ASPD%']];
 const statOf = it => it.ty === 'use' ? [it.heal ? `HP +${it.heal}` : '', it.sp ? `SP +${it.sp}` : '', it.recall ? 'กลับจุดเซฟ' : ''].filter(Boolean).join(' ') : it.cosmetic ? 'คอสตูม (เปลี่ยนรูปลักษณ์เท่านั้น)' : ST_LAB.filter(([k]) => it[k]).map(([k, l]) => `${l} +${it[k]}`).join(' ') + (it.range ? ` · ระยะ ${it.range}` : '');
 const reqOf = it => { if (!me) return ''; const bad = it.req > me.lv; const cl = it.cls ? ' · ' + it.cls.map(k => (CLSDEF[k] && CLSDEF[k].th) || k).join('/') : ''; return (it.req > 1 || cl) ? ` <span class="${bad ? 'req' : ''}">· Lv ${it.req}+${cl}</span>` : ''; };
 function renderEquip() {
@@ -813,6 +813,8 @@ addEventListener('keyup', e => { keys[e.key.toLowerCase()] = 0; walkTick(); });
 // players and NPCs share one soft oval shadow (never baked into the sprites): faint wide oval + darker core
 function charShadow(x, y) { shadowA(x, y, 12, 0.14); shadowA(x, y, 8, 0.2); }
 function shadowA(x, y, rw, a) { ctx.fillStyle = `rgba(16,20,10,${a})`; const rh = Math.max(2, Math.round(rw * 0.38)); for (let i = -rh; i <= rh; i++) { const w = Math.round(rw * Math.sqrt(1 - (i / (rh + 0.5)) ** 2)); ctx.fillRect(Math.round(x) - w, Math.round(y) + i, w * 2, 1); } }
+// elite monsters: a pulsing gold ring on the ground (between normal monsters and bosses)
+function eliteRing(x, y, sc, tn) { const r = Math.round(13 * Math.max(1, sc)), a = 0.55 + Math.sin(tn * 4) * 0.25; ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.42, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
 function shadow(x, y, rw) { ctx.fillStyle = 'rgba(16,20,10,0.3)'; const rh = Math.max(2, Math.round(rw * 0.4)); for (let i = -rh; i <= rh; i++) { const w = Math.round(rw * Math.sqrt(1 - (i / (rh + 0.5)) ** 2)); ctx.fillRect(Math.round(x) - w, Math.round(y) + i, w * 2, 1); } }
 function entAnim(e, name, tn) {
   if (e.dead) return ['hurt', tn - (e.dieT || tn - 9)];
@@ -871,14 +873,15 @@ function frame(t) {
       const nm = mobSprite(e.type) || 'm_' + e.type, sc = mobScale(e.type), big = e.type === 'kingjel' || mobBig(e.type);
       if (id === selected) drawTargetMarker(x, y, big ? 30 : 14, tn, e.tg === myId || !!(MOBN[e.type] && MOBN[e.type].aggro));
       shadow(x, y, big ? Math.round(11 * Math.max(sc, 2.5)) : Math.round(11 * sc));
+      if (MOBN[e.type] && MOBN[e.type].elite) eliteRing(x, y, sc, tn);
       const [an, at] = entAnim(e, nm, tn);
       const fl = e.hurtT && tn - e.hurtT < 0.1;
       if (fl) ctx.filter = 'brightness(2.2)';
       if (sc !== 1) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); drawChar(nm, an, at, e.row ?? 2, 0, 0); ctx.restore(); } else drawChar(nm, an, at, e.row ?? 2, x, y);
       if (fl) ctx.filter = 'none';
       const info = MOBN[e.type]; const hh = Math.round((e.type === 'kingjel' ? 92 : (META.lpc[nm] ? 56 : 34)) * (e.type === 'kingjel' ? 1 : sc));
-      if (id === selected || e.tg === myId || (e.hitT && tn - e.hitT < 4) || (info && info.boss)) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d'); // in combat / targeted / bosses
-      if (info && HUD.S.names) labels.push([x, y + 6, `${info.n}`, info.boss ? '#ff8b8b' : '#ffffff', info.boss ? 'boss' : 'mob', info.lv]);
+      if (id === selected || e.tg === myId || (e.hitT && tn - e.hitT < 4) || (info && (info.boss || info.elite))) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d'); // in combat / targeted / bosses
+      if (info && HUD.S.names) labels.push([x, y + 6, info.elite ? `★ ${info.n}` : `${info.n}`, info.boss ? '#ff8b8b' : info.elite ? '#ffd34d' : '#ffffff', info.boss || info.elite ? 'boss' : 'mob', info.lv]);
     } });
     else if (e.kind === 'p') list.push({ y, f: () => {
       const nm = heroOf(e.look); charShadow(x, y);
@@ -1033,7 +1036,7 @@ function drawMinimap() {
     for (const q of here) { if (q.zone) { g.strokeStyle = '#ffd34d'; g.lineWidth = 1; g.strokeRect(Math.round(W / 2 + (q.zone[0] - e.x) * s), Math.round(H / 2 + (q.zone[1] - e.y) * s), (q.zone[2] - q.zone[0]) * s, (q.zone[3] - q.zone[1]) * s); } else P(q.x, q.y, '#ffd34d', 6); }
     if (qt.length && !here.length) { const r = aqRoute(new Set(qt.map(q => q.map))); if (r && r.length) P(r[0].x, r[0].y, '#ffd34d', 7); }
   }
-  for (const en of ents.values()) if (en.kind === 'm') P(en.x, en.y, MOBN[en.type] && MOBN[en.type].boss ? '#ff3b3b' : '#ff8b8b', 2); else if (en.kind === 'p' && en !== e) P(en.x, en.y, '#7dff8a', 3);
+  for (const en of ents.values()) if (en.kind === 'm') P(en.x, en.y, MOBN[en.type] && MOBN[en.type].boss ? '#ff3b3b' : MOBN[en.type] && MOBN[en.type].elite ? '#ffd34d' : '#ff8b8b', 2); else if (en.kind === 'p' && en !== e) P(en.x, en.y, '#7dff8a', 3);
   P(e.x, e.y, '#ffffff', 5); P(e.x, e.y, '#3d8bf0', 3);
   $('mmxy2').textContent = `${Math.round(e.x)},${Math.round(e.y)}`;
   let pc = 0; for (const en of ents.values()) if (en.kind === 'p') pc++; $('mmp').textContent = '👥 ' + pc;

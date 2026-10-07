@@ -1,6 +1,6 @@
 # LUMIRA ONLINE — CONTENT MATRIX
 
-สร้างจาก data จริงใน `content/` (สคริปต์นับอัตโนมัติ) · อัปเดต 2026-10-07 · commit ฐาน `0d658ca`
+สร้างจาก data จริงใน `content/` (สคริปต์นับอัตโนมัติ) · อัปเดต 2026-10-07 · หลัง Milestone 1 + 2
 
 **Status:** PLANNED = มีชื่อ/Lv ใน `content/world.js` แต่ยังไม่มีไฟล์แผนที่ · IMPLEMENTING = กำลังสร้าง · PLAYABLE = เข้าเล่นได้ · TESTED = เล่นได้ + มี automated test · COMPLETE = ครบตามเกณฑ์ Region (เมือง, field 4–7, dungeon 1–2, elite, field boss + dungeon boss, story, side quest, resource, equipment tier, BGM เฉพาะ)
 
@@ -8,15 +8,15 @@
 
 | Region | Lv | Maps (data) | เปิดแล้ว | เมือง | Field | Dungeon | Status |
 |---|---|---|---|---|---|---|---|
-| 1 Heartland | 1–33 | 14 | 12 | 2 | 5 (+2 planned) | 5 | TESTED (ยังไม่ COMPLETE: elite 1 ตัว, dungeon ใช้ BGM ร่วมกัน) |
-| 2 Verdant Wilds | 20–45 | 6 | 0 | 1 | 4 | 1 | PLANNED |
+| 1 Heartland | 1–33 | 14 | 12 | 2 | 5 (+2 planned) | 5 | TESTED (dungeon ใช้ BGM ร่วมกัน) |
+| 2 Verdant Wilds | 20–45 | 7 | 7 | 1 | 5 | 1 | TESTED (M2 เสร็จ) |
 | 3 Ashen Frontier | 40–65 | 5 | 0 | 1 | 2 | 2 | PLANNED (field น้อยกว่าเกณฑ์ 4) |
 | 4 Azure Coast | 55–80 | 5 | 0 | 1 | 3 | 1 | PLANNED (field น้อยกว่าเกณฑ์) |
 | 5 Sandsea | 70–95 | 6 | 0 | 1 | 3 | 2 | PLANNED |
 | 6 Frostland | 90–115 | 6 | 0 | 1 | 3 | 2 | PLANNED |
 | 7 Arcane Highlands | 105–130 | 5 | 0 | 1 | 2 | 2 | PLANNED |
 | 8 Void Frontier | 125–150 | 5 | 0 | 1 | 2 | 2 | PLANNED |
-| **รวม** | | **52** | **12** | 9 | 24 | 17 | |
+| **รวม** | | **53** | **19** | 9 | 25 | 17 | |
 
 > หมายเหตุ: Region 3–8 ใน data ปัจจุบันมี field 2–3 แผนที่ ต่ำกว่าเกณฑ์ "4–7 Field Maps" ต้องเพิ่มแผนที่ใน `content/world.js` ตอนทำแต่ละ Milestone
 
@@ -26,26 +26,27 @@
 
 | Region | Map | Kind | Level | Monster | Elite | Boss | NPC | Quest | Shop | Dungeon | Equipment | BGM | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 Heartland | lumira | village | 1–10 | 1 | 0 | - | 17 | 8 | 4 | - | T1-T2 (ร่วม) | bgm_lumira_village | TESTED |
-| 1 Heartland | solkara | capital | 1–30 | 0 | 0 | - | 29 | 9 | 6 | - | T1-T2 (ร่วม) | bgm_elyndra_capital | TESTED |
-| 1 Heartland | beginner_meadow | field | 1–8 | 5 | 0 | - | 1 | 1 | 0 | - | T1-T2 (ร่วม) | bgm_beginner_meadow | TESTED |
-| 1 Heartland | greenwood | field | 8–18 | 9 | 1 | เอลเดอร์ ธอร์นวูด | 4 | 4 | 1 | - | T1-T2 (ร่วม) | bgm_greenwood | TESTED |
-| 1 Heartland | moonlit_creek | field | 14–24 | 7 | 0 | - | 1 | 2 | 0 | - | T1-T2 (ร่วม) | bgm_moonlit_creek | TESTED |
-| 1 Heartland | old_mine | dungeon | 20–30 | 8 | 0 | ไอรอนจอว์ ทรราชเหมือง | 2 | 3 | 1 | ✔ | T1-T2 (ร่วม) | bgm_old_mine | TESTED |
-| 1 Heartland | plains | field | 1–10 | 4 | 0 | ราชาเจลลอป | 0 | 0 | 0 | - | T1-T2 (ร่วม) | bgm_golden_fields | TESTED |
-| 1 Heartland | woods | field | 5–15 | 4 | 0 | - | 0 | 0 | 0 | - | T1-T2 (ร่วม) | bgm_oasis_woods | TESTED |
-| 1 Heartland | slime_burrow | dungeon | 4–10 | 4 | 0 | ราชินีเจลลี่ | 0 | 0 | 0 | ✔ | T1-T2 (ร่วม) | bgm_old_mine | TESTED |
-| 1 Heartland | spider_nest | dungeon | 13–20 | 4 | 0 | แม่แมงมุมกรีนวูด | 0 | 0 | 0 | ✔ | T1-T2 (ร่วม) | bgm_old_mine | TESTED |
-| 1 Heartland | moon_crypt | dungeon | 19–26 | 4 | 0 | มูนแฟง หมาป่าจันทร์ | 0 | 0 | 0 | ✔ | T1-T2 (ร่วม) | bgm_old_mine | TESTED |
-| 1 Heartland | iron_labyrinth | dungeon | 27–33 | 4 | 0 | ราชาเขาวงกต | 0 | 0 | 0 | ✔ | T1-T2 (ร่วม) | bgm_old_mine | TESTED |
+| 1 Heartland | lumira | village | 1–10 | 1 | 0 | - | 17 | 8 | 4 | - | T1 (Lv1-30) | bgm_lumira_village | TESTED |
+| 1 Heartland | solkara | capital | 1–30 | 0 | 0 | - | 29 | 10 | 6 | - | T1 (Lv1-30) | bgm_elyndra_capital | TESTED |
+| 1 Heartland | beginner_meadow | field | 1–8 | 5 | 0 | - | 1 | 1 | 0 | - | T1 (Lv1-30) | bgm_beginner_meadow | TESTED |
+| 1 Heartland | greenwood | field | 8–18 | 9 | 1 | เอลเดอร์ ธอร์นวูด | 4 | 4 | 1 | - | T1 (Lv1-30) | bgm_greenwood | TESTED |
+| 1 Heartland | moonlit_creek | field | 14–24 | 7 | 0 | - | 1 | 2 | 0 | - | T1 (Lv1-30) | bgm_moonlit_creek | TESTED |
+| 1 Heartland | old_mine | dungeon | 20–30 | 8 | 0 | ไอรอนจอว์ ทรราชเหมือง | 2 | 3 | 1 | ✔ | T1 (Lv1-30) | bgm_old_mine | TESTED |
+| 1 Heartland | plains | field | 1–10 | 4 | 0 | ราชาเจลลอป | 0 | 0 | 0 | - | T1 (Lv1-30) | bgm_golden_fields | TESTED |
+| 1 Heartland | woods | field | 5–15 | 4 | 0 | - | 0 | 0 | 0 | - | T1 (Lv1-30) | bgm_oasis_woods | TESTED |
+| 1 Heartland | slime_burrow | dungeon | 4–10 | 4 | 0 | ราชินีเจลลี่ | 0 | 0 | 0 | ✔ | T1 (Lv1-30) | bgm_old_mine | TESTED |
+| 1 Heartland | spider_nest | dungeon | 13–20 | 4 | 0 | แม่แมงมุมกรีนวูด | 0 | 0 | 0 | ✔ | T1 (Lv1-30) | bgm_old_mine | TESTED |
+| 1 Heartland | moon_crypt | dungeon | 19–26 | 4 | 0 | มูนแฟง หมาป่าจันทร์ | 0 | 0 | 0 | ✔ | T1 (Lv1-30) | bgm_old_mine | TESTED |
+| 1 Heartland | iron_labyrinth | dungeon | 27–33 | 4 | 0 | ราชาเขาวงกต | 0 | 0 | 0 | ✔ | T1 (Lv1-30) | bgm_old_mine | TESTED |
 | 1 Heartland | ancient_farm | field | 10–20 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
 | 1 Heartland | bandit_road | field | 18–25 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 2 Verdant Wilds | verdant_haven | forest_city | 20–45 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 2 Verdant Wilds | deep_forest | field | 22–30 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 2 Verdant Wilds | mushroom_hollow | field | 26–34 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 2 Verdant Wilds | spirit_grove | field | 30–38 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 2 Verdant Wilds | ancient_tree | dungeon | 36–45 | - | - | - | - | - | - | ✔ | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 2 Verdant Wilds | beast_valley | field | 32–42 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
+| 2 Verdant Wilds | verdant_haven | forest_city | 20–45 | 0 | 0 | - | 15 | 12 | 4 | - | T2 (Lv30-45) | bgm_verdant_town | TESTED |
+| 2 Verdant Wilds | deep_forest | field | 22–30 | 6 | 1 | - | 2 | 1 | 1 | - | T2 (Lv30-45) | bgm_verdant_field | TESTED |
+| 2 Verdant Wilds | mushroom_hollow | field | 26–34 | 5 | 1 | - | 0 | 0 | 0 | - | T2 (Lv30-45) | bgm_mushroom_hollow | TESTED |
+| 2 Verdant Wilds | spirit_grove | field | 30–38 | 3 | 0 | ผู้เฝ้าสวนวิญญาณ | 0 | 0 | 0 | - | T2 (Lv30-45) | bgm_spirit_grove | TESTED |
+| 2 Verdant Wilds | ancient_tree | dungeon | 38–45 | 4 | 0 | รอทฮาร์ท หัวใจไม้เน่า | 0 | 0 | 0 | ✔ | T2 (Lv30-45) | bgm_verdant_dungeon | TESTED |
+| 2 Verdant Wilds | beast_valley | field | 32–42 | 5 | 1 | กริมพอว์ ราชาหมีหุบเขา | 1 | 1 | 0 | - | T2 (Lv30-45) | bgm_verdant_field | TESTED |
+| 2 Verdant Wilds | thornmire | field | 38–45 | 5 | 1 | - | 0 | 0 | 0 | - | T2 (Lv30-45) | bgm_thornmire | TESTED |
 | 3 Ashen Frontier | emberhold | mining_city | 40–65 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
 | 3 Ashen Frontier | ash_plains | field | 40–48 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
 | 3 Ashen Frontier | volcanic_road | field | 46–54 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
@@ -83,13 +84,13 @@
 
 | หมวด | ปัจจุบัน | เป้าหมาย Lv150 |
 |---|---|---|
-| มอนสเตอร์ธรรมดา | 53 (Lv1–30) | 100+ |
-| Elite | 1 (แบรมเบิลคิน) | 2–4 ต่อ Region |
-| Boss | 7 (Lv10–33) — field 2 / dungeon 5 | ≥1 field + ≥1 dungeon ต่อ Region + World Boss |
-| อาชีพเล่นได้ | 7 (นักผจญภัย + ขั้น 1 ×6) | 31 |
+| มอนสเตอร์ธรรมดา | 75 (Lv1–44) | 100+ |
+| Elite | 5 (Heartland 1 · Verdant 4) | 2–4 ต่อ Region |
+| Boss | 10 (Lv10–45) — field 4 / dungeon 6 | ≥1 field + ≥1 dungeon ต่อ Region + World Boss |
+| อาชีพเล่นได้ | 7 (นักผจญภัย + ขั้น 1 ×6) · Job cap ขั้น 1 = 40 | 31 |
 | สกิล | 24 (พื้นฐาน 6 + ขั้น 1 ×18) | + ขั้น 2 (4–6/อาชีพ ×12) + ขั้น 3 (3–5 ×12) |
-| อุปกรณ์ | 83 ชิ้น, ต้องการ Lv ≤30 | Tier 1–8 ถึง Lv150 |
+| อุปกรณ์ | 122 ชิ้น, Tier 1–2 (Lv ≤45) + modifier crit/aspd/flee | Tier 1–8 ถึง Lv150 |
 | Rarity ที่มีจริง | ธรรมดา 105 · ไม่ธรรมดา 21 · หายาก 19 · มหากาพย์ 5 · ตำนาน 0 | Legendary จาก Boss/Craft/Event |
-| เควส | 27 (main 9 · class 6 · daily 3 · side 9) | main ต่อทุก Region + weekly |
-| สูตรคราฟต์ | 17 | ต่อ Region |
-| ร้านค้า | 10 | ต่อเมือง |
+| เควส | 42 (main 15 · class 6 · daily 5 · side 16) | main ต่อทุก Region + weekly |
+| สูตรคราฟต์ | 27 | ต่อ Region |
+| ร้านค้า | 14 | ต่อเมือง |

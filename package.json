@@ -12,7 +12,8 @@
     "test:art": "node tests/run.js art",
     "test:aq": "node tests/run.js aq",
     "test:auto": "node tests/run.js auto",
-    "test:social": "node tests/run.js social"
+    "test:social": "node tests/run.js social",
+    "test:verdant": "node tests/run.js verdant"
   },
   "keywords": [],
   "author": "",

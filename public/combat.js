@@ -92,7 +92,7 @@ function updTarget() {
   $('tgName').textContent = info.n || e.type; $('tgLv').textContent = 'Lv ' + (info.lv ?? '?');
   $('tgHp').style.width = pc + '%'; $('tgHpT').textContent = `${Math.ceil(pc)}%`; placeTarget();
   const m = myEnt(), d = m ? cheb(m, e) : 0;
-  const st = [info.boss ? 'บอส' : info.aggro ? 'ดุร้าย' : 'ไม่ก้าวร้าว'];
+  const st = [info.boss ? 'บอส' : info.elite ? 'อีลิท ★' : info.aggro ? 'ดุร้าย' : 'ไม่ก้าวร้าว'];
   if (e.tg === myId) st.unshift('<span class="hot">กำลังโจมตีคุณ</span>');
   st.push(d <= ((me && me.rng) || MELEE_R) ? 'ในระยะโจมตี' : `<span class="far">ห่าง ${Math.round(d)} ช่อง</span>`);
   $('tgSt').innerHTML = st.join(' · ');

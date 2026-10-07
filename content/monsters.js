@@ -44,7 +44,7 @@ function m(id, n, lv, family, behavior, o = {}) {
     exp: o.exp != null ? o.exp : Math.round(mobExp(lv, R.exp * (o.expMul || 1))), jexp: 0,
     respawn: o.respawn || (behavior === 'boss' ? 900 : 12), skills: o.skills || [], drops: o.drops || null,
     spr: o.spr, tint: o.tint, scale: o.scale || 1, z: o.z || Math.max(2, Math.round(lv / 2)), beginner: !!o.beginner, d: o.d || '',
-    phases: o.phases, minions: o.minions, region: o.region,
+    phases: o.phases, minions: o.minions, region: o.region, elite: o.role === 'elite' ? 1 : 0,
     // audio (optional): without these the client uses the family's sound set (mon_<family>_*)
     bgm: o.bgm, spawnSound: o.spawnSound, idleSound: o.idleSound, attackSound: o.attackSound, hitSound: o.hitSound, deathSound: o.deathSound,
   };
@@ -76,7 +76,7 @@ m('mossgoblin', 'ก็อบลินมอส', 12, 'goblin', 'assist', { spr:
 m('goblinsling', 'ก็อบลินนักสลิง', 13, 'goblin', 'ranged', { spr: 'm_lpc_goblin', tint: [20, 1, 6], scale: 1, range: 5, d: 'ยิงหินจากระยะไกล' });
 m('wisp',      'วิสป์กรีนวูด', 14, 'spirit', 'caster', { spr: 'proc:wisp', tint: [110, 1, 0], aggro: 5, d: 'ดวงไฟวิญญาณที่ยิงเวทใส่ผู้บุกรุก' });
 m('thornwolf', 'หมาป่าหนาม', 15, 'beast', 'pack', { spr: 'm_lpc_wolf', tint: [60, 0.8, 0], d: 'หมาป่าขนเขียวที่ล่าเป็นฝูง' });
-m('bramblekin', 'แบรมเบิลคิน', 16, 'plant', 'aggressive', { spr: 'm_lpc_flower', tint: [-120, 0.8, -14], scale: 0.8, role: 'elite', d: 'พืชเสื่อมที่ถูกพลังมืดครอบงำ' });
+m('bramblekin', 'แบรมเบิลคิน', 16, 'plant', 'aggressive', { spr: 'm_lpc_flower', tint: [-120, 0.8, -14], scale: 1.1, role: 'elite', respawn: 360, skills: ['root_slam'], d: 'อีลิท: พืชเสื่อมที่ถูกพลังมืดครอบงำ ฟาดรากลงพื้น' });
 // Moonlit Creek (Lv14-24)
 m('creekcrab', 'ปูลำธาร', 14, 'aquatic', 'passive', { spr: 'm_lpc_beetle', tint: [170, 1.1, 0], d: 'ปูกระดองฟ้าแห่งลำธาร' });
 m('moonslime', 'สไลม์จันทร์', 16, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [120, 0.9, 12], d: 'สไลม์เรืองแสงยามค่ำคืน' });
@@ -136,6 +136,50 @@ m('moonfang', 'มูนแฟง หมาป่าจันทร์', 26, 'be
 m('labyrinthking', 'ราชาเขาวงกต', 33, 'beast', 'boss', { spr: 'm_lpc_minotaur', tint: [200, 0.6, 0], scale: 1.9, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', respawn: 1200, hpMul: 1.1, skills: ['quake', 'charge', 'summon'], minions: 'labyrinthguard',
   phases: [{ at: 0.65, atk: 1.2, msg: 'ราชาเขาวงกตกระทืบพื้น!' }, { at: 0.3, atk: 1.6, spd: 1.3, msg: 'ราชาเขาวงกตเข้าสู่ความบ้าคลั่ง!' }], d: 'มินอทอร์ผู้ครองเขาวงกตเหล็กใต้เหมืองเก่า' });
 
+// ---- Region 2: Verdant Wilds (Lv22-45). Tribes of the leaf, spore-rot spreading from the Ancient Tree, spirits of the
+// grove and the beasts of the valley. Each map has its own ecosystem: prey + hunters + a support monster + an elite.
+const VB = { bgm: 'bgm_boss_verdant', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death' };
+// Deep Forest (Lv22-30): the leaf tribe's hunting ground
+m('vinesnake', 'งูเถาวัลย์', 22, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_snake', tint: [90, 1.1, -4], aggro: 4, element: 'earth', d: 'งูสีเขียวที่พรางตัวเป็นเถาวัลย์ รอฉกผู้ผ่านทาง' });
+m('canopybee', 'ผึ้งยอดไม้', 23, 'insect', 'pack', { region: 'verdant', spr: 'm_lpc_bee', element: 'wind', hpMul: 0.9, atkMul: 1.08, d: 'ฝูงผึ้งยักษ์ที่หวงรังบนยอดไม้' });
+m('leafgoblin', 'ก็อบลินเผ่าใบไม้', 25, 'goblin', 'assist', { region: 'verdant', spr: 'm_lpc_goblin', tint: [70, 1.1, -2], d: 'นักรบเผ่าใบไม้ ช่วยพวกพ้องทันทีที่ถูกโจมตี' });
+m('mossbear', 'หมีขนมอส', 26, 'beast', 'passive', { region: 'verdant', spr: 'm_lpc_bear', tint: [70, 0.7, -6], scale: 0.85, hpMul: 1.25, d: 'หมีสงบที่มีมอสขึ้นเต็มหลัง จะสู้เมื่อถูกรังแก' });
+m('leafshaman', 'หมอผีเผ่าใบไม้', 27, 'goblin', 'healer', { region: 'verdant', spr: 'm_lpc_goblin', tint: [250, 0.9, 2], scale: 0.95, d: 'ร่ายเวทรักษานักรบในเผ่า ควรจัดการก่อน' });
+m('leafchief', 'หัวหน้าเผ่าใบไม้', 29, 'goblin', 'aggressive', { role: 'elite', region: 'verdant', spr: 'm_lpc_goblin', tint: [40, 1.3, 6], scale: 1.4, respawn: 420, skills: ['charge', 'quake'], d: 'อีลิท: หัวหน้าเผ่าที่ถูกพลังสปอร์ปลุกความบ้าคลั่ง พุ่งชนและกระแทกพื้น' });
+// Mushroom Hollow (Lv26-34): the spore-rot spreads here first
+m('sporeling', 'สปอร์ลิง', 26, 'plant', 'passive', { region: 'verdant', spr: 'm_lpc_mushroom', tint: [200, 1.0, 4], scale: 0.8, d: 'ลูกเห็ดซุกซนที่ปล่อยสปอร์เรืองแสง' });
+m('capshroom', 'เห็ดหมวกแดง', 29, 'plant', 'caster', { region: 'verdant', spr: 'm_lpc_mushroom', tint: [-20, 1.4, -2], scale: 1.4, d: 'เห็ดพิษที่ร่ายเวทสปอร์จากระยะไกล' });
+m('sporebat', 'ค้างคาวสปอร์', 30, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_bat', tint: [260, 1.1, 0], aggro: 6, d: 'ค้างคาวที่ติดเชื้อสปอร์ บินโฉบเข้าหาทุกสิ่งที่ขยับ' });
+m('shroomfrog', 'กบเห็ด', 32, 'aquatic', 'ranged', { region: 'verdant', spr: 'm_lpc_frogman', tint: [240, 0.9, -4], range: 5, d: 'กบที่มีเห็ดงอกบนหลัง พ่นเมือกจากระยะไกล' });
+m('eldercap', 'เห็ดยักษ์โบราณ', 33, 'plant', 'caster', { role: 'elite', region: 'verdant', spr: 'm_lpc_mushroom', tint: [280, 1.3, -8], scale: 2.0, respawn: 480, skills: ['spore'], d: 'อีลิท: เห็ดอายุนับร้อยปีที่เป็นต้นตอสปอร์ ระเบิดสปอร์รอบตัว' });
+// Spirit Grove (Lv30-38): sacred grove, spirits restless since the fallen star
+m('leafwisp', 'ภูตใบไม้ร่วง', 31, 'spirit', 'caster', { region: 'verdant', spr: 'm_lpc_ghost', tint: [90, 1.0, 6], scale: 0.8, element: 'wind', d: 'วิญญาณใบไม้ที่ร่วงหล่นในสวนศักดิ์สิทธิ์' });
+m('spiritwolf', 'หมาป่าวิญญาณ', 34, 'spirit', 'pack', { region: 'verdant', spr: 'm_lpc_wolf', tint: [170, 0.6, 14], d: 'วิญญาณหมาป่าผู้พิทักษ์สวน ล่าเป็นฝูง' });
+m('mossgolem', 'โกเลมมอส', 36, 'elemental', 'passive', { region: 'verdant', spr: 'm_lpc_golem', tint: [80, 0.9, -6], scale: 1.1, hpMul: 1.3, d: 'หินมีชีวิตที่หลับใหลมานาน ทนทานแต่ไม่ก้าวร้าว' });
+m('grovewarden', 'ผู้เฝ้าสวนวิญญาณ', 38, 'elemental', 'boss', Object.assign({ region: 'verdant', spr: 'm_lpc_golem', tint: [170, 0.8, 10], scale: 2.1, respawn: 1200, skills: ['spore', 'quake', 'summon'], minions: 'leafwisp', element: 'holy',
+  phases: [{ at: 0.6, atk: 1.2, msg: 'ผู้เฝ้าสวนปลุกวิญญาณใบไม้!' }, { at: 0.3, atk: 1.45, spd: 1.2, msg: 'ศิลาของผู้เฝ้าสวนแตกร้าว... มันคลุ้มคลั่ง!' }], d: 'บอสสนาม: ผู้พิทักษ์ศิลาที่ถูกเมล็ดวอยด์บิดเบือน' }, VB));
+// Beast Valley (Lv32-42): the Fang tribe of orcs and the great beasts
+m('valleywolf', 'หมาป่าหุบเขา', 33, 'beast', 'pack', { region: 'verdant', spr: 'm_lpc_wolf', tint: [20, 0.9, -4], d: 'หมาป่าสีน้ำตาลที่ล่าเป็นฝูงในทุ่งหญ้าสูง' });
+m('fangorc', 'ออร์คเผ่าเขี้ยว', 37, 'orc', 'aggressive', { region: 'verdant', spr: 'm_lpc_goblin', tint: [10, 0.7, -10], scale: 1.35, d: 'นักรบออร์คที่บุกเข้ามาในหุบเขา' });
+m('fangarcher', 'ออร์คนักธนูเผ่าเขี้ยว', 39, 'orc', 'ranged', { region: 'verdant', spr: 'm_lpc_goblin', tint: [-30, 0.7, -8], scale: 1.3, range: 6, d: 'ออร์คนักยิงที่คอยหนุนแนวหน้า' });
+m('grizzly', 'หมีกริซลี่', 40, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_bear', tint: [10, 0.8, -8], scale: 1.15, hpMul: 1.15, d: 'หมียักษ์ที่ครองหุบเขาก่อนพวกออร์คจะมา' });
+m('silvermane', 'หมาป่าขนเงิน', 41, 'beast', 'pack', { role: 'elite', region: 'verdant', spr: 'm_lpc_werewolf', tint: [0, 0.1, 18], scale: 1.3, respawn: 540, skills: ['charge'], d: 'อีลิท: จ่าฝูงหมาป่าขนเงิน พุ่งเข้าใส่จากระยะไกล' });
+m('grimpaw', 'กริมพอว์ ราชาหมีหุบเขา', 42, 'beast', 'boss', Object.assign({ region: 'verdant', spr: 'm_lpc_bear', tint: [-10, 0.6, -14], scale: 2.3, respawn: 1200, skills: ['root_slam', 'charge', 'summon'], minions: 'valleywolf',
+  phases: [{ at: 0.6, atk: 1.25, msg: 'กริมพอว์คำรามเรียกฝูงหมาป่า!' }, { at: 0.3, atk: 1.55, spd: 1.3, msg: 'กริมพอว์คลั่งเลือด!' }], d: 'บอสสนาม: ราชาหมีที่ปกครองหุบเขามานับร้อยปี' }, VB));
+// Thornmire (Lv38-45): a rotting swamp where the void seed's roots surfaced
+m('mirefrog', 'กบหนองมืด', 39, 'aquatic', 'aggressive', { region: 'verdant', spr: 'm_lpc_frogman', tint: [40, 0.7, -12], d: 'กบยักษ์ที่ซุ่มอยู่ใต้น้ำขุ่น' });
+m('bogviper', 'งูหนองพิษ', 41, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_snake', tint: [200, 0.6, -14], aggro: 5, element: 'shadow', d: 'งูพิษดำในหนองหนาม กัดเจ็บและเร็ว' });
+m('bogzombie', 'ซอมบี้หนอง', 42, 'undead', 'aggressive', { region: 'verdant', spr: 'm_lpc_zombie', tint: [60, 0.8, -6], d: 'นักเดินทางที่จมหนองแล้วถูกรากวอยด์ปลุกขึ้นมา' });
+m('marshwisp', 'ภูตไฟหนอง', 43, 'spirit', 'caster', { region: 'verdant', spr: 'm_lpc_ghost', tint: [-160, 1.2, 10], element: 'fire', d: 'ไฟผีที่ล่อคนหลงทางให้เดินลงหนอง' });
+m('mireking', 'ราชากบหนอง', 44, 'aquatic', 'aggressive', { role: 'elite', region: 'verdant', spr: 'm_lpc_frogman', tint: [80, 0.9, -4], scale: 1.6, respawn: 600, skills: ['quake'], d: 'อีลิท: กบยักษ์ผู้ครองหนอง กระโดดทับพื้นเป็นวงกว้าง' });
+// Ancient Tree (dungeon, Lv38-45): the hollow heart of the oldest tree, where the second void seed took root
+m('heartgrub', 'หนอนแก่นไม้', 38, 'insect', 'pack', { region: 'verdant', spr: 'm_lpc_centipede', tint: [90, 0.9, 4], scale: 0.55, d: 'ตัวอ่อนที่กัดกินแก่นไม้จากข้างใน' });
+m('rootguard', 'ผู้พิทักษ์ราก', 40, 'plant', 'aggressive', { region: 'verdant', spr: 'm_lpc_flower', tint: [10, 0.6, -10], scale: 1.6, hpMul: 1.1, d: 'รากไม้ที่ลุกขึ้นปกป้องหัวใจต้นไม้' });
+m('sapspirit', 'ภูตยางไม้', 42, 'spirit', 'healer', { region: 'verdant', spr: 'm_lpc_ghost', tint: [-120, 1.1, 8], d: 'วิญญาณยางไม้ที่ซ่อมแซมผู้พิทักษ์ราก' });
+m('barkspider', 'แมงมุมเปลือกไม้', 44, 'insect', 'aggressive', { region: 'verdant', spr: 'm_lpc_spider', tint: [20, 0.6, -6], scale: 1.1, d: 'แมงมุมที่ชักใยตามโพรงไม้มืด' });
+m('rotheart', 'รอทฮาร์ท หัวใจไม้เน่า', 45, 'plant', 'boss', Object.assign({ region: 'verdant', spr: 'm_lpc_flower', tint: [250, 0.7, -16], scale: 2.7, respawn: 1500, hpMul: 1.15, skills: ['root_slam', 'spore', 'summon'], minions: 'heartgrub', element: 'shadow',
+  phases: [{ at: 0.7, atk: 1.15, msg: 'รากเน่าทะลุพื้นขึ้นมา!' }, { at: 0.45, atk: 1.35, msg: 'รอทฮาร์ทดูดพลังจากเมล็ดวอยด์!' }, { at: 0.2, atk: 1.6, spd: 1.25, msg: 'หัวใจไม้เน่ากำลังจะแตก... มันบ้าคลั่ง!' }], d: 'บอสดันเจี้ยน: หัวใจของต้นไม้โบราณที่ถูกเมล็ดวอยด์กัดกิน' }, VB));
+
 // ---- tiered drop tables (server rolls): common / uncommon / rare / veryRare. [item, chance]
 const DROPS = {
   dewslime: { common: [[103, .55]], uncommon: [[1, .12]], rare: [[401, .01]] },
@@ -190,6 +234,39 @@ const DROPS = {
   broodmother: { common: [[132, 1], [130, 1]], uncommon: [[2, 1], [228, .25]], rare: [[225, .15], [411, .2]], veryRare: [[306, .05]] },
   moonfang: { common: [[135, 1], [134, 1]], uncommon: [[5, 1], [226, .25], [313, .2]], rare: [[410, .12]], veryRare: [[365, .05]] },
   labyrinthking: { common: [[138, 1], [136, 1]], uncommon: [[5, 1], [312, .25], [365, .2]], rare: [[227, .1]], veryRare: [[410, .04]] },
+
+  // Verdant Wilds
+  vinesnake: { common: [[171, .45], [170, .25]], uncommon: [[5, .06]], rare: [[418, .008]] },
+  canopybee: { common: [[172, .45]], uncommon: [[9, .04]], rare: [[412, .006]] },
+  leafgoblin: { common: [[174, .45], [170, .2]], uncommon: [[5, .06]], rare: [[366, .01], [232, .006]] },
+  mossbear: { common: [[173, .5], [190, .2]], uncommon: [[9, .05]], rare: [[318, .006]] },
+  leafshaman: { common: [[174, .35], [104, .3]], uncommon: [[9, .08], [6, .04]], rare: [[233, .008], [415, .006]] },
+  leafchief: { common: [[191, .6], [174, 1]], uncommon: [[9, .3], [369, .06]], rare: [[245, .05], [413, .04]], veryRare: [[322, .02]] },
+  sporeling: { common: [[175, .5]], uncommon: [[129, .25]], rare: [[415, .006]] },
+  capshroom: { common: [[176, .45], [175, .2]], uncommon: [[6, .05]], rare: [[368, .01], [236, .006]] },
+  sporebat: { common: [[177, .5]], uncommon: [[5, .06]], rare: [[418, .008]] },
+  shroomfrog: { common: [[178, .45]], uncommon: [[9, .05]], rare: [[317, .008]] },
+  eldercap: { common: [[192, .6], [176, 1]], uncommon: [[9, .3], [368, .08]], rare: [[319, .06], [415, .05]], veryRare: [[240, .015]] },
+  leafwisp: { common: [[179, .45]], uncommon: [[6, .05]], rare: [[317, .008], [415, .006]] },
+  spiritwolf: { common: [[180, .45]], uncommon: [[5, .06]], rare: [[414, .004]] },
+  mossgolem: { common: [[181, .45], [118, .25]], uncommon: [[190, .3]], rare: [[316, .008]] },
+  grovewarden: { common: [[193, 1], [181, 1]], uncommon: [[9, 1], [240, .25], [319, .2]], rare: [[416, .12]], veryRare: [[244, .03]] },
+  valleywolf: { common: [[182, .5]], uncommon: [[5, .06]], rare: [[231, .006]] },
+  fangorc: { common: [[183, .45]], uncommon: [[9, .05]], rare: [[245, .008], [413, .006]] },
+  fangarcher: { common: [[183, .35], [108, .25]], uncommon: [[9, .05]], rare: [[239, .003], [232, .01]] },
+  grizzly: { common: [[184, .5]], uncommon: [[9, .06]], rare: [[318, .01]] },
+  silvermane: { common: [[196, .6], [182, 1]], uncommon: [[9, .3]], rare: [[239, .06], [414, .05]], veryRare: [[241, .01]] },
+  grimpaw: { common: [[194, 1], [184, 1]], uncommon: [[9, 1], [318, .25], [414, .2]], rare: [[241, .1]], veryRare: [[417, .03]] },
+  mirefrog: { common: [[185, .5]], uncommon: [[9, .05]], rare: [[322, .006]] },
+  bogviper: { common: [[186, .45], [171, .2]], uncommon: [[9, .05]], rare: [[242, .006], [418, .008]] },
+  bogzombie: { common: [[185, .35], [133, .3]], uncommon: [[9, .06]], rare: [[370, .005]] },
+  marshwisp: { common: [[187, .45]], uncommon: [[6, .06]], rare: [[244, .002], [416, .002]] },
+  mireking: { common: [[197, .6], [185, 1]], uncommon: [[9, .3]], rare: [[242, .06], [320, .04]], veryRare: [[417, .01]] },
+  heartgrub: { common: [[188, .3], [131, .3]], uncommon: [[9, .04]], rare: [[418, .006]] },
+  rootguard: { common: [[188, .4], [190, .3]], uncommon: [[9, .06]], rare: [[370, .01]] },
+  sapspirit: { common: [[188, .45]], uncommon: [[6, .06]], rare: [[416, .003]] },
+  barkspider: { common: [[189, .45], [130, .2]], uncommon: [[9, .06]], rare: [[320, .008]] },
+  rotheart: { common: [[195, 1], [188, 1]], uncommon: [[9, 1], [321, .2], [243, .15], [244, .15]], rare: [[416, .12], [370, .2]], veryRare: [[417, .05]] },
 };
 for (const id in DROPS) if (MOBS[id]) MOBS[id].drops = DROPS[id];
 // legacy flat lists -> tiers by chance

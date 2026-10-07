@@ -108,7 +108,7 @@
     }
   }
   function terrain(e) {
-    const env = map.env; if (env === 'cave') return 'cave'; if (env === 'snow') return 'snow';
+    const env = map.env; if (env === 'cave' || env === 'heartwood') return 'cave'; if (env === 'snow') return 'snow';
     const v = map.t[Math.round(e.y) * map.w + Math.round(e.x)];
     if ((v === 3 || v === 9 || v === 0) && map.town) return 'dirt';
     return L.terrain[v] || 'grass';

@@ -23,13 +23,13 @@ module.exports = G => {
   portal(m, 0, 50, 'beginner_meadow', 62, 8);
   portal(m, 69, 30, 'moonlit_creek', 1, 26);
   rect(m, 34, 1, 36, 3, 4);
-  portal(m, 35, 0, 'deep_forest', 36, 62, { locked: 1 }, 'ป่าลึก (ยังไม่เปิด)');
+  portal(m, 35, 0, 'deep_forest', 36, 61, { lv: 20 }, 'ป่าลึก (Lv 20+)');
   m.deco = [['prop_tent_01', 31.5, 29.5], ['prop_tent_01', 37.5, 29.5], ['prop_barrel_01', 33.4, 33.4], ['prop_crate_01', 36.2, 33.2], ['prop_flag_red_01', 30.4, 33.6], ['prop_tent_01', 9.5, 8.6], ['prop_crate_01', 14.5, 12.3], ['prop_sack_01', 10.4, 12.6], ['prop_lumber_01', 39.5, 34.2]];
   m.spawns = [
     { mob: 'mossslime', n: 8, zone: [4, 38, 30, 56] }, { mob: 'thornsprite', n: 7, zone: [16, 14, 40, 28] },
     { mob: 'barkbeetle', n: 8, zone: [44, 8, 66, 24] }, { mob: 'mossgoblin', n: 6, zone: [40, 34, 66, 50] },
     { mob: 'goblinsling', n: 5, zone: [44, 34, 66, 56] }, { mob: 'wisp', n: 5, zone: [18, 16, 30, 30] },
-    { mob: 'thornwolf', n: 6, zone: [40, 44, 66, 58] }, { mob: 'bramblekin', n: 3, zone: [24, 12, 46, 18] },
+    { mob: 'thornwolf', n: 6, zone: [40, 44, 66, 58] }, { mob: 'bramblekin', n: 1, zone: [24, 12, 46, 18], respawn: 360 },
     { mob: 'banditlook', n: 4, zone: [6, 6, 18, 14] },
   ];
   m.bosses = [{ mob: 'thornwood', x: 35, y: 7, every: 900 }];
