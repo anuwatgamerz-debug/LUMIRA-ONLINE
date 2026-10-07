@@ -17,7 +17,11 @@
     "test:brand": "node tests/run.js brand",
     "test:skills2": "node tests/run.js skills2",
     "test:vfx": "node tests/run.js vfx",
-    "test:portrait": "node tests/run.js portrait"
+    "test:portrait": "node tests/run.js portrait",
+    "test:prepublic": "node tests/run.js prepublic",
+    "test:load": "node tests/load.js",
+    "migrate": "node scripts/migrate-db-json-to-sqlite.js",
+    "backup": "node scripts/backup-database.js"
   },
   "keywords": [],
   "author": "",

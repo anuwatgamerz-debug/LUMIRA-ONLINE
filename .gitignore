@@ -16,6 +16,7 @@ backups/
 
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 id_rsa
@@ -32,3 +33,12 @@ __pycache__/
 RESTART-REQUEST
 
 tests/out/
+
+# SQLite database + secrets (never commit)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.importing*
+data/*.migrated
+data/.session-secret
+data/admins.txt

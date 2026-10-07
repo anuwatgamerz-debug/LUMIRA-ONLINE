@@ -12,9 +12,13 @@ const C = require('./content');
 const createQuests = require('./engine/quests');
 const createStatus = require('./engine/status');
 
-const PORT = +process.env.PORT || 3400;
-const DATA_ENV = process.env.ELYNDRA_DATA || process.env.LUMIRA_DATA;
-const DATA = DATA_ENV ? path.resolve(DATA_ENV) : path.join(__dirname, 'data', 'db.json');
+const CFG = require('./engine/config'); // NODE_ENV, PORT, HOST, DATABASE_PATH, SESSION_SECRET ... (.env / environment)
+const L = require('./engine/log');
+const createStore = require('./engine/store');
+const RL = require('./engine/limits')();
+const PWD = require('./engine/password')(CFG.bcryptCost);
+const PORT = CFG.port;
+const DATA = CFG.dataJson; // legacy db.json (read once by the migration, never written again)
 const PUB = path.join(__dirname, 'public');
 const TICK = 100;
 if (C.report.err.length) { console.error('[content] errors:\n  ' + C.report.err.join('\n  ')); process.exit(1); }
@@ -50,34 +54,38 @@ const { SOLID, get } = C;
 const SPAWN = { map: 'lumira', x: 25, y: 20 };      // new characters start in Lumira Village
 const OLD_HOME = { map: 'solkara', x: 21, y: 20 };   // save point of characters made before the village existed
 
-// ---------------------------------------------------------------- db
-const BAK = DATA + '.bak';
-function loadDb() {
-  if (!fs.existsSync(DATA)) return { accounts: {} };
-  try { return JSON.parse(fs.readFileSync(DATA, 'utf8')); }
-  catch (e) {
-    // never start with an empty db over a broken file: the next save would wipe every account
-    console.error(`[db] ${DATA} is unreadable: ${e.message}`);
-    try { const b = JSON.parse(fs.readFileSync(BAK, 'utf8')); fs.copyFileSync(DATA, DATA + '.corrupt'); console.error(`[db] loaded backup ${BAK} (broken file kept as db.json.corrupt)`); return b; }
-    catch (e2) { console.error('[db] no usable backup either - fix data/db.json and restart'); process.exit(1); }
+// ---------------------------------------------------------------- db (SQLite: engine/store.js)
+// First start with an old data/db.json: it is backed up, imported and verified (engine/migrate.js), then left alone.
+// If elyndra.db goes missing after a migration, refuse to start rather than silently going back to the old JSON.
+function openStore() {
+  const f = CFG.databasePath;
+  if (!fs.existsSync(f) && fs.existsSync(DATA)) {
+    if (fs.existsSync(DATA + '.migrated') && !CFG.allowRemigrate) { console.error(`[db] ${f} is missing but ${path.basename(DATA)} was already migrated — restore elyndra.db from data/backups/ (or set ALLOW_REMIGRATE=1 to import the old JSON again)`); process.exit(1); }
+    try { require('./engine/migrate').migrate(DATA, f, { backupDir: CFG.backupDir, log: m => console.log(m) }); }
+    catch (e) { console.error('[db] migration failed — db.json untouched:', e.message); process.exit(1); }
   }
+  try { return createStore(f); } catch (e) { console.error('[db] cannot open database:', e.message); process.exit(1); }
 }
-let db = loadDb();
-if (!db || typeof db !== 'object') db = {};
-if (!db.accounts || typeof db.accounts !== 'object') db.accounts = {};
-let dirty = false;
+const store = openStore();
+// in memory: accounts by login (each with chars[]), guilds by name — the game reads these; the store persists them
+const db = { accounts: Object.fromEntries(store.loadAccounts()), guilds: store.loadGuilds() };
+for (const login of CFG.admins) { const a = db.accounts[login]; if (a && a.role !== 'ADMIN') { store.setRole(a, 'ADMIN'); console.log(`[db] ${login} -> ADMIN (ADMIN_ACCOUNTS)`); } }
+let dirty = false; const dirtyChars = new Set(); // characters changed while offline (guild kick, mail ...) are saved too
+const markChar = c => { if (c) { dirtyChars.add(c); dirty = true; } };
+// save every online character + marked ones in one transaction (not the whole database)
 function saveDb() {
   if (!dirty) return;
   dirty = false;
-  const tmp = DATA + '.tmp';
-  try {
-    fs.mkdirSync(path.dirname(DATA), { recursive: true });
-    fs.writeFileSync(tmp, JSON.stringify(db));
-    if (fs.existsSync(DATA)) fs.copyFileSync(DATA, BAK);
-    fs.renameSync(tmp, DATA);
-  } catch (e) { dirty = true; console.error('[db] save failed:', e.message); }
+  const list = new Set(dirtyChars); for (const p of players.values()) if (p.c) list.add(p.c);
+  try { store.tx(() => { store.saveChars([...list]); store.saveGuilds(db.guilds); }); dirtyChars.clear(); }
+  catch (e) { dirty = true; L.error('db_save_failed', { err: e.message }); }
 }
+// characters that must be on disk now (trade, mail claim, GM grant): one transaction, all or nothing
+function commitChars(list) { store.tx(() => { store.saveChars(list); store.saveGuilds(db.guilds); }); for (const c of list) dirtyChars.delete(c); }
 setInterval(saveDb, 15000);
+// automatic backup (BACKUP_HOURS, default 24; 0 = off): VACUUM INTO data/backups/elyndra-YYYY-MM-DD-HHMM.db
+function backupNow(tag) { try { const f = store.backup(CFG.backupDir, CFG.backupKeep, tag); store.meta('last_backup', Date.now()); L.log('db_backup', { file: path.basename(f) }); return f; } catch (e) { L.error('db_backup_failed', { err: e.message }); return null; } }
+if (CFG.backupHours > 0) { const due = () => Date.now() - (+store.meta('last_backup') || 0) > CFG.backupHours * 3600e3; if (due()) setTimeout(() => backupNow('auto'), 5000); setInterval(() => { if (due()) backupNow('auto'); }, 3600e3).unref(); }
 // same scrypt params as the old scryptSync call, so existing hashes still match
 // failed logins per account: 10 wrong passwords within 10 minutes lock the account's login for 5 minutes
 const loginFails = new Map(), LOGIN_MAX_FAILS = 10, LOGIN_LOCK_MS = 300000;
@@ -89,13 +97,20 @@ const validId = u => (/^[a-z0-9_]{3,16}$/.test(u) || (u.length <= 80 && EMAIL_RE
 const ID_ERR = 'ใส่อีเมล หรือไอดี (a-z 0-9 _ ยาว 3-16 ตัว)';
 // ---- "remember me" sessions: random tokens, only their sha256 is stored with the account (max 5, 30 days)
 const SESSION_MS = 30 * 864e5, sha = t => crypto.createHash('sha256').update(String(t)).digest('hex');
+// session tokens: random 24 bytes; only an HMAC (SESSION_SECRET) of the token is stored (old sessions: sha256)
+const tokHash = t => 'h1:' + crypto.createHmac('sha256', CFG.sessionSecret).update(String(t)).digest('hex');
 function issueToken(p, u) {
   const a = db.accounts[u]; if (!a) return;
-  const tok = crypto.randomBytes(24).toString('hex'), now = Date.now();
-  a.tokens = (Array.isArray(a.tokens) ? a.tokens : []).filter(t => t && t.exp > now).slice(-4); a.tokens.push({ h: sha(tok), exp: now + SESSION_MS }); dirty = true;
+  const tok = crypto.randomBytes(24).toString('hex');
+  store.addSession(a, tokHash(tok), Date.now() + SESSION_MS);
   send(p, { t: 'session', u, tok, guest: !!a.guest });
 }
-function tokenOk(a, tok) { const h = sha(tok), now = Date.now(); return !!(a && Array.isArray(a.tokens) && a.tokens.some(t => t && t.exp > now && t.h.length === h.length && crypto.timingSafeEqual(Buffer.from(t.h), Buffer.from(h)))); }
+function tokenOk(a, tok) {
+  if (!a || typeof tok !== 'string' || tok.length < 16 || tok.length > 128) return false;
+  const want = [tokHash(tok), sha(tok)];
+  return store.sessionsOf(a).some(r => want.some(h => h.length === r.h.length && crypto.timingSafeEqual(Buffer.from(h), Buffer.from(r.h))));
+}
+const revokeToken = (a, tok) => { for (const h of [tokHash(tok), sha(tok)]) store.removeSession(a, h); };
 // ---- guests: limited per address so nobody can flood the database
 const guestBy = new Map(), GUEST_PER_HOUR = 6;
 const cleanLook = m => ({ hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(8, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 });
@@ -115,8 +130,6 @@ function verifyGoogle(cred, cb) {
     res.on('end', () => { try { const j = JSON.parse(b); const ok = res.statusCode === 200 && j.aud === cid && /^(https:\/\/)?accounts\.google\.com$/.test(j.iss) && +j.exp * 1000 > Date.now() && j.sub; cb(ok ? j : null); } catch (e) { cb(null); } });
   }).on('error', () => cb(null)).setTimeout(8000, function () { this.destroy(); });
 }
-function hashPw(pw, salt, cb) { crypto.scrypt(pw, salt, 32, (e, k) => cb(e, k && k.toString('hex'))); }
-function samePw(a, b) { const x = Buffer.from(a, 'hex'), y = Buffer.from(String(b), 'hex'); return x.length === y.length && crypto.timingSafeEqual(x, y); }
 
 // ---------------------------------------------------------------- formulas
 const expNext = LV.expNext;
@@ -191,7 +204,7 @@ const players = new Map(); // id -> player
 const mobs = new Map();
 const drops = new Map();
 const ST = createStatus({ now: () => Date.now(), dotHit: (m, o, d, k) => dotHit(m, o, d, k), MOBS });
-const nameTaken = n => Object.values(db.accounts).some(a => a.char && a.char.name.toLowerCase() === n.toLowerCase());
+const nameTaken = n => store.nameTaken(n); // UNIQUE index on characters.name_key (deleted characters free their name)
 
 function walkable(m, x, y) { return !SOLID.has(get(m, x, y)); }
 function occupiedByNpc(m, x, y) { return m.npcs.some(n => n.x === x && n.y === y); }
@@ -258,7 +271,7 @@ function me(p) {
   const now = Date.now(), B = buffsOf(c);
   send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit,
     matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, portraitId: c.portraitId, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
-    skp: [skPoints(c), skSpent(c)], cls: clsOf(c).id, guest: !!(db.accounts[p.acct] || {}).guest, guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
+    skp: [skPoints(c), skSpent(c)], cls: clsOf(c).id, guest: !!(db.accounts[p.acct] || {}).guest, role: (db.accounts[p.acct] || {}).role || 'PLAYER', guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
     buffs: Object.entries(B).filter(([, b]) => b.until > now).map(([id, b]) => ({ id, th: b.th, ms: b.until - now })) } });
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
@@ -780,10 +793,21 @@ function equipBlock(c, it) {
 }
 
 // ---------------------------------------------------------------- ws handling
+// behind a reverse proxy (Caddy, TRUST_PROXY=1) the client address / scheme come from X-Forwarded-*; otherwise the socket
+const clientIp = req => { const s = (req.socket && req.socket.remoteAddress) || '?'; if (!CFG.trustProxy) return s; const f = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim(); return f || s; };
+const isHttps = req => !!(req.socket && req.socket.encrypted) || (CFG.trustProxy && String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https');
+const isLocal = req => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(String(req.headers.host || ''));
+const SEC_HEADERS = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'SAMEORIGIN' };
 const server = http.createServer((req, res) => {
+  for (const [k, v] of Object.entries(SEC_HEADERS)) res.setHeader(k, v);
+  // production: plain HTTP -> HTTPS (localhost development stays on HTTP); HSTS once on HTTPS
+  if (CFG.forceHttps && !isHttps(req) && !isLocal(req)) { const host = String(req.headers.host || '').replace(/[^A-Za-z0-9.:\-\[\]]/g, ''); res.writeHead(301, { Location: `https://${host}${String(req.url || '/')}` }); return res.end(); }
+  if (isHttps(req)) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   let u;
   try { u = decodeURIComponent(req.url.split('?')[0]); } catch (e) { res.writeHead(400); return res.end(); }
   if (u.includes('\0')) { res.writeHead(400); return res.end(); }
+  // health check for uptime monitors: no secrets, no admin data
+  if (u === '/health') { let dbok = false; try { dbok = store.ping(); } catch (e) { } res.writeHead(dbok ? 200 : 503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ status: dbok ? 'ok' : 'degraded', uptime: Math.round(process.uptime()), database: dbok ? 'ok' : 'error', playersOnline: players.size })); }
   if (u === '/api/config') { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' }); return res.end(JSON.stringify({ name: 'ELYNDRA ONLINE', google: googleId() })); }
   if (u === '/') u = '/index.html';
   const f = path.join(PUB, path.normalize(u).replace(/^(\.\.[\/\\])+/, ''));
@@ -805,12 +829,12 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server, maxPayload: 4096 });
 const conns = new Set();
 wss.on('connection', (ws, req) => {
-  const p = { id: NID++, ws, ip: (req && req.socket && req.socket.remoteAddress) || '?', c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0, authBusy: false, authFails: 0, cd: {}, gcd: 0 };
+  const p = { id: NID++, ws, ip: req ? clientIp(req) : '?', c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0, authBusy: false, authFails: 0, abuse: 0, cd: {}, gcd: 0 };
   conns.add(p);
   // without a listener, a protocol error (e.g. a message over maxPayload) is thrown and kills the process
   ws.on('error', e => console.error('[ws]', e.message));
   ws.on('message', raw => {
-    if (++p.msgs > 40) return; // rate limit (reset each second)
+    if (++p.msgs > 40) { if (p.msgs === 41 && ++p.abuse % 5 === 1) L.warn('ws_abuse', { u: p.acct, ip: p.ip, n: p.abuse }); return; } // rate limit (reset each second)
     let m; try { m = JSON.parse(raw); } catch (e) { return; }
     if (!m || typeof m !== 'object') return;
     try { handle(p, m); } catch (e) { console.error(e); }
@@ -822,7 +846,7 @@ function logout(p) {
   if (!p.c) return;
   SOC.onLeave(p);
   if (p.wave) endWave(p, false);
-  db.accounts[p.acct].char = p.c; dirty = true;
+  markChar(p.c);
   players.delete(p.id);
   bcast(p.c.map, { t: 'fx', k: 'leave', id: p.id });
   for (const mb of mobs.values()) if (mb.target === p.id) mb.target = null;
@@ -864,8 +888,31 @@ const GUIDE = (() => {
   return { npcs, spawns, nodes, portals, drops, legacy: [['jellop', 10], ['crab', 8], ['leafling', 10], ['kingjel', 1]], legacyNpc: 'solkara:iris' };
 })();
 // social: rankings, party, guild, trade (engine/social.js)
-const SOC = require('./engine/social')({ players, send, sys, getDb: () => db, setDirty: () => { dirty = true; }, ITEMS, addItem, countItem, takeItem, me, MAPS, itemsChanged: p => Q.onItems(p) });
+const SOC = require('./engine/social')({ players, send, sys, getDb: () => db, setDirty: () => { dirty = true; }, commitChars, markChar, isBlocked: (from, to) => !!(from.c && to.c && from.c._id && to.c._id && store.isBlocked(from.c._id, to.c._id)), limit: (k, n, w) => RL.hit(k, n, w), log: L, ITEMS, addItem, countItem, takeItem, me, MAPS, itemsChanged: p => Q.onItems(p) });
 setInterval(() => SOC.tick(), 500);
+const MAIL = require('./engine/mail')({ store, ITEMS, addItem, countItem, takeItem, L });
+const GM = require('./engine/gm')({ store, db, players, send, sys, bcastAll, MAPS, ITEMS, QUESTS, L, warp: (p, m, x, y) => warp(p, m, x, y), walkable, addItem, me, derive, commitChars, logout: p => logout(p), backupNow, mail: MAIL, Q, MAX_LV });
+const muted = p => { if (p.mute && p.mute.expires_at && p.mute.expires_at <= Date.now()) p.mute = null; return p.mute; };
+// friends / blocks (foundation: chat commands + messages; the friend window comes later)
+function socialCmd(p, m) {
+  const c = p.c, name = String(m.name || '').trim().slice(0, 14), other = name && store.charIdByName(name);
+  const done = t => sys(p, t, '#9fe7ff');
+  if (m.t === 'block') {
+    if (m.a === 'list') return send(p, { t: 'blocks', list: store.blocksOf(c._id) });
+    if (!other || other.id === c._id) return done('ไม่พบผู้เล่นชื่อนี้');
+    if (m.a === 'remove') { store.unblock(c._id, other.id); return done(`เลิกบล็อก ${name} แล้ว`); }
+    store.block(c._id, other.id); return done(`บล็อก ${name} แล้ว — จะไม่ได้รับกระซิบ/คำขอจากผู้เล่นนี้`);
+  }
+  if (m.a === 'list') return send(p, { t: 'friends', ...store.friendsOf(c._id) });
+  if (!other || other.id === c._id) return done('ไม่พบผู้เล่นชื่อนี้');
+  if (m.a === 'remove') { store.friendRemove(c._id, other.id); return done(`ลบ ${name} ออกจากเพื่อนแล้ว`); }
+  if (!RL.hit('friend:' + c._id, 20, 3600e3)) return done('ส่งคำขอเป็นเพื่อนบ่อยเกินไป');
+  if (store.isBlocked(c._id, other.id) || store.isBlocked(other.id, c._id)) return done('ไม่สามารถส่งคำขอถึงผู้เล่นนี้ได้'); // blocked: nothing reaches them
+  const r = store.friendRequest(c._id, other.id), o = [...players.values()].find(x => x.c && x.c._id === other.id);
+  if (r === 'accepted') { done(`${name} เป็นเพื่อนกับคุณแล้ว`); if (o) sys(o, `${c.name} เป็นเพื่อนกับคุณแล้ว`, '#9fe7ff'); }
+  else { done(`ส่งคำขอเป็นเพื่อนถึง ${name} แล้ว`); if (o) sys(o, `${c.name} ขอเป็นเพื่อน — พิมพ์ /friend ${c.name} เพื่อตอบรับ`, '#9fe7ff'); }
+}
+const CHAT_CMD = { '/block': ['block', 'add'], '/unblock': ['block', 'remove'], '/friend': ['friend', 'req'], '/unfriend': ['friend', 'remove'], '/friends': ['friend', 'list'], '/blocks': ['block', 'list'] };
 // static game data the client needs once (monster visuals, world map, quest texts, classes, recipes)
 // skill -> visual effect ids for every skill (other players' skills too), from content/skills.js
 const VFX_BIND = Object.fromEntries(Object.entries(SKILLS).filter(([, s]) => s.castVfx || s.projectileVfx || s.hitVfx || s.areaVfx).map(([id, s]) => [id, [s.castVfx || 0, s.projectileVfx || 0, s.hitVfx || 0, s.areaVfx || 0, s.areaVfx ? s.r || s.range || 2 : 0]]));
@@ -881,119 +928,211 @@ function welcomeData(c) {
     recipes: RECIPES,
   };
 }
-function enterWorld(p, u) {
+// ---------------------------------------------------------------- accounts: characters, ban check, character select
+const CHAR_NAME_ERR = 'ชื่อตัวละคร 2-14 ตัวอักษร (ไทย/อังกฤษ/ตัวเลข)';
+const ipOf = p => p.ip || '?';
+const banText = b => `บัญชีนี้ถูกระงับ: ${b.reason}${b.expires_at ? ` (ถึง ${new Date(b.expires_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })})` : ' (ถาวร)'}`;
+function charCard(c) { return { id: c._id, slot: c._slot, name: c.name, lv: c.lv, cls: c.cls || 'adventurer', clsTh: (CLASSES[c.cls] || {}).th || 'นักผจญภัย', jlv: c.jlv || 1, map: c.map, mapName: (MAPS[c.map] || {}).name || c.map, portraitId: c.portraitId || POR.portraitFallback(c.look, c.name), look: c.look }; }
+function sendChars(p, sel) { const a = db.accounts[p.acct]; if (!a) return; send(p, { t: 'chars', list: a.chars.map(charCard), max: a.slots || 3, guest: !!a.guest, sel: sel || 0 }); }
+// a new character in the first free slot (also used by sign-up). The database's UNIQUE name index settles races.
+function createChar(a, name, look, portrait) {
+  name = String(name || '').trim();
+  if (!validName(name)) return { err: CHAR_NAME_ERR };
+  if (nameTaken(name)) return { err: 'ชื่อตัวละครนี้มีคนใช้แล้ว' };
+  const used = new Set(a.chars.map(c => c._slot)); let slot = 0; for (let i = 1; i <= (a.slots || 3); i++) if (!used.has(i)) { slot = i; break; }
+  if (!slot) return { err: `สร้างตัวละครได้สูงสุด ${a.slots || 3} ตัวต่อบัญชี` };
+  const c = newChar(name, look, portrait);
+  try { store.insertChar(a, c, slot); } catch (e) { return { err: /UNIQUE/.test(e.message) ? 'ชื่อตัวละครนี้มีคนใช้แล้ว' : 'สร้างตัวละครไม่สำเร็จ' }; }
+  a.chars.push(c); a.chars.sort((x, y) => x._slot - y._slot);
+  return { c };
+}
+// a new account + its first character in one transaction (nothing is kept if either fails)
+function createAccount(login, fields, name, look, portrait) {
+  const a = Object.assign({ login, chars: [], created: Date.now() }, fields); let r;
+  try { store.tx(() => { store.insertAccount(a); r = createChar(a, name, look, portrait); if (r.err) throw new Error(r.err); }); }
+  catch (e) { return { err: r && r.err ? r.err : /UNIQUE/.test(e.message) ? 'ไอดีนี้มีคนใช้แล้ว' : 'สร้างบัญชีไม่สำเร็จ' }; }
+  db.accounts[login] = a; return { a, c: r.c };
+}
+// authenticated: check bans, then the character select (new client: m.cs) or straight into a character (old clients)
+function authed(p, u, m, fresh) {
+  const a = db.accounts[u]; if (!a) return;
+  const ban = store.activeBan(a.id);
+  if (ban) { L.warn('login_banned', { u, ip: ipOf(p) }); send(p, { t: 'err', code: 'banned', m: banText(ban) }); return; }
+  p.acct = u; a.lastLogin = Date.now(); try { store.saveAccount(a); } catch (e) { }
+  if (m.rem) issueToken(p, u);
+  if (m.cs && !fresh) return sendChars(p);
+  const c = fresh || a.chars[0];
+  if (!c) return sendChars(p);
+  enterWorld(p, u, c);
+}
+function enterWorld(p, u, ch) {
   const a = db.accounts[u];
-  for (const o of players.values()) if (o.acct === u) {
+  for (const o of players.values()) if (o.acct === u) { // one character per account in the world
     send(o, { t: 'err', m: 'มีการล็อกอินจากที่อื่น' });
     logout(o); // drop the old session now; its socket can take up to 30s to finish closing
     o.ws.close();
   }
-  p.acct = u; p.c = fixChar(a.char); p.knows = new Set(skillsFor(p.c).filter(id => ownsSkill(p.c, id)));
+  p.acct = u; p.c = fixChar(ch); p.knows = new Set(skillsFor(p.c).filter(id => ownsSkill(p.c, id)));
+  p.mute = store.activeMute(a.id);
   if (p.c.hp <= 0) { p.c.hp = Math.floor(p.c.maxhp / 2); p.c.map = p.c.save.map; p.c.x = p.c.save.x; p.c.y = p.c.save.y; }
-  players.set(p.id, p);
-  send(p, Object.assign({ t: 'welcome', id: p.id }, welcomeData(p.c)));
+  players.set(p.id, p); markChar(p.c);
+  send(p, Object.assign({ t: 'welcome', id: p.id, charId: p.c._id }, welcomeData(p.c)));
   warp(p, p.c.map, p.c.x, p.c.y); SOC.onLogin(p);
   bcastAll({ t: 'sys', m: `${p.c.name} เข้าสู่โลก Elyndra`, col: '#9ad0ff' });
   if (p.c.qs.a.mq1 && p.c.qs.a.mq1.s === 0) sys(p, 'คุยกับ ผู้ใหญ่บ้านมาเรน (บ้านทางเหนือของลานหมู่บ้าน) เพื่อเริ่มการผจญภัย', '#ffd34d');
   else if (p.c.q.step === 0 && p.c.q.k === 0 && p.c.map === 'solkara') sys(p, 'คุยกับ ไอริส ที่ลานกลางเมืองเพื่อรับภารกิจแรก', '#ffd34d');
 }
+// a fixed bcrypt hash so a wrong id costs the same time as a wrong password (no account probing by timing)
+const DUMMY = { alg: 'scrypt', salt: 'nosuchaccount', hash: '00'.repeat(32) }; PWD.hash(crypto.randomBytes(8).toString('hex')).then(h => Object.assign(DUMMY, h), () => { });
+function loginFail(p, u, why) {
+  const f = loginFails.get(u) || { n: 0, t: Date.now() }; if (Date.now() - f.t > 600000) { f.n = 0; f.t = Date.now(); } f.n++; loginFails.set(u, f);
+  if (f.n >= LOGIN_MAX_FAILS) f.lock = Date.now() + LOGIN_LOCK_MS;
+  L.warn('login_failed', { u, ip: ipOf(p), why, n: f.n });
+  send(p, { t: 'err', m: 'อีเมล/ไอดี หรือรหัสผ่านไม่ถูกต้อง' });
+  if (++p.authFails >= 5) p.ws.close();
+}
+const pwErr = pw => pw.length < 4 ? 'รหัสผ่านต้องยาว 4 ตัวขึ้นไป' : pw.length > 64 || PWD.tooLong(pw) ? 'รหัสผ่านยาวเกินไป' : '';
 
 function handle(p, m) {
+  if (!p.c && p.acct && db.accounts[p.acct]) { // ---- signed in, at the character select
+    const a = db.accounts[p.acct];
+    if (m.t === 'chars') return sendChars(p);
+    if (m.t === 'enter') { const c = a.chars.find(x => x._id === (m.id | 0)); if (!c) { L.warn('char_spoof', { u: p.acct, id: m.id, ip: ipOf(p) }); return send(p, { t: 'charerr', m: 'ไม่พบตัวละครนี้ในบัญชีของคุณ' }); } return enterWorld(p, p.acct, c); }
+    if (m.t === 'newchar') {
+      if (!RL.hit('newchar:' + a.id, 10, 3600e3) || !RL.hit('newchar-ip:' + ipOf(p), CFG.rl.newcharIp, 3600e3)) return send(p, { t: 'charerr', m: 'สร้างตัวละครบ่อยเกินไป ลองใหม่ภายหลัง' });
+      const look = cleanLook(m), name = String(m.name || '').trim(), por = pickPortrait(m, look, name); if (!por) return send(p, { t: 'charerr', m: 'ภาพตัวละครไม่ถูกต้อง เลือกใหม่อีกครั้ง' });
+      const r = createChar(a, name, look, por); if (r.err) return send(p, { t: 'charerr', m: r.err });
+      L.log('char_created', { u: p.acct, char: r.c.name }); return sendChars(p, r.c._id);
+    }
+    if (m.t === 'delchar') { // two steps on the client + the exact name typed again; checked here
+      const c = a.chars.find(x => x._id === (m.id | 0)); if (!c) return send(p, { t: 'charerr', m: 'ไม่พบตัวละครนี้ในบัญชีของคุณ' });
+      if (!m.confirm || String(m.name || '').trim().toLowerCase() !== c.name.toLowerCase()) return send(p, { t: 'charerr', m: 'พิมพ์ชื่อตัวละครให้ตรงเพื่อยืนยันการลบ' });
+      if (!RL.hit('delchar:' + a.id, 5, 3600e3)) return send(p, { t: 'charerr', m: 'ลบตัวละครบ่อยเกินไป ลองใหม่ภายหลัง' });
+      if ([...players.values()].some(o => o.c === c)) return send(p, { t: 'charerr', m: 'ตัวละครนี้กำลังออนไลน์อยู่' });
+      const G = c.guild && db.guilds[c.guild]; if (G) { G.members = G.members.filter(n => n !== c.name); if (!G.members.length) delete db.guilds[c.guild]; else if (G.master === c.name) G.master = G.members[0]; }
+      store.tx(() => { store.deleteChar(c); store.saveGuilds(db.guilds); }); a.chars = a.chars.filter(x => x !== c);
+      L.log('char_deleted', { u: p.acct, char: c.name, id: c._id }); send(p, { t: 'chardel', id: c._id }); return sendChars(p);
+    }
+    if (m.t === 'revoke') { revokeToken(a, String(m.tok || '')); return; }
+    return;
+  }
   if (!p.c) {
     if (m.t === 'register' || m.t === 'login') {
       const u = String(m.u || '').trim().toLowerCase(), pw = String(m.p || '');
       if (!validId(u)) return send(p, { t: 'err', m: ID_ERR });
-      if (pw.length < 4 || pw.length > 64) return send(p, { t: 'err', m: 'รหัสผ่านต้องยาว 4 ตัวขึ้นไป' });
+      if (m.t === 'register' && pwErr(pw)) return send(p, { t: 'err', m: pwErr(pw) }); // login: any wrong password counts as a failed try (rate limit / lock)
+      if (pw.length > 200) return send(p, { t: 'err', m: 'อีเมล/ไอดี หรือรหัสผ่านไม่ถูกต้อง' });
       if (p.authBusy) return; // one password check at a time per connection
       if (m.t === 'register') {
+        if (!RL.hit('reg-ip:' + ipOf(p), CFG.rl.registerIp, 3600e3)) { L.warn('rate_limit', { what: 'register', ip: ipOf(p) }); return send(p, { t: 'err', m: 'สมัครบ่อยเกินไป ลองใหม่ภายหลัง' }); }
         if (db.accounts[u]) return send(p, { t: 'err', m: 'ไอดีนี้มีคนใช้แล้ว' });
         const name = String(m.name || '').trim();
-        if (!/^[A-Za-z0-9ก-๙ _]{2,14}$/.test(name)) return send(p, { t: 'err', m: 'ชื่อตัวละคร 2-14 ตัวอักษร (ไทย/อังกฤษ/ตัวเลข)' });
+        if (!validName(name)) return send(p, { t: 'err', m: CHAR_NAME_ERR });
         if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
-        const salt = crypto.randomBytes(12).toString('hex');
-        const look = { hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(8, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 };
+        const look = cleanLook(m);
         const portrait = pickPortrait(m, look, name); if (!portrait) return send(p, { t: 'err', m: 'ภาพตัวละครไม่ถูกต้อง เลือกใหม่อีกครั้ง' });
         p.authBusy = true;
-        hashPw(pw, salt, (e, hash) => {
+        PWD.hash(pw).then(h => {
           p.authBusy = false;
-          if (e || p.ws.readyState !== 1 || p.c) return;
+          if (p.ws.readyState !== 1 || p.c) return;
           // re-check: another connection may have taken the id/name while we were hashing
           if (db.accounts[u]) return send(p, { t: 'err', m: 'ไอดีนี้มีคนใช้แล้ว' });
-          if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
-          db.accounts[u] = { salt, hash, char: newChar(name, look, portrait), created: Date.now() };
-          dirty = true; saveDb();
-          enterWorld(p, u); if (m.rem) issueToken(p, u);
-        });
+          const r = createAccount(u, h, name, look, portrait); if (r.err) return send(p, { t: 'err', m: r.err });
+          L.log('account_created', { u, ip: ipOf(p) });
+          authed(p, u, m, r.c);
+        }, () => { p.authBusy = false; send(p, { t: 'err', m: 'สมัครไม่สำเร็จ ลองใหม่อีกครั้ง' }); });
       } else {
         const a = db.accounts[u], lf = loginFails.get(u);
+        if (!RL.hit('login-ip:' + ipOf(p), CFG.rl.loginIp, 600e3)) { L.warn('rate_limit', { what: 'login', ip: ipOf(p) }); return send(p, { t: 'err', m: 'ลองเข้าสู่ระบบบ่อยเกินไป รอสักครู่แล้วลองใหม่' }); }
         if (lf && lf.lock > Date.now()) return send(p, { t: 'err', m: `ใส่รหัสผิดหลายครั้ง ลองใหม่ใน ${Math.ceil((lf.lock - Date.now()) / 60000)} นาที` });
         p.authBusy = true;
-        // hash even for unknown ids so response time doesn't reveal which ids exist
-        hashPw(pw, a ? a.salt : 'nosuchaccount', (e, hash) => {
+        // check a password even for unknown ids so response time doesn't reveal which ids exist
+        PWD.verify(a && a.hash ? a : DUMMY, pw).then(ok => {
           p.authBusy = false;
-          if (e || p.ws.readyState !== 1 || p.c) return;
-          if (!a || db.accounts[u] !== a || !samePw(hash, a.hash)) {
-            const f = loginFails.get(u) || { n: 0, t: Date.now() }; if (Date.now() - f.t > 600000) { f.n = 0; f.t = Date.now(); } f.n++; loginFails.set(u, f);
-            if (f.n >= LOGIN_MAX_FAILS) f.lock = Date.now() + LOGIN_LOCK_MS;
-            send(p, { t: 'err', m: 'อีเมล/ไอดี หรือรหัสผ่านไม่ถูกต้อง' });
-            if (++p.authFails >= 5) p.ws.close();
-            return;
-          }
+          if (p.ws.readyState !== 1 || p.c) return;
+          if (!a || !ok || db.accounts[u] !== a) return loginFail(p, u, a ? 'password' : 'unknown');
           loginFails.delete(u);
-          enterWorld(p, u); if (m.rem) issueToken(p, u);
-        });
+          if (PWD.needsUpgrade(a)) PWD.hash(pw).then(h => { Object.assign(a, h); store.saveAccount(a); L.log('password_upgraded', { u }); }, () => { });
+          authed(p, u, m);
+        }, () => { p.authBusy = false; send(p, { t: 'err', m: 'เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง' }); });
       }
     } else if (m.t === 'tlogin') { // remembered session (also how a guest comes back)
+      if (!RL.hit('tlogin-ip:' + ipOf(p), CFG.rl.tokenIp, 600e3)) return send(p, { t: 'err', m: 'ลองเข้าสู่ระบบบ่อยเกินไป รอสักครู่แล้วลองใหม่' });
       const u = String(m.u || '').slice(0, 96), a = Object.hasOwn(db.accounts, u) ? db.accounts[u] : null;
-      if (!a || !tokenOk(a, m.tok)) return send(p, { t: 'err', m: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', code: 'session' });
-      enterWorld(p, u);
+      if (!a || !tokenOk(a, m.tok)) { L.warn('session_rejected', { u, ip: ipOf(p) }); return send(p, { t: 'err', m: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', code: 'session' }); }
+      authed(p, u, Object.assign({}, m, { rem: 0 }));
     } else if (m.t === 'guest') {
-      const ip = p.ip || '?', now = Date.now(), list = (guestBy.get(ip) || []).filter(t => now - t < 3600000);
+      const ip = ipOf(p), now = Date.now(), list = (guestBy.get(ip) || []).filter(t => now - t < 3600000);
       if (list.length >= GUEST_PER_HOUR) return send(p, { t: 'err', m: 'สร้างบัญชี Guest บ่อยเกินไป ลองใหม่ภายหลัง' });
       let name = String(m.name || '').trim(); if (!validName(name) || nameTaken(name)) name = guestName();
       const gPortrait = pickPortrait(m, cleanLook(m), name); if (!gPortrait) return send(p, { t: 'err', m: 'ภาพตัวละครไม่ถูกต้อง เลือกใหม่อีกครั้ง' });
       list.push(now); guestBy.set(ip, list);
       let u; do { u = 'guest:' + crypto.randomBytes(8).toString('hex'); } while (db.accounts[u]);
-      db.accounts[u] = { salt: '', hash: '', guest: 1, char: newChar(name, cleanLook(m), gPortrait), created: now }; dirty = true; saveDb();
-      enterWorld(p, u); issueToken(p, u);
+      const r = createAccount(u, { guest: 1 }, name, cleanLook(m), gPortrait); if (r.err) return send(p, { t: 'err', m: r.err });
+      authed(p, u, Object.assign({}, m, { rem: 1 }), r.c);
     } else if (m.t === 'glogin') {
       if (!googleId()) return send(p, { t: 'err', m: 'ยังไม่ได้เปิดใช้การเข้าสู่ระบบด้วย Google บนเซิร์ฟเวอร์นี้' });
       if (p.authBusy) return; p.authBusy = true;
       verifyGoogle(m.cred, j => {
         p.authBusy = false; if (p.ws.readyState !== 1 || p.c) return;
         if (!j) return send(p, { t: 'err', m: 'ยืนยันบัญชี Google ไม่สำเร็จ ลองใหม่อีกครั้ง' });
-        const u = 'google:' + j.sub;
+        const u = 'google:' + j.sub; let fresh = null;
         if (!db.accounts[u]) {
           const name = String(m.name || '').trim();
           if (!name) return send(p, { t: 'needchar', via: 'google', email: j.email || '' });
-          if (!validName(name)) return send(p, { t: 'err', m: 'ชื่อตัวละคร 2-14 ตัวอักษร (ไทย/อังกฤษ/ตัวเลข)' });
+          if (!validName(name)) return send(p, { t: 'err', m: CHAR_NAME_ERR });
           if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
           const gp = pickPortrait(m, cleanLook(m), name); if (!gp) return send(p, { t: 'err', m: 'ภาพตัวละครไม่ถูกต้อง เลือกใหม่อีกครั้ง' });
-          db.accounts[u] = { salt: '', hash: '', google: j.email || 1, char: newChar(name, cleanLook(m), gp), created: Date.now() }; dirty = true; saveDb();
+          const r = createAccount(u, { google: j.email || 1 }, name, cleanLook(m), gp); if (r.err) return send(p, { t: 'err', m: r.err });
+          fresh = r.c;
         }
-        enterWorld(p, u); if (m.rem) issueToken(p, u);
+        authed(p, u, m, fresh);
       });
     }
     return;
   }
-  if (m.t === 'revoke') { const a = db.accounts[p.acct], h = sha(m.tok); if (a && Array.isArray(a.tokens)) { a.tokens = a.tokens.filter(t => t.h !== h); dirty = true; } return; }
+  if (m.t === 'revoke') { const a = db.accounts[p.acct]; if (a) revokeToken(a, String(m.tok || '')); return; }
+  if (m.t === 'charsel') { logout(p); return sendChars(p); } // back to the character select (session stays)
   if (m.t === 'bind') { // a guest keeps the character and gets a normal e-mail / id + password login
     const a = db.accounts[p.acct], u = String(m.u || '').trim().toLowerCase(), pw = String(m.p || '');
     if (!a || !a.guest) return sys(p, 'บัญชีนี้ไม่ใช่บัญชี Guest', '#ff8b8b');
     if (!validId(u)) return send(p, { t: 'bindres', ok: false, m: ID_ERR });
-    if (pw.length < 4 || pw.length > 64) return send(p, { t: 'bindres', ok: false, m: 'รหัสผ่านต้องยาว 4 ตัวขึ้นไป' });
+    if (pwErr(pw)) return send(p, { t: 'bindres', ok: false, m: pwErr(pw) });
     if (db.accounts[u]) return send(p, { t: 'bindres', ok: false, m: 'อีเมล/ไอดีนี้มีคนใช้แล้ว' });
     if (p.authBusy) return; p.authBusy = true;
-    const salt = crypto.randomBytes(12).toString('hex');
-    hashPw(pw, salt, (e, hash) => {
-      p.authBusy = false; if (e || !p.c || db.accounts[p.acct] !== a) return;
+    PWD.hash(pw).then(h => {
+      p.authBusy = false; if (!p.c || db.accounts[p.acct] !== a) return;
       if (db.accounts[u]) return send(p, { t: 'bindres', ok: false, m: 'อีเมล/ไอดีนี้มีคนใช้แล้ว' });
-      a.char = p.c; delete db.accounts[p.acct]; delete a.guest; a.salt = salt; a.hash = hash; a.tokens = []; db.accounts[u] = a; p.acct = u; dirty = true; saveDb();
+      const old = a.login; Object.assign(a, h, { login: u }); delete a.guest;
+      try { store.tx(() => { store.saveAccount(a); store.clearSessions(a); }); } catch (e) { Object.assign(a, { login: old, guest: 1 }); return send(p, { t: 'bindres', ok: false, m: 'อีเมล/ไอดีนี้มีคนใช้แล้ว' }); }
+      delete db.accounts[old]; db.accounts[u] = a; p.acct = u;
+      L.log('guest_bound', { u });
       send(p, { t: 'bindres', ok: true, u, m: 'ผูกบัญชีสำเร็จ! ครั้งหน้าเข้าเกมด้วยอีเมล/ไอดีนี้ได้เลย' }); issueToken(p, u); me(p);
-    });
+    }, () => { p.authBusy = false; });
     return;
   }
   const c = p.c, map = MAPS[c.map];
+  if (m.t === 'chat') {
+    const raw = String(m.m || '').trim();
+    if (/^\/gm(\s|$)/i.test(raw) && GM.run(p, raw)) return;
+    const cc = CHAT_CMD[raw.split(/\s+/)[0].toLowerCase()]; if (cc) return socialCmd(p, { t: cc[0], a: cc[1], name: raw.split(/\s+/).slice(1).join(' ') });
+    const mu = muted(p); if (mu) return sys(p, `คุณถูกห้ามแชท${mu.expires_at ? ' ถึง ' + new Date(mu.expires_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : ''}: ${mu.reason}`, '#ff8b8b');
+    if (!RL.hit('chatmin:' + p.acct, 40, 60000)) { L.warn('chat_flood', { u: p.acct }); return sys(p, 'ส่งข้อความเร็วเกินไป พักสักครู่', '#ff8b8b'); }
+  }
+  if (m.t === 'admin') { GM.view(p, m); return; }
+  if (m.t === 'friend' || m.t === 'block') return socialCmd(p, m);
+  if (m.t === 'mail') {
+    const a = String(m.a || 'list');
+    if (a === 'claim') { const e = MAIL.claim(p, m.id); if (e) sys(p, e, '#ffb36b'); else { sys(p, 'รับของจากจดหมายแล้ว', '#8fe38f'); me(p); } }
+    else if (a === 'read') MAIL.read(c, m.id);
+    else if (a === 'send') {
+      if (!RL.hit('mail:' + c._id, 10, 3600e3)) return sys(p, 'ส่งจดหมายบ่อยเกินไป');
+      const to = store.charIdByName(String(m.to || '')); const e = MAIL.sendFromPlayer(p, to && to.id, m.subject, m.body, m.item, m.qty, m.gold);
+      if (typeof e === 'string') return sys(p, e, '#ffb36b'); sys(p, 'ส่งจดหมายแล้ว', '#8fe38f'); me(p);
+      const o = [...players.values()].find(x => x.c && to && x.c._id === to.id); if (o) sys(o, `📬 จดหมายใหม่จาก ${c.name}`, '#ffd34d');
+    }
+    return send(p, { t: 'mail', list: MAIL.list(c) });
+  }
   if (SOC.handle(p, m)) return; // rankings / party / guild / trade / party+guild chat
   if (p.dead && m.t !== 'respawn' && m.t !== 'chat') { if (m.t === 'cast' || m.t === 'attack') failMsg(p, String(m.s || 'attack').slice(0, 16), 'dead'); return; }
   switch (m.t) {
@@ -1077,6 +1216,7 @@ function handle(p, m) {
         const to = String(m.to || '').trim().toLowerCase();
         const o = [...players.values()].find(o => o.c.name.toLowerCase() === to);
         if (!o) return sys(p, `ไม่พบผู้เล่นชื่อ "${String(m.to || '').slice(0, 14)}" ที่ออนไลน์อยู่`);
+        if (o !== p && store.isBlocked(c._id, o.c._id)) return sys(p, 'ไม่สามารถส่งข้อความถึงผู้เล่นนี้ได้'); // the receiver blocked you
         p.lastChat = Date.now();
         const pkt = { t: 'chat', ch, id: p.id, from: c.name, to: o.c.name, m: msg };
         send(o, pkt); if (o !== p) send(p, pkt);
@@ -1362,8 +1502,8 @@ setInterval(() => {
 }, TICK);
 const AOI = 30; // tiles of view around the player's 8x8 block
 
-function syncChars() { for (const p of players.values()) db.accounts[p.acct].char = p.c; if (players.size) dirty = true; }
-function shutdown() { syncChars(); dirty = true; saveDb(); process.exit(0); }
+function syncChars() { if (players.size) dirty = true; }
+function shutdown() { syncChars(); dirty = true; saveDb(); try { store.close(); } catch (e) { } process.exit(0); }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 // remote-safe restart: creating the file RESTART-REQUEST next to server.js saves every player and exits;
@@ -1371,7 +1511,7 @@ process.on('SIGTERM', shutdown);
 const RESTART_FLAG = path.join(__dirname, 'RESTART-REQUEST');
 setInterval(() => { if (!fs.existsSync(RESTART_FLAG)) return; try { fs.unlinkSync(RESTART_FLAG); } catch (e) { } console.log('[admin] restart requested - saving and exiting'); shutdown(); }, 3000);
 // last resort: keep player progress before the process dies (START-LUMIRA-ONLINE.bat restarts it)
-process.on('uncaughtException', e => { console.error('[fatal]', e); try { syncChars(); dirty = true; saveDb(); } catch (e2) { } process.exit(1); });
+process.on('uncaughtException', e => { console.error('[fatal]', e); L.error('server_error', { err: e.message, stack: String(e.stack || '').split('\n').slice(0, 4).join(' | ') }); try { syncChars(); dirty = true; saveDb(); store.close(); } catch (e2) { } process.exit(1); });
 setInterval(syncChars, 30000);
 server.on('error', e => { console.error(`[http] ${e.code === 'EADDRINUSE' ? 'port ' + PORT + ' is already in use' : e.message}`); process.exit(1); });
-server.listen(PORT, () => console.log(`ELYNDRA ONLINE running on http://localhost:${PORT}`));
+server.listen(PORT, CFG.host, () => { console.log(`ELYNDRA ONLINE running on http://localhost:${PORT} (${CFG.env}, ${CFG.host}, node ${process.version}, db ${path.basename(CFG.databasePath)})`); L.log('server_start', { env: CFG.env, port: PORT, host: CFG.host, node: process.version, ...store.counts() }); });

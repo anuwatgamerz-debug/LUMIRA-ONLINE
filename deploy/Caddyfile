@@ -1,0 +1,13 @@
+# ELYNDRA ONLINE — Caddy reverse proxy (HTTPS + WSS with automatic Let's Encrypt certificates)
+# 1. Point the domain's DNS A record to the VPS (168.222.28.53).
+# 2. Replace play.example.com below, put this file next to caddy.exe and run:  caddy run --config Caddyfile
+#    (or install it as a Windows service — see docs/PRODUCTION_SETUP.md)
+# Ports 80 and 443 must be open in the Windows firewall; port 3400 can then be closed to the internet.
+play.example.com {
+	encode gzip
+	# WebSocket (wss://) and the game page use the same address; Caddy upgrades the connection automatically
+	reverse_proxy 127.0.0.1:3400 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+# http://play.example.com is redirected to https:// by Caddy automatically

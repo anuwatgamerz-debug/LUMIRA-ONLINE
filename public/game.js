@@ -305,12 +305,19 @@ function onMsg(m) {
   switch (m.t) {
     case 'learnfail': toast({ points: 'แต้มสกิลไม่พอ', job: `ต้องการ Job Lv ${m.job}`, max: 'สกิลนี้เลเวลสูงสุดแล้ว', class: 'อาชีพนี้เรียนสกิลนี้ไม่ได้' }[m.r] || 'เรียนสกิลไม่ได้'); break;
     case 'session': store.set(m.guest ? 'ely_guest' : 'ely_session', { u: m.u, tok: m.tok }); break;
+    case 'chars': showCharSelect(m); break;
+    case 'charerr': onCharErr(m); break;
+    case 'mail': onMail(m); break;
+    case 'admin': onAdmin(m); break;
+    case 'gminfo': onGmInfo(m); break;
+    case 'friends': log(`เพื่อน: ${(m.friends || []).map(x => x.name).join(', ') || '-'} · คำขอ: ${(m.incoming || []).map(x => x.name).join(', ') || '-'}`, '#9fe7ff'); break;
+    case 'blocks': log(`บล็อกไว้: ${(m.list || []).map(x => x.name).join(', ') || '-'}`, '#9fe7ff'); break;
     case 'portraitfail': toast(m.m); $('portmsg').textContent = m.m; break;
     case 'needchar': setMode('gchar'); loginErr('บัญชี Google นี้ยังไม่มีตัวละคร — ตั้งชื่อและเลือกหน้าตาได้เลย'); break;
     case 'bindres': $('bindMsg').textContent = m.m; if (m.ok) { store.set('ely_guest', null); $('bindP').value = ''; } break;
     case 'err': if (m.code === 'session') { const g = store.get('ely_guest'); if (mode === 'guest' && g) store.set('ely_guest', null); else store.set('ely_session', null); }
       if (typeof setBusy === 'function' && loginBusy) { setBusy(false); loginErr(m.m); break; } $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
-    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; { const L = $('login'); setBusy(true, 'กำลังเข้าสู่โลก Elyndra...'); L.classList.add('leaving'); setTimeout(() => { L.style.display = 'none'; }, 560); loginBusy = false; } $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked && mode === 'login') localStorage.setItem('lmo_u', $('u').value.trim().toLowerCase()); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6; if (V) V.bind(m.vfx);
+    case 'welcome': if (typeof chOnWelcome === 'function') chOnWelcome(); myId = m.id; ITEMS = m.items; MOBN = m.mobs; { const L = $('login'); setBusy(true, 'กำลังเข้าสู่โลก Elyndra...'); L.classList.add('leaving'); setTimeout(() => { L.style.display = 'none'; }, 560); loginBusy = false; } $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked && mode === 'login') localStorage.setItem('lmo_u', $('u').value.trim().toLowerCase()); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6; if (V) V.bind(m.vfx);
       QDEF = m.quests || {}; GUIDE = m.guide || null; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
     case 'map': { const first = !map; map = m.map; snd('map', map, first); } ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
     case 'me': { const prev = me; me = m.c; updHud(); snd('me', prev, me); if (prev && prev.portraitId !== me.portraitId && $('wPort').style.display === 'block') { $('portmsg').textContent = 'บันทึกภาพตัวละครแล้ว ✔'; $('portSave').disabled = true; } break; }
@@ -747,7 +754,8 @@ const MORE = [['char', 'ตัวละคร', 'pport'], ['skill', 'สกิ�
   ['quest', 'เครดิตภาพ', () => open('credits.html', '_blank')], ['more', 'ออกจากระบบ', () => { if (!confirm(me && me.guest ? 'ออกจากระบบ? (บัญชี Guest ยังเข้าต่อได้จากเครื่องนี้ แต่ถ้าล้างข้อมูลเบราว์เซอร์จะหาย — ผูกบัญชีได้ที่ ตั้งค่า)' : 'ออกจากระบบ?')) return; const sv = store.get('ely_session'); if (sv && me && !me.guest) { send({ t: 'revoke', tok: sv.tok }); store.set('ely_session', null); } setTimeout(() => { me = null; try { ws.close(); } catch (e) { } location.reload(); }, 150); }]];
 function renderMore() {
   const g = $('moregrid'); g.innerHTML = '';
-  for (const [ic, lab, act] of MORE) {
+  const extra = [['quest', 'จดหมาย', () => openMail()], ['char', 'เปลี่ยนตัวละคร', () => charSelect()]].concat(me && me.role && me.role !== 'PLAYER' ? [['guild', 'GM', () => openGm()]] : []);
+  for (const [ic, lab, act] of MORE.slice(0, -1).concat(extra, MORE.slice(-1))) {
     const b = document.createElement('button'); b.dataset.icon = ic; b.textContent = lab;
     if (lab === 'ออกจากระบบ') b.dataset.skin = 'npc_portal'; // "leave the world"; the grid art means "More"
     b.onclick = () => { closeWins(); typeof act === 'function' ? act() : $(act).click(); };
@@ -1216,7 +1224,7 @@ function loginHint() {
   const sv = store.get('ely_session'), h = $('lhint');
   h.textContent = mode === 'login' && sv && !/^(guest|google):/.test(sv.u) && $('u').value.trim().toLowerCase() === sv.u && !$('p').value ? '✓ จดจำไว้ในอุปกรณ์นี้แล้ว — กด "เข้าเกม" ได้เลย' : '';
 }
-function startLogin(msg, txt) { $('err').textContent = ''; setBusy(true, txt); if (ws) try { ws.close(); } catch (e) { } connect(msg); }
+function startLogin(msg, txt) { msg = Object.assign({ cs: 1 }, msg); /* cs: this client has the character select */ $('err').textContent = ''; setBusy(true, txt); if (ws) try { ws.close(); } catch (e) { } connect(msg); }
 $('go').onclick = () => {
   if (loginBusy) return;
   const u = $('u').value.trim().toLowerCase(), p = $('p').value, rem = $('rem').checked;

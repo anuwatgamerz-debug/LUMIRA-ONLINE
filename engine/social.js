@@ -21,8 +21,7 @@ module.exports = function social(api) {
   let rankCache = null, rankT = 0;
   function rankings() {
     if (rankCache && Date.now() - rankT < 10000) return rankCache;
-    const live = new Map(); for (const p of players.values()) if (p.c) live.set(p.acct, p.c);
-    const chars = Object.entries(getDb().accounts).map(([u, a]) => live.get(u) || a.char).filter(c => c && c.name);
+    const chars = Object.values(getDb().accounts).flatMap(a => a.chars || []).filter(c => c && c.name); // online characters are the same objects
     rankCache = {}; rankT = Date.now();
     for (const [k, R] of Object.entries(RANKS)) rankCache[k] = { th: R.th, rows: chars.map(c => [c.name, R.v(c), R.show(c), c.lv, c.cls || 'adventurer', c.guild || '']).sort((a, b) => b[1] - a[1]) };
     return rankCache;
@@ -70,6 +69,7 @@ module.exports = function social(api) {
   // ------------------------------------------------------------------ invites
   function invite(p, o, kind, extra) {
     if (!o || o === p || !online(o)) return sys(p, 'ไม่พบผู้เล่นคนนี้');
+    if (api.isBlocked(p, o)) return sys(p, 'ไม่สามารถส่งคำขอถึงผู้เล่นนี้ได้');
     o.invites = o.invites || {}; o.invites[kind] = { from: p.id, until: Date.now() + INVITE_MS, ...extra };
     send(o, { t: 'invite', kind, from: p.id, name: p.c.name, ...extra });
   }
@@ -99,7 +99,11 @@ module.exports = function social(api) {
       for (const it of off.items) { takeItem({ inv: from.inv }, it.id, it.q); }
     }
     for (const [from, to, P] of [[sa, sb, A], [sb, sa, B]]) for (const it of T.offer[P.id].items) if (!addItem({ inv: to.inv }, it.id, it.q)) return tradeEnd(T, 'กระเป๋าเต็ม — ยกเลิกการแลกเปลี่ยน (ไม่มีของหาย)');
-    A.c.inv = sa.inv; A.c.zeny = sa.zeny; B.c.inv = sb.inv; B.c.zeny = sb.zeny; setDirty();
+    const old = [A.c.inv, A.c.zeny, B.c.inv, B.c.zeny];
+    A.c.inv = sa.inv; A.c.zeny = sa.zeny; B.c.inv = sb.inv; B.c.zeny = sb.zeny;
+    // both characters reach the database in ONE transaction; if that fails nothing changes (in memory or on disk)
+    try { api.commitChars([A.c, B.c]); } catch (e) { [A.c.inv, A.c.zeny, B.c.inv, B.c.zeny] = old; api.log.error('trade_error', { a: A.c.name, b: B.c.name, err: e.message }); return tradeEnd(T, 'บันทึกการแลกเปลี่ยนไม่สำเร็จ — ยกเลิก (ไม่มีของหาย)'); }
+    api.log.log('trade', { a: A.c.name, b: B.c.name, ia: T.offer[A.id].items, za: T.offer[A.id].zeny, ib: T.offer[B.id].items, zb: T.offer[B.id].zeny });
     trades.delete(T.id); A.trade = B.trade = 0;
     for (const o of [A, B]) { send(o, { t: 'trade', id: 0, done: 1, msg: 'แลกเปลี่ยนสำเร็จ!' }); sys(o, 'แลกเปลี่ยนสำเร็จ!', '#8fe38f'); me(o); api.itemsChanged(o); }
   }
@@ -168,8 +172,8 @@ module.exports = function social(api) {
           const who = a === 'kick' ? String(m.name || '') : c.name;
           if (a === 'kick' && (g.master !== c.name || who === c.name || !g.members.includes(who))) return true;
           g.members = g.members.filter(n => n !== who);
-          const wc = [...players.values()].find(o => o.c && o.c.name === who); const acc = Object.values(getDb().accounts).find(x => x.char && x.char.name === who);
-          if (wc) wc.c.guild = ''; if (acc && acc.char) acc.char.guild = '';
+          const wc = [...players.values()].find(o => o.c && o.c.name === who); const oc = Object.values(getDb().accounts).flatMap(x => x.chars || []).find(x => x.name === who);
+          if (wc) wc.c.guild = ''; if (oc) { oc.guild = ''; api.markChar(oc); }
           if (!g.members.length) delete G[g.name]; else if (g.master === who) g.master = g.members[0];
           setDirty(); if (wc && online(wc)) { send(wc, { t: 'guild', g: null }); sys(wc, a === 'kick' ? `คุณถูกเชิญออกจากกิลด์ "${g.name}"` : `ออกจากกิลด์ "${g.name}" แล้ว`); me(wc); }
           guildSync(g.name); return true;
@@ -180,6 +184,8 @@ module.exports = function social(api) {
         const a = String(m.a || '');
         if (a === 'req') {
           const o = byId(m.id); if (!o || !o.c || o === p) return true;
+          if (!api.limit('trade:' + p.id, 6, 60000)) return sys(p, 'ส่งคำขอแลกเปลี่ยนบ่อยเกินไป รอสักครู่'), true;
+          if (api.isBlocked(p, o)) return sys(p, 'ไม่สามารถส่งคำขอถึงผู้เล่นนี้ได้'), true;
           if (p.trade || o.trade) return sys(p, 'มีการแลกเปลี่ยนค้างอยู่'), true;
           if (!near(p, o, 8)) return sys(p, 'ต้องอยู่ใกล้กัน (ไม่เกิน 8 ช่อง) จึงจะแลกเปลี่ยนได้'), true;
           invite(p, o, 'trade'); sys(p, `ส่งคำขอแลกเปลี่ยนถึง ${o.c.name} แล้ว`, '#9fe7ff'); return true;

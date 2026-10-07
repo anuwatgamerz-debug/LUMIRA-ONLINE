@@ -488,6 +488,36 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 #pbig .pnm{flex:1}#pbig .pnm b{color:#ffe9a8}#pbig .px{position:absolute;right:8px;top:8px;padding:2px 9px;z-index:2}
 .chead .cpimg{width:4.6rem;height:4.6rem;border-radius:50%;object-fit:cover;object-position:50% 40%;border:2px solid var(--gold2);flex:none}
 .pmh .pmp,.li .pmp{width:2.6rem;height:2.6rem;border-radius:50%;object-fit:cover;object-position:50% 40%;border:2px solid #c9a24e;flex:none;margin-right:.4rem;vertical-align:middle}
+
+/* ---- character select */
+#login .box.chs{text-align:center}
+#chview{display:flex;align-items:center;gap:.5em;margin:.7em 0 .3em}
+#chcards{flex:1;display:flex;gap:.6em;justify-content:center;min-height:13em;touch-action:pan-y}
+.chcard{flex:1;max-width:11em;min-width:0;border:2px solid #2a3360;border-radius:12px;background:linear-gradient(180deg,#1a2452,#0c1131);padding:.7em .5em;cursor:pointer;color:#f1ead8;display:flex;flex-direction:column;align-items:center;gap:.2em;font:inherit}
+.chcard.on{border-color:#ffd56a;box-shadow:0 0 0 2px #7fd4ff,0 0 18px #4fb4ff88}
+.chcard .cp{width:6.5em;height:6.5em;border-radius:50%;overflow:hidden;border:2px solid #e8c46a;box-shadow:0 0 12px #3d8bf0;background:radial-gradient(#3b4a8a,#151b38)}
+.chcard .cp img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
+.chcard b{font-size:1em;color:#ffe9a8;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chcard small{font-size:.72em;color:#a9b0c8;line-height:1.3}
+.chcard.empty{border-style:dashed;justify-content:center;color:#8fd0ff}.chcard.empty .plus{font-size:2.4em;line-height:1}
+.chnav{width:2.2em;height:2.2em;border-radius:50%;border:1px solid #c9a24e;background:#0e1534;color:#ffe9a8;font-size:1.2em;cursor:pointer;flex:none;display:none}
+#chslots{display:flex;gap:.4em;justify-content:center;margin:.3em 0}
+#chslots button{min-width:4.5em;padding:.3em .6em;border-radius:99px;border:1px solid #39457a;background:#0e1534;color:#c9cfe6;font-size:.75em;cursor:pointer}
+#chslots button.on{background:linear-gradient(#e8c46a,#b8903a);color:#1a1530;border-color:#ffe59a}
+.chgo{display:block;width:100%;margin-top:.6em;height:2.7em;font:600 1.1em Mitr,sans-serif;color:#fff;cursor:pointer;background:linear-gradient(180deg,#6ab0ff,#2a64d8 52%,#1a46a8);border:2px solid #e8c46a;border-radius:11px;box-shadow:0 0 0 3px #0a0d1c,0 0 18px #3d8bf0aa}
+.chgo:disabled{filter:grayscale(.5) brightness(.8)}
+.chrow{display:flex;gap:.5em;justify-content:center;margin-top:.55em}.chrow .xbtn{flex:1}
+.chdanger{color:#ffb0b0!important;border-color:#a14848!important}
+#chErr{color:#ff8b8b;font-size:.85em;min-height:1.1em;margin-top:.4em}
+#login.port #chcards .chcard{display:none}#login.port #chcards .chcard.on{display:flex;max-width:14em}#login.port .chnav{display:block}
+#chDelBox{position:fixed;inset:0;z-index:95;background:#05081acc;display:flex;align-items:center;justify-content:center;padding:16px}#chDelBox[hidden]{display:none}
+#chDelBox .cdb{width:min(92vw,380px);background:linear-gradient(180deg,#131c44,#0a1030);border:2px solid #a14848;border-radius:14px;padding:16px;color:#f1ead8;text-align:center;font-family:Mitr,sans-serif}
+#chDelBox h3{margin:0 0 .5em;color:#ff9b9b}#chDelBox input{width:100%;box-sizing:border-box;padding:.5em;border-radius:8px;border:1px solid #39457a;background:#0a0f28;color:#fff;font:inherit;text-align:center}
+/* ---- GM window */
+#wGm .gmtabs{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.5rem}#wGm .gmtabs button.on{background:var(--gold);color:#1a1530}
+#wGm .gmrow{display:flex;gap:.4rem;align-items:center;border-bottom:1px solid #2a3360;padding:.3rem 0;font-size:1.1rem}#wGm .gmrow .grow{flex:1;min-width:0}
+#wGm .gmrow small{color:var(--dim)}#wGm pre{white-space:pre-wrap;font-size:1rem;max-height:20rem;overflow:auto}
+#wGm .gmcmd{display:flex;gap:.4rem;margin-top:.5rem}#wGm .gmcmd input{flex:1}
+#wMail .mrow{border-bottom:1px solid #2a3360;padding:.4rem 0}#wMail .mrow b{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -498,7 +528,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
  <div id="ltop"><button data-i="news" aria-label="ข่าวสาร">📣<span>ข่าวสาร</span></button><button data-i="guide" aria-label="คู่มือเกม">📖<span>คู่มือ</span></button><button data-i="contact" aria-label="ศูนย์ช่วยเหลือ">🎧<span>ศูนย์ช่วยเหลือ</span></button><button data-i="settings" aria-label="ตั้งค่า">⚙<span>ตั้งค่า</span></button></div>
  <div id="lwrap">
   <img id="llogo" src="assets/branding/elyndra-logo-small.webp" srcset="assets/branding/elyndra-logo-small.webp 640w, assets/branding/elyndra-logo.webp 1400w" sizes="(min-width: 900px) 560px, 80vw" alt="ELYNDRA ONLINE" width="640" height="221" onerror="this.style.display='none'">
-  <div class="box" role="form" aria-label="เข้าสู่ระบบ ELYNDRA ONLINE">
+  <div class="box" id="lbox" role="form" aria-label="เข้าสู่ระบบ ELYNDRA ONLINE">
     <h2>ยินดีต้อนรับสู่ ELYNDRA ONLINE</h2>
     <p class="lsub">มากกว่าการเล่นเกม คือการเริ่มต้นเรื่องราวบทใหม่ของคุณ</p>
     <div class="tabs" id="ltabs" role="tablist"><button id="tGoogle" role="tab" hidden><svg class="gico" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Google</button><button id="tLogin" role="tab" class="on">✉ อีเมล</button><button id="tGuest" role="tab">👤 Guest</button></div>
@@ -532,6 +562,18 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
     <div id="err" role="alert"></div>
     <div class="lor">หรือ</div>
     <div class="lalt"><button id="altGoogle" class="gbtn" type="button" hidden><svg class="gico" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>เข้าสู่ระบบด้วย Google</button><button id="altGuest" class="xbtn" type="button">👤 เข้าเล่นแบบ Guest</button></div>
+  </div>
+  <div class="box chs" id="chsel" hidden role="region" aria-label="เลือกตัวละคร">
+    <h2>เลือกตัวละคร</h2><p class="lsub" id="chsub">1 บัญชีสร้างได้สูงสุด 3 ตัวละคร</p>
+    <div id="chmain">
+      <div id="chview"><button type="button" id="chPrev" class="chnav" aria-label="ตัวละครก่อนหน้า">‹</button><div id="chcards"></div><button type="button" id="chNext" class="chnav" aria-label="ตัวละครถัดไป">›</button></div>
+      <div id="chslots"></div>
+      <button type="button" id="chEnter" class="chgo">เข้าเกม ›</button>
+      <div class="chrow"><button type="button" id="chNew" class="xbtn">+ สร้างตัวละคร</button><button type="button" id="chDel" class="xbtn chdanger">ลบตัวละคร</button></div>
+    </div>
+    <div id="chCreate" hidden><div id="chCreateSlot"></div><button type="button" id="chMake" class="chgo">สร้างตัวละคร ›</button><div class="chrow"><button type="button" id="chBack" class="lnk">‹ กลับไปเลือกตัวละคร</button></div></div>
+    <div id="chErr" role="alert"></div>
+    <div class="chrow"><button type="button" id="chOut" class="lnk">ออกจากระบบ</button></div>
   </div>
   <div class="ltag">A GREATER WORLD AWAITS</div>
  </div>
@@ -592,6 +634,10 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
   <div id="wBag" class="win frame"><h3><span>กระเป๋า</span><button class="x">✕</button></h3><div class="note" style="margin-bottom:6px">สวมอยู่ (แตะเพื่อถอด)</div><div class="grid" id="eqgrid"></div><div class="note" style="margin:8px 0 6px">ของในกระเป๋า (แตะเพื่อใช้/สวม)</div><div class="grid" id="invgrid"></div></div>
   <div id="wEquip" class="win frame"><h3><span>อุปกรณ์</span><button class="x">✕</button></h3><div id="equipbody"></div></div>
   <div id="wStat" class="win frame"><h3><span>ข้อมูลตัวละคร</span><button class="x">✕</button></h3><div id="statbody"></div></div>
+  <div id="wGm" class="win frame"><h3><span>🛡 GM / Admin</span><button class="x">✕</button></h3><div class="gmtabs" id="gmtabs"><button data-a="overview" class="on">เซิร์ฟเวอร์</button><button data-a="players">ออนไลน์</button><button data-a="accounts">บัญชี</button><button data-a="bans">แบน/มิวต์</button><button data-a="audit">GM Log</button></div><div id="gmbody"></div><div class="gmcmd"><input id="gmIn" placeholder="/gm help" maxlength="120"><button id="gmGo">ส่ง</button></div></div>
+  <div id="wMail" class="win frame"><h3><span>📬 จดหมาย</span><button class="x">✕</button></h3><div id="mailbody"></div></div>
+  <div id="chDelBox" hidden><div class="cdb"><h3>ลบตัวละคร</h3><div id="cdStep1"><p>ลบ <b id="cdName"></b> ถาวร? ไอเทม เงิน และความคืบหน้าของตัวละครนี้จะหายทั้งหมด และกู้คืนเองไม่ได้</p><div class="chrow"><button type="button" id="cdNext" class="chdanger xbtn">ต่อไป</button><button type="button" class="cdX xbtn">ยกเลิก</button></div></div>
+    <div id="cdStep2" hidden><p>พิมพ์ชื่อตัวละคร <b id="cdName2"></b> เพื่อยืนยัน</p><input id="cdInput" maxlength="14" autocomplete="off"><div class="chrow"><button type="button" id="cdGo" class="chdanger xbtn" disabled>ลบตัวละคร</button><button type="button" class="cdX xbtn">ยกเลิก</button></div></div></div></div>
   <div id="wPort" class="win frame"><h3><span>เปลี่ยนภาพตัวละคร</span><button class="x">✕</button></h3><div class="crhud big" id="porthud"><span class="pc"><img id="portimg" alt="" src="assets/portraits/portrait_default.png"></span><div class="pnm"><b id="portname"></b><small>ภาพนี้แสดงในกรอบตัวละคร ปาร์ตี้ และข้อมูลผู้เล่น (ไม่มีผลต่อค่าสถานะ)</small></div></div><div id="portgal"></div><div class="row" style="gap:.5rem;margin-top:.6rem"><button id="portSave" style="flex:1">บันทึกภาพนี้</button><button id="portBig" class="ghost">ดูภาพใหญ่</button></div><div class="note" id="portmsg"></div></div>
   <div id="wSkill" class="win frame"><h3><span>สกิล</span><button class="x">✕</button></h3><div id="skillbody"></div></div>
   <div id="wQuest" class="win frame"><h3><span>ภารกิจ</span><button class="x">✕</button></h3><div id="questbody"></div></div>
@@ -654,6 +700,7 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 <script src="autoquest.js"></script>
 <script src="autocombat.js"></script>
 <script src="social.js"></script>
+<script src="account.js"></script>
 <script src="audio-events.js"></script>
 </body>
 </html>
