@@ -53,131 +53,131 @@ function m(id, n, lv, family, behavior, o = {}) {
 }
 // the original seven keep their exact numbers (saves, quests and tests depend on them)
 const legacy = (id, o) => { MOBS[id] = Object.assign({ id, family: 'slime', behavior: o.aggro ? 'aggressive' : 'passive', element: 'neutral', size: 's', sp: 0, matk: 0, mdef: 0, aspd: o.boss ? 1300 : 1600, range: 1.5, assist: 0, fleeAt: 0, magic: 0, heals: 0, respawn: 0, skills: [], scale: 1, jexp: Math.round(o.exp * 0.6), legacy: 1 }, o); if (o.aggro) MOBS[id].aggro = 5; };
-legacy('jellop',   { spr: 'm_lpc_slime', tint: [-150, 1.1, 10], n: 'เจลลอป', lv: 1, hp: 40, atk: [3, 5], def: 0, flee: 2, exp: 6, spd: 2.2, aggro: 0, drops: [[10, .6], [1, .08]], z: 2, family: 'slime', element: 'water', beginner: true });
-legacy('crab',     { spr: 'm_lpc_beetle', tint: [-40, 1.3, 0], n: 'ปูทราย', lv: 4, hp: 95, atk: [6, 9], def: 2, flee: 6, exp: 16, spd: 2.4, aggro: 0, drops: [[11, .5], [1, .1]], z: 4, family: 'aquatic' });
-legacy('leafling', { spr: 'm_lpc_flower', tint: [80, 1, 4], scale: 0.6, n: 'ลีฟลิง', lv: 6, hp: 130, atk: [8, 12], def: 2, flee: 10, exp: 25, spd: 2.8, aggro: 0, drops: [[14, .55], [2, .05]], z: 5, family: 'plant', element: 'earth' });
-legacy('cactimp',  { spr: 'm_lpc_imp', tint: [100, 0.9, 0], scale: 0.85, n: 'อิมป์กระบองเพชร', lv: 8, hp: 170, atk: [11, 15], def: 3, flee: 10, exp: 36, spd: 2.6, aggro: 1, drops: [[12, .5], [40, .03]], z: 6, family: 'desert', element: 'earth' });
-legacy('dunewolf', { spr: 'm_lpc_skeleton', n: 'อัศวินกระดูก', lv: 11, hp: 280, atk: [15, 21], def: 4, flee: 14, exp: 66, spd: 3.6, aggro: 1, drops: [[13, .45], [21, .04]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
-legacy('mosshog',  { spr: 'm_lpc_skeleton', tint: [250, 0.6, -6], n: 'จอมเวทกระดูก', lv: 13, hp: 360, atk: [18, 24], def: 6, flee: 12, exp: 85, spd: 3.0, aggro: 1, drops: [[15, .45], [31, .03]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
-legacy('kingjel',  { spr: 'm_lpc_slime', tint: [-150, 1.2, 14], scale: 2.2, n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk: [26, 36], def: 8, flee: 15, exp: 700, spd: 2.0, aggro: 1, boss: 1, behavior: 'boss', drops: [[41, .35], [23, .15], [2, 1]], z: 14, family: 'slime', size: 'l', respawn: 600, bgm: 'bgm_boss_common', spawnSound: 'boss_spawn', deathSound: 'boss_death' });
+legacy('jellop',   { spr: 'm_hd_jelly', scale: 0.91, tint: [-14, 1.1, 10], n: 'เจลลอป', lv: 1, hp: 40, atk: [3, 5], def: 0, flee: 2, exp: 6, spd: 2.2, aggro: 0, drops: [[10, .6], [1, .08]], z: 2, family: 'slime', element: 'water', beginner: true });
+legacy('crab',     { spr: 'm_hd_crab', scale: 1.12, tint: [-5, 1.3, 0], n: 'ปูทราย', lv: 4, hp: 95, atk: [6, 9], def: 2, flee: 6, exp: 16, spd: 2.4, aggro: 0, drops: [[11, .5], [1, .1]], z: 4, family: 'aquatic' });
+legacy('leafling', { spr: 'm_hd_sprout', tint: [47, 1, 4], scale: 1.01, n: 'ลีฟลิง', lv: 6, hp: 130, atk: [8, 12], def: 2, flee: 10, exp: 25, spd: 2.8, aggro: 0, drops: [[14, .55], [2, .05]], z: 5, family: 'plant', element: 'earth' });
+legacy('cactimp',  { spr: 'm_hd_cactus', tint: [3, 0.9, 0], scale: 0.83, n: 'อิมป์กระบองเพชร', lv: 8, hp: 170, atk: [11, 15], def: 3, flee: 10, exp: 36, spd: 2.6, aggro: 1, drops: [[12, .5], [40, .03]], z: 6, family: 'desert', element: 'earth' });
+legacy('dunewolf', { spr: 'm_hd_boneknight', scale: 0.89, n: 'อัศวินกระดูก', lv: 11, hp: 280, atk: [15, 21], def: 4, flee: 14, exp: 66, spd: 3.6, aggro: 1, drops: [[13, .45], [21, .04]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
+legacy('mosshog',  { spr: 'm_hd_skeleton', scale: 0.85, tint: [-119, 0.6, -6], n: 'จอมเวทกระดูก', lv: 13, hp: 360, atk: [18, 24], def: 6, flee: 12, exp: 85, spd: 3.0, aggro: 1, drops: [[15, .45], [31, .03]], z: 8, family: 'undead', element: 'shadow', size: 'm' });
+legacy('kingjel',  { spr: 'm_hd_kingjelly', tint: [-21, 1.2, 14], scale: 1.65, n: 'ราชาเจลลอป', lv: 16, hp: 2200, atk: [26, 36], def: 8, flee: 15, exp: 700, spd: 2.0, aggro: 1, boss: 1, behavior: 'boss', drops: [[41, .35], [23, .15], [2, 1]], z: 14, family: 'slime', size: 'l', respawn: 600, bgm: 'bgm_boss_common', spawnSound: 'boss_spawn', deathSound: 'boss_death' });
 
 // ---- Region 1: Elyndra Heartland (Lv1-30)
 // Beginner Meadow (Lv1-8): passive only, beginner protection
-m('dewslime',  'สไลม์น้ำค้าง', 2, 'slime', 'passive', { spr: 'm_lpc_slime', tint: [70, 1.1, 8], beginner: true, d: 'สไลม์ใสที่เกิดจากน้ำค้างยามเช้า' });
-m('sprout',    'สไปรต์ดอกตูม', 3, 'plant', 'passive', { spr: 'm_lpc_flower', tint: [60, 1.1, 6], scale: 0.62, beginner: true, d: 'ต้นอ่อนซุกซนที่เดินได้' });
-m('fluffle',   'ฟลัฟเฟิล', 4, 'beast', 'coward', { spr: 'm_lpc_slime', tint: [-100, 0.35, 25], spd: 3.2, beginner: true, d: 'ก้อนขนปุยขี้ตกใจ วิ่งหนีเมื่อบาดเจ็บ' });
-m('hopper',    'ด้วงกระโดดทุ่ง', 5, 'insect', 'passive', { spr: 'm_lpc_beetle', tint: [70, 1.2, 0], scale: 0.85, beginner: true, d: 'ด้วงเปลือกเขียวกระโดดไปมาในหญ้า' });
-m('budling',   'บัดลิงทุ่งดอกไม้', 7, 'plant', 'assist', { spr: 'm_lpc_flower', tint: [-40, 1.1, 4], scale: 0.6, d: 'เรียกพวกเดียวกันมาช่วยเมื่อถูกโจมตี' });
+m('dewslime',  'สไลม์น้ำค้าง', 2, 'slime', 'passive', { spr: 'm_hd_slime', scale: 1.05, tint: [104, 1.1, 8], beginner: true, d: 'สไลม์ใสที่เกิดจากน้ำค้างยามเช้า' });
+m('sprout',    'สไปรต์ดอกตูม', 3, 'plant', 'passive', { spr: 'm_hd_sprout', tint: [27, 1.1, 6], scale: 1.04, beginner: true, d: 'ต้นอ่อนซุกซนที่เดินได้' });
+m('fluffle',   'ฟลัฟเฟิล', 4, 'beast', 'coward', { spr: 'm_hd_slime', scale: 1.05, tint: [-66, 0.35, 25], spd: 3.2, beginner: true, d: 'ก้อนขนปุยขี้ตกใจ วิ่งหนีเมื่อบาดเจ็บ' });
+m('hopper',    'ด้วงกระโดดทุ่ง', 5, 'insect', 'passive', { spr: 'm_hd_beetle', tint: [77, 1.2, 0], scale: 1.03, beginner: true, d: 'ด้วงเปลือกเขียวกระโดดไปมาในหญ้า' });
+m('budling',   'บัดลิงทุ่งดอกไม้', 7, 'plant', 'assist', { spr: 'm_hd_bloom', tint: [-44, 1.1, 4], scale: 0.99, d: 'เรียกพวกเดียวกันมาช่วยเมื่อถูกโจมตี' });
 // Greenwood Forest (Lv8-18)
-m('mossslime', 'สไลม์มอส', 8, 'slime', 'passive', { spr: 'm_lpc_slime', tint: [-30, 0.8, -8], d: 'สไลม์ที่มีมอสขึ้นเต็มตัว' });
-m('thornsprite', 'สไปรต์หนาม', 10, 'plant', 'aggressive', { spr: 'm_lpc_imp', tint: [110, 0.9, -4], scale: 0.8, aggro: 4, d: 'ภูตหนามหวงถิ่น' });
-m('barkbeetle', 'ด้วงเปลือกไม้', 11, 'insect', 'pack', { spr: 'm_lpc_beetle', d: 'ด้วงแข็งที่อยู่กันเป็นฝูง' });
-m('mossgoblin', 'ก็อบลินมอส', 12, 'goblin', 'assist', { spr: 'm_lpc_goblin', scale: 1, d: 'ก็อบลินขี้ขโมยแห่งป่ากรีนวูด' });
-m('goblinsling', 'ก็อบลินนักสลิง', 13, 'goblin', 'ranged', { spr: 'm_lpc_goblin', tint: [20, 1, 6], scale: 1, range: 5, d: 'ยิงหินจากระยะไกล' });
-m('wisp',      'วิสป์กรีนวูด', 14, 'spirit', 'caster', { spr: 'proc:wisp', tint: [110, 1, 0], aggro: 5, d: 'ดวงไฟวิญญาณที่ยิงเวทใส่ผู้บุกรุก' });
-m('thornwolf', 'หมาป่าหนาม', 15, 'beast', 'pack', { spr: 'm_lpc_wolf', tint: [60, 0.8, 0], d: 'หมาป่าขนเขียวที่ล่าเป็นฝูง' });
-m('bramblekin', 'แบรมเบิลคิน', 16, 'plant', 'aggressive', { spr: 'm_lpc_flower', tint: [-120, 0.8, -14], scale: 1.1, role: 'elite', respawn: 360, skills: ['root_slam'], d: 'อีลิท: พืชเสื่อมที่ถูกพลังมืดครอบงำ ฟาดรากลงพื้น' });
+m('mossslime', 'สไลม์มอส', 8, 'slime', 'passive', { spr: 'm_hd_slime', scale: 1.05, tint: [4, 0.8, -8], d: 'สไลม์ที่มีมอสขึ้นเต็มตัว' });
+m('thornsprite', 'สไปรต์หนาม', 10, 'plant', 'aggressive', { spr: 'm_hd_imp', tint: [112, 0.9, -4], scale: 0.73, aggro: 4, d: 'ภูตหนามหวงถิ่น' });
+m('barkbeetle', 'ด้วงเปลือกไม้', 11, 'insect', 'pack', { spr: 'm_hd_beetle', scale: 1.22, d: 'ด้วงแข็งที่อยู่กันเป็นฝูง' });
+m('mossgoblin', 'ก็อบลินมอส', 12, 'goblin', 'assist', { spr: 'm_hd_goblin', scale: 1.2, d: 'ก็อบลินขี้ขโมยแห่งป่ากรีนวูด' });
+m('goblinsling', 'ก็อบลินนักสลิง', 13, 'goblin', 'ranged', { spr: 'm_hd_goblin', tint: [17, 1, 6], scale: 1.2, range: 5, d: 'ยิงหินจากระยะไกล' });
+m('wisp',      'วิสป์กรีนวูด', 14, 'spirit', 'caster', { spr: 'm_hd_wisp', scale: 0.91, tint: [110, 1, 0], aggro: 5, d: 'ดวงไฟวิญญาณที่ยิงเวทใส่ผู้บุกรุก' });
+m('thornwolf', 'หมาป่าหนาม', 15, 'beast', 'pack', { spr: 'm_hd_wolf', scale: 1.72, tint: [-150, 0.8, 0], d: 'หมาป่าขนเขียวที่ล่าเป็นฝูง' });
+m('bramblekin', 'แบรมเบิลคิน', 16, 'plant', 'aggressive', { spr: 'm_hd_bloom', tint: [-124, 0.8, -14], scale: 1.81, role: 'elite', respawn: 360, skills: ['root_slam'], d: 'อีลิท: พืชเสื่อมที่ถูกพลังมืดครอบงำ ฟาดรากลงพื้น' });
 // Moonlit Creek (Lv14-24)
-m('creekcrab', 'ปูลำธาร', 14, 'aquatic', 'passive', { spr: 'm_lpc_beetle', tint: [170, 1.1, 0], d: 'ปูกระดองฟ้าแห่งลำธาร' });
-m('moonslime', 'สไลม์จันทร์', 16, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [120, 0.9, 12], d: 'สไลม์เรืองแสงยามค่ำคืน' });
-m('nightmoth', 'มอธราตรี', 17, 'insect', 'coward', { spr: 'm_lpc_bee', tint: [200, 0.9, 0], scale: 1.2, spd: 3.4, d: 'แมลงกลางคืนบินว่อน' });
-m('pondlurker', 'ตัวซุ่มบ่อ', 19, 'aquatic', 'aggressive', { spr: 'm_lpc_snake', tint: [60, 0.9, -4], scale: 1.3, aggro: 4, d: 'ซุ่มอยู่ใต้ใบบัวรอเหยื่อ' });
-m('lanternspirit', 'วิญญาณตะเกียง', 20, 'spirit', 'healer', { spr: 'proc:wisp', tint: [-150, 1, 10], d: 'รักษามอนสเตอร์รอบตัว' });
-m('willowwraith', 'ภูตต้นหลิว', 22, 'undead', 'caster', { spr: 'm_lpc_ghost', tint: [60, 1.3, -10], d: 'วิญญาณผูกพันกับต้นหลิวเก่า' });
-m('froglord', 'กบหมอผี', 23, 'aquatic', 'caster', { spr: 'm_lpc_frogman', tint: [0, 1, 0], d: 'กบที่ร่ายเวทน้ำได้' });
+m('creekcrab', 'ปูลำธาร', 14, 'aquatic', 'passive', { spr: 'm_hd_crab', scale: 1.12, tint: [-155, 1.1, 0], d: 'ปูกระดองฟ้าแห่งลำธาร' });
+m('moonslime', 'สไลม์จันทร์', 16, 'slime', 'assist', { spr: 'm_hd_slime', scale: 1.05, tint: [154, 0.9, 12], d: 'สไลม์เรืองแสงยามค่ำคืน' });
+m('nightmoth', 'มอธราตรี', 17, 'insect', 'coward', { spr: 'm_hd_moth', tint: [-10, 0.9, 0], scale: 1.64, spd: 3.4, d: 'แมลงกลางคืนบินว่อน' });
+m('pondlurker', 'ตัวซุ่มบ่อ', 19, 'aquatic', 'aggressive', { spr: 'm_hd_snake', tint: [30, 0.9, -4], scale: 1.39, aggro: 4, d: 'ซุ่มอยู่ใต้ใบบัวรอเหยื่อ' });
+m('lanternspirit', 'วิญญาณตะเกียง', 20, 'spirit', 'healer', { spr: 'm_hd_wisp', scale: 0.91, tint: [-150, 1, 10], d: 'รักษามอนสเตอร์รอบตัว' });
+m('willowwraith', 'ภูตต้นหลิว', 22, 'undead', 'caster', { spr: 'm_hd_wraith', scale: 1.18, tint: [-121, 1.3, -10], d: 'วิญญาณผูกพันกับต้นหลิวเก่า' });
+m('froglord', 'กบหมอผี', 23, 'aquatic', 'caster', { spr: 'm_hd_frogman', scale: 0.95, tint: [7, 1, 0], d: 'กบที่ร่ายเวทน้ำได้' });
 // Old Mine (Lv20-30)
-m('cavebat', 'ค้างคาวถ้ำ', 20, 'beast', 'pack', { spr: 'm_lpc_bat', spd: 3.8, d: 'บินเป็นฝูงในความมืด' });
-m('minegoblin', 'ก็อบลินขุดแร่', 21, 'goblin', 'coward', { spr: 'm_lpc_goblin', tint: [-40, 0.8, -6], scale: 1, d: 'ขโมยแร่แล้ววิ่งหนี' });
-m('crystalcrawler', 'ตัวคลานผลึก', 23, 'insect', 'aggressive', { spr: 'm_lpc_beetle', tint: [200, 1.3, 10], scale: 1.1, aggro: 4, d: 'แมลงที่มีผลึกงอกบนหลัง' });
-m('rustbot', 'หุ่นสนิมเหมือง', 24, 'machine', 'aggressive', { spr: 'm_lpc_golem', tint: [30, 0.6, -6], scale: 0.8, aspd: 1900, d: 'หุ่นขุดแร่เก่าที่ยังทำงานผิดพลาด' });
-m('skeletonminer', 'โครงกระดูกคนงาน', 25, 'undead', 'aggressive', { spr: 'm_lpc_skeleton', tint: [30, 0.6, 8], d: 'คนงานเหมืองที่ไม่เคยได้กลับบ้าน' });
-m('golemite', 'โกเลมไมต์', 27, 'elemental', 'passive', { spr: 'm_lpc_golem', tint: [0, 0.2, 0], scale: 0.9, hpMul: 1.3, d: 'ก้อนหินมีชีวิต อึดมาก' });
-m('oreelemental', 'ธาตุแร่เงินจันทร์', 28, 'elemental', 'caster', { spr: 'm_lpc_golem', tint: [60, 1.2, 10], scale: 0.85, d: 'แร่ที่ดูดพลังรูนจนมีชีวิต' });
-m('tarslime',  'สไลม์น้ำมันดิน', 26, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [0, 0.1, -35], d: 'เหนียวหนึบ ช้า แต่ตีแรง' });
+m('cavebat', 'ค้างคาวถ้ำ', 20, 'beast', 'pack', { spr: 'm_hd_bat', scale: 1.22, spd: 3.8, d: 'บินเป็นฝูงในความมืด' });
+m('minegoblin', 'ก็อบลินขุดแร่', 21, 'goblin', 'coward', { spr: 'm_hd_goblin', tint: [-43, 0.8, -6], scale: 1.2, d: 'ขโมยแร่แล้ววิ่งหนี' });
+m('crystalcrawler', 'ตัวคลานผลึก', 23, 'insect', 'aggressive', { spr: 'm_hd_beetle', tint: [-153, 1.3, 10], scale: 1.34, aggro: 4, d: 'แมลงที่มีผลึกงอกบนหลัง' });
+m('rustbot', 'หุ่นสนิมเหมือง', 24, 'machine', 'aggressive', { spr: 'm_hd_automaton', tint: [-164, 0.6, -6], scale: 0.73, aspd: 1900, d: 'หุ่นขุดแร่เก่าที่ยังทำงานผิดพลาด' });
+m('skeletonminer', 'โครงกระดูกคนงาน', 25, 'undead', 'aggressive', { spr: 'm_hd_skeleton', scale: 0.85, tint: [21, 0.6, 8], d: 'คนงานเหมืองที่ไม่เคยได้กลับบ้าน' });
+m('golemite', 'โกเลมไมต์', 27, 'elemental', 'passive', { spr: 'm_hd_golem', tint: [-25, 0.2, 0], scale: 0.88, hpMul: 1.3, d: 'ก้อนหินมีชีวิต อึดมาก' });
+m('oreelemental', 'ธาตุแร่เงินจันทร์', 28, 'elemental', 'caster', { spr: 'm_hd_golem', tint: [35, 1.2, 10], scale: 0.84, d: 'แร่ที่ดูดพลังรูนจนมีชีวิต' });
+m('tarslime',  'สไลม์น้ำมันดิน', 26, 'slime', 'assist', { spr: 'm_hd_slime', scale: 1.05, tint: [34, 0.1, -35], d: 'เหนียวหนึบ ช้า แต่ตีแรง' });
 // event / quest monsters
-m('raider',    'ก็อบลินจู่โจม', 10, 'goblin', 'aggressive', { spr: 'm_lpc_goblin', tint: [-70, 1, -8], scale: 1, aggro: 9, respawn: 0, expMul: 0.5, d: 'ผู้รุกรานหมู่บ้านในบททดสอบแวนการ์ด' });
+m('raider',    'ก็อบลินจู่โจม', 10, 'goblin', 'aggressive', { spr: 'm_hd_goblin', tint: [-73, 1, -8], scale: 1.2, aggro: 9, respawn: 0, expMul: 0.5, d: 'ผู้รุกรานหมู่บ้านในบททดสอบแวนการ์ด' });
 m('target',    'เป้าซ้อมยิง', 1, 'machine', 'dummy', { spr: 'proc:dummy', hpMul: 0.15, exp: 0, jexp: 0, d: 'เป้าสำหรับฝึกยิงธนู' });
-m('banditlook', 'โจรเฝ้าค่าย', 14, 'goblin', 'aggressive', { spr: 'm_lpc_goblin', tint: [0, 0.4, -10], scale: 1, aggro: 4, d: 'โจรในค่ายกลางป่า ระวังอย่าให้เห็น' });
+m('banditlook', 'โจรเฝ้าค่าย', 14, 'goblin', 'aggressive', { spr: 'm_hd_goblin', tint: [-3, 0.4, -10], scale: 1.2, aggro: 4, d: 'โจรในค่ายกลางป่า ระวังอย่าให้เห็น' });
 // bosses
 m('thornwood', 'เอลเดอร์ ธอร์นวูด', 18, 'plant', 'boss', {
-  spr: 'm_lpc_flower', tint: [-150, 0.9, -18], scale: 1.5, respawn: 900, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', skills: ['root_slam', 'summon'], minions: 'bramblekin',
+  spr: 'm_hd_treant', tint: [-149, 0.9, -18], scale: 1.46, respawn: 900, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', skills: ['root_slam', 'summon'], minions: 'bramblekin',
   phases: [{ at: 0.6, atk: 1.25, msg: 'รากไม้ทั่วป่าสั่นสะเทือน!' }, { at: 0.3, atk: 1.5, spd: 1.3, msg: 'ธอร์นวูดคลุ้มคลั่ง!' }],
   d: 'ต้นไม้โบราณที่ถูกพลังเสื่อมจากเศษรูนกลืนกิน',
 });
 m('ironjaw', 'ไอรอนจอว์ ทรราชเหมือง', 30, 'machine', 'boss', {
-  spr: 'm_lpc_minotaur', tint: [0, 0.15, -6], scale: 1.8, respawn: 1200, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', skills: ['quake', 'summon', 'charge'], minions: 'rustbot', hpMul: 1.15,
+  spr: 'm_hd_automaton', tint: [-26, 0.15, -6], scale: 1.61, respawn: 1200, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', skills: ['quake', 'summon', 'charge'], minions: 'rustbot', hpMul: 1.15,
   phases: [{ at: 0.65, atk: 1.2, msg: 'ไอรอนจอว์ส่งเสียงคำราม! เฟืองหมุนเร็วขึ้น' }, { at: 0.3, atk: 1.55, spd: 1.35, msg: 'ไอรอนจอว์เข้าสู่โหมดคลั่ง!' }],
   d: 'หัวหน้าคนงานที่หลอมรวมกับเครื่องจักรขุดแร่และผลึกวอยด์',
 });
 
 // ---- Heartland dungeons (Lv4-33): slime burrow, spider nest, moonlit crypt, iron labyrinth
-m('caverat', 'หนูถ้ำ', 5, 'beast', 'passive', { spr: 'm_lpc_rat', scale: 0.7, d: 'หนูตัวใหญ่ที่อาศัยในโพรงชื้น' });
-m('shroomlet', 'เห็ดเดิน', 6, 'plant', 'passive', { spr: 'm_lpc_mushroom', scale: 1.5, d: 'เห็ดที่งอกขาเดินได้' });
-m('pinkjel', 'เจลลี่ชมพู', 7, 'slime', 'assist', { spr: 'm_lpc_slime', tint: [-160, 1.1, 12], d: 'บริวารของราชินีเจลลี่' });
-m('burrowbat', 'ค้างคาวโพรง', 8, 'beast', 'pack', { spr: 'm_lpc_bat', tint: [-30, 0.8, 4], scale: 0.85, aggro: 3, d: 'ค้างคาวตัวเล็กที่บินเป็นฝูง' });
-m('spiderling', 'ลูกแมงมุม', 13, 'insect', 'aggressive', { spr: 'm_lpc_spider', scale: 0.7, aggro: 4, d: 'ลูกแมงมุมที่ฟักจากรังกรีนวูด' });
-m('webspinner', 'แมงมุมชักใย', 15, 'insect', 'ranged', { spr: 'm_lpc_spider', tint: [80, 0.9, 6], range: 4, d: 'พ่นใยใส่เหยื่อจากระยะไกล' });
-m('nestcentipede', 'ตะขาบรัง', 16, 'insect', 'aggressive', { spr: 'm_lpc_centipede', scale: 0.55, aggro: 4, d: 'ตะขาบยักษ์ที่เฝ้าทางเดินในรัง' });
-m('venomshroom', 'เห็ดพิษ', 17, 'plant', 'caster', { spr: 'm_lpc_mushroom', tint: [140, 1.3, -6], scale: 1.7, d: 'ปล่อยสปอร์พิษเป็นวงกว้าง' });
-m('cryptskeleton', 'โครงกระดูกสุสาน', 20, 'undead', 'aggressive', { spr: 'm_lpc_skeleton', d: 'ผู้เฝ้าสุสานที่ไม่ยอมพักผ่อน' });
-m('ghoul', 'กูล', 21, 'undead', 'aggressive', { spr: 'm_lpc_zombie', d: 'ศพเดินได้ที่หิวโหย' });
-m('cryptwraith', 'ภูตสุสาน', 22, 'undead', 'caster', { spr: 'm_lpc_ghost', tint: [200, 1.2, -8], hpMul: 0.92, matkMul: 1.15, d: 'วิญญาณแค้นที่ร่ายเวทเงา' });
-m('gravepumpkin', 'ฟักทองหลุมศพ', 23, 'plant', 'aggressive', { spr: 'm_lpc_pumpkin', aggro: 4, d: 'ฟักทองที่งอกจากหลุมศพเก่า' });
-m('labyrinthguard', 'ยามเขาวงกต', 28, 'beast', 'aggressive', { spr: 'm_lpc_minotaur', tint: [10, 0.8, -4], d: 'มนุษย์กระทิงที่เฝ้าเขาวงกต' });
-m('cavebear', 'หมีถ้ำ', 28, 'beast', 'aggressive', { spr: 'm_lpc_bear', hpMul: 1.2, d: 'หมีที่อาศัยในอุโมงค์ลึก' });
-m('giantcentipede', 'ตะขาบยักษ์', 29, 'insect', 'aggressive', { spr: 'm_lpc_centipede', tint: [40, 0.8, -10], scale: 0.75, d: 'ตะขาบยาวกว่าคนสองคน' });
-m('boneknight', 'อัศวินกระดูก', 30, 'undead', 'aggressive', { spr: 'm_lpc_skeleton', tint: [200, 0.4, -10], hpMul: 1.15, d: 'อัศวินที่หลงทางในเขาวงกตตลอดกาล' });
-m('jellyqueen', 'ราชินีเจลลี่', 10, 'slime', 'boss', { spr: 'm_lpc_slime', tint: [-160, 1.2, 16], scale: 2.4, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', respawn: 600, skills: ['summon'], minions: 'pinkjel',
+m('caverat', 'หนูถ้ำ', 5, 'beast', 'passive', { spr: 'm_hd_rat', tint: [72, 1, 0], scale: 1.18, d: 'หนูตัวใหญ่ที่อาศัยในโพรงชื้น' });
+m('shroomlet', 'เห็ดเดิน', 6, 'plant', 'passive', { spr: 'm_hd_mushroom', tint: [175, 1, 0], scale: 1.39, d: 'เห็ดที่งอกขาเดินได้' });
+m('pinkjel', 'เจลลี่ชมพู', 7, 'slime', 'assist', { spr: 'm_hd_jelly', scale: 0.91, tint: [-24, 1.1, 12], d: 'บริวารของราชินีเจลลี่' });
+m('burrowbat', 'ค้างคาวโพรง', 8, 'beast', 'pack', { spr: 'm_hd_bat', tint: [-14, 0.8, 4], scale: 1.04, aggro: 3, d: 'ค้างคาวตัวเล็กที่บินเป็นฝูง' });
+m('spiderling', 'ลูกแมงมุม', 13, 'insect', 'aggressive', { spr: 'm_hd_spider', tint: [-152, 1, 0], scale: 0.83, aggro: 4, d: 'ลูกแมงมุมที่ฟักจากรังกรีนวูด' });
+m('webspinner', 'แมงมุมชักใย', 15, 'insect', 'ranged', { spr: 'm_hd_spider', scale: 1.19, tint: [-72, 0.9, 6], range: 4, d: 'พ่นใยใส่เหยื่อจากระยะไกล' });
+m('nestcentipede', 'ตะขาบรัง', 16, 'insect', 'aggressive', { spr: 'm_hd_centipede', scale: 1.05, aggro: 4, d: 'ตะขาบยักษ์ที่เฝ้าทางเดินในรัง' });
+m('venomshroom', 'เห็ดพิษ', 17, 'plant', 'caster', { spr: 'm_hd_mushroom', tint: [-45, 1.3, -6], scale: 1.57, d: 'ปล่อยสปอร์พิษเป็นวงกว้าง' });
+m('cryptskeleton', 'โครงกระดูกสุสาน', 20, 'undead', 'aggressive', { spr: 'm_hd_skeleton', scale: 0.85, d: 'ผู้เฝ้าสุสานที่ไม่ยอมพักผ่อน' });
+m('ghoul', 'กูล', 21, 'undead', 'aggressive', { spr: 'm_hd_zombie', scale: 0.89, tint: [-67, 1, 0], d: 'ศพเดินได้ที่หิวโหย' });
+m('cryptwraith', 'ภูตสุสาน', 22, 'undead', 'caster', { spr: 'm_hd_wraith', scale: 1.18, tint: [19, 1.2, -8], hpMul: 0.92, matkMul: 1.15, d: 'วิญญาณแค้นที่ร่ายเวทเงา' });
+m('gravepumpkin', 'ฟักทองหลุมศพ', 23, 'plant', 'aggressive', { spr: 'm_hd_pumpkin', scale: 1.23, aggro: 4, d: 'ฟักทองที่งอกจากหลุมศพเก่า' });
+m('labyrinthguard', 'ยามเขาวงกต', 28, 'beast', 'aggressive', { spr: 'm_hd_minotaur', scale: 0.87, tint: [-5, 0.8, -4], d: 'มนุษย์กระทิงที่เฝ้าเขาวงกต' });
+m('cavebear', 'หมีถ้ำ', 28, 'beast', 'aggressive', { spr: 'm_hd_bear', scale: 1.17, hpMul: 1.2, d: 'หมีที่อาศัยในอุโมงค์ลึก' });
+m('giantcentipede', 'ตะขาบยักษ์', 29, 'insect', 'aggressive', { spr: 'm_hd_centipede', tint: [36, 0.8, -10], scale: 1.43, d: 'ตะขาบยาวกว่าคนสองคน' });
+m('boneknight', 'อัศวินกระดูก', 30, 'undead', 'aggressive', { spr: 'm_hd_boneknight', scale: 0.89, tint: [-165, 0.4, -10], hpMul: 1.15, d: 'อัศวินที่หลงทางในเขาวงกตตลอดกาล' });
+m('jellyqueen', 'ราชินีเจลลี่', 10, 'slime', 'boss', { spr: 'm_hd_kingjelly', tint: [-31, 1.2, 16], scale: 1.8, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', respawn: 600, skills: ['summon'], minions: 'pinkjel',
   phases: [{ at: 0.5, atk: 1.3, msg: 'ราชินีเจลลี่แบ่งร่าง!' }], d: 'ราชินีแห่งโพรงสไลม์' });
-m('broodmother', 'แม่แมงมุมกรีนวูด', 20, 'insect', 'boss', { spr: 'm_lpc_spider', tint: [-40, 1.3, -4], scale: 2.2, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', respawn: 900, skills: ['summon', 'charge'], minions: 'spiderling',
+m('broodmother', 'แม่แมงมุมกรีนวูด', 20, 'insect', 'boss', { spr: 'm_hd_spider', tint: [168, 1.3, -4], scale: 2.61, bgm: 'bgm_boss_thornwood', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death', respawn: 900, skills: ['summon', 'charge'], minions: 'spiderling',
   phases: [{ at: 0.6, atk: 1.25, msg: 'แม่แมงมุมเรียกลูก ๆ!' }, { at: 0.3, atk: 1.5, spd: 1.3, msg: 'แม่แมงมุมคลุ้มคลั่ง!' }], d: 'แม่แห่งรังแมงมุมใต้ป่ากรีนวูด' });
-m('moonfang', 'มูนแฟง หมาป่าจันทร์', 26, 'beast', 'boss', { spr: 'm_lpc_werewolf', tint: [200, 0.5, 4], scale: 1.7, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', respawn: 1000, skills: ['charge', 'summon'], minions: 'ghoul',
+m('moonfang', 'มูนแฟง หมาป่าจันทร์', 26, 'beast', 'boss', { spr: 'm_hd_werewolf', tint: [-164, 0.5, 4], scale: 1.45, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', respawn: 1000, skills: ['charge', 'summon'], minions: 'ghoul',
   phases: [{ at: 0.6, atk: 1.25, msg: 'มูนแฟงหอนใต้แสงจันทร์!' }, { at: 0.3, atk: 1.55, spd: 1.35, msg: 'มูนแฟงคลั่งเลือด!' }], d: 'มนุษย์หมาป่าที่ครองสุสานจันทร์' });
-m('labyrinthking', 'ราชาเขาวงกต', 33, 'beast', 'boss', { spr: 'm_lpc_minotaur', tint: [200, 0.6, 0], scale: 1.9, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', respawn: 1200, hpMul: 1.1, skills: ['quake', 'charge', 'summon'], minions: 'labyrinthguard',
+m('labyrinthking', 'ราชาเขาวงกต', 33, 'beast', 'boss', { spr: 'm_hd_minotaur', tint: [-175, 0.6, 0], scale: 1.64, bgm: 'bgm_boss_ironjaw', spawnSound: 'boss_ironjaw_spawn', attackSound: 'boss_ironjaw_attack', deathSound: 'boss_ironjaw_death', respawn: 1200, hpMul: 1.1, skills: ['quake', 'charge', 'summon'], minions: 'labyrinthguard',
   phases: [{ at: 0.65, atk: 1.2, msg: 'ราชาเขาวงกตกระทืบพื้น!' }, { at: 0.3, atk: 1.6, spd: 1.3, msg: 'ราชาเขาวงกตเข้าสู่ความบ้าคลั่ง!' }], d: 'มินอทอร์ผู้ครองเขาวงกตเหล็กใต้เหมืองเก่า' });
 
 // ---- Region 2: Verdant Wilds (Lv22-45). Tribes of the leaf, spore-rot spreading from the Ancient Tree, spirits of the
 // grove and the beasts of the valley. Each map has its own ecosystem: prey + hunters + a support monster + an elite.
 const VB = { bgm: 'bgm_boss_verdant', spawnSound: 'boss_thornwood_spawn', attackSound: 'boss_thornwood_attack', deathSound: 'boss_thornwood_death' };
 // Deep Forest (Lv22-30): the leaf tribe's hunting ground
-m('vinesnake', 'งูเถาวัลย์', 22, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_snake', tint: [90, 1.1, -4], aggro: 4, element: 'earth', d: 'งูสีเขียวที่พรางตัวเป็นเถาวัลย์ รอฉกผู้ผ่านทาง' });
-m('canopybee', 'ผึ้งยอดไม้', 23, 'insect', 'pack', { region: 'verdant', spr: 'm_lpc_bee', element: 'wind', hpMul: 0.9, atkMul: 1.08, d: 'ฝูงผึ้งยักษ์ที่หวงรังบนยอดไม้' });
-m('leafgoblin', 'ก็อบลินเผ่าใบไม้', 25, 'goblin', 'assist', { region: 'verdant', spr: 'm_lpc_goblin', tint: [70, 1.1, -2], d: 'นักรบเผ่าใบไม้ ช่วยพวกพ้องทันทีที่ถูกโจมตี' });
-m('mossbear', 'หมีขนมอส', 26, 'beast', 'passive', { region: 'verdant', spr: 'm_lpc_bear', tint: [70, 0.7, -6], scale: 0.85, hpMul: 1.25, d: 'หมีสงบที่มีมอสขึ้นเต็มหลัง จะสู้เมื่อถูกรังแก' });
-m('leafshaman', 'หมอผีเผ่าใบไม้', 27, 'goblin', 'healer', { region: 'verdant', spr: 'm_lpc_goblin', tint: [250, 0.9, 2], scale: 0.95, d: 'ร่ายเวทรักษานักรบในเผ่า ควรจัดการก่อน' });
-m('leafchief', 'หัวหน้าเผ่าใบไม้', 29, 'goblin', 'aggressive', { role: 'elite', region: 'verdant', spr: 'm_lpc_goblin', tint: [40, 1.3, 6], scale: 1.4, respawn: 420, skills: ['charge', 'quake'], d: 'อีลิท: หัวหน้าเผ่าที่ถูกพลังสปอร์ปลุกความบ้าคลั่ง พุ่งชนและกระแทกพื้น' });
+m('vinesnake', 'งูเถาวัลย์', 22, 'beast', 'aggressive', { region: 'verdant', spr: 'm_hd_snake', scale: 1.07, tint: [60, 1.1, -4], aggro: 4, element: 'earth', d: 'งูสีเขียวที่พรางตัวเป็นเถาวัลย์ รอฉกผู้ผ่านทาง' });
+m('canopybee', 'ผึ้งยอดไม้', 23, 'insect', 'pack', { region: 'verdant', spr: 'm_hd_bee', scale: 1.3, tint: [-180, 1, 0], element: 'wind', hpMul: 0.9, atkMul: 1.08, d: 'ฝูงผึ้งยักษ์ที่หวงรังบนยอดไม้' });
+m('leafgoblin', 'ก็อบลินเผ่าใบไม้', 25, 'goblin', 'assist', { region: 'verdant', spr: 'm_hd_goblin', scale: 1.2, tint: [67, 1.1, -2], d: 'นักรบเผ่าใบไม้ ช่วยพวกพ้องทันทีที่ถูกโจมตี' });
+m('mossbear', 'หมีขนมอส', 26, 'beast', 'passive', { region: 'verdant', spr: 'm_hd_bear', tint: [74, 0.7, -6], scale: 0.99, hpMul: 1.25, d: 'หมีสงบที่มีมอสขึ้นเต็มหลัง จะสู้เมื่อถูกรังแก' });
+m('leafshaman', 'หมอผีเผ่าใบไม้', 27, 'goblin', 'healer', { region: 'verdant', spr: 'm_hd_goblin', tint: [-113, 0.9, 2], scale: 1.14, d: 'ร่ายเวทรักษานักรบในเผ่า ควรจัดการก่อน' });
+m('leafchief', 'หัวหน้าเผ่าใบไม้', 29, 'goblin', 'aggressive', { role: 'elite', region: 'verdant', spr: 'm_hd_goblin', tint: [37, 1.3, 6], scale: 1.67, respawn: 420, skills: ['charge', 'quake'], d: 'อีลิท: หัวหน้าเผ่าที่ถูกพลังสปอร์ปลุกความบ้าคลั่ง พุ่งชนและกระแทกพื้น' });
 // Mushroom Hollow (Lv26-34): the spore-rot spreads here first
-m('sporeling', 'สปอร์ลิง', 26, 'plant', 'passive', { region: 'verdant', spr: 'm_lpc_mushroom', tint: [200, 1.0, 4], scale: 0.8, d: 'ลูกเห็ดซุกซนที่ปล่อยสปอร์เรืองแสง' });
-m('capshroom', 'เห็ดหมวกแดง', 29, 'plant', 'caster', { region: 'verdant', spr: 'm_lpc_mushroom', tint: [-20, 1.4, -2], scale: 1.4, d: 'เห็ดพิษที่ร่ายเวทสปอร์จากระยะไกล' });
-m('sporebat', 'ค้างคาวสปอร์', 30, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_bat', tint: [260, 1.1, 0], aggro: 6, d: 'ค้างคาวที่ติดเชื้อสปอร์ บินโฉบเข้าหาทุกสิ่งที่ขยับ' });
-m('shroomfrog', 'กบเห็ด', 32, 'aquatic', 'ranged', { region: 'verdant', spr: 'm_lpc_frogman', tint: [240, 0.9, -4], range: 5, d: 'กบที่มีเห็ดงอกบนหลัง พ่นเมือกจากระยะไกล' });
-m('eldercap', 'เห็ดยักษ์โบราณ', 33, 'plant', 'caster', { role: 'elite', region: 'verdant', spr: 'm_lpc_mushroom', tint: [280, 1.3, -8], scale: 2.0, respawn: 480, skills: ['spore'], d: 'อีลิท: เห็ดอายุนับร้อยปีที่เป็นต้นตอสปอร์ ระเบิดสปอร์รอบตัว' });
+m('sporeling', 'สปอร์ลิง', 26, 'plant', 'passive', { region: 'verdant', spr: 'm_hd_mushroom', tint: [15, 1.0, 4], scale: 0.74, d: 'ลูกเห็ดซุกซนที่ปล่อยสปอร์เรืองแสง' });
+m('capshroom', 'เห็ดหมวกแดง', 29, 'plant', 'caster', { region: 'verdant', spr: 'm_hd_mushroom', tint: [155, 1.4, -2], scale: 1.3, d: 'เห็ดพิษที่ร่ายเวทสปอร์จากระยะไกล' });
+m('sporebat', 'ค้างคาวสปอร์', 30, 'beast', 'aggressive', { region: 'verdant', spr: 'm_hd_bat', scale: 1.22, tint: [-84, 1.1, 0], aggro: 6, d: 'ค้างคาวที่ติดเชื้อสปอร์ บินโฉบเข้าหาทุกสิ่งที่ขยับ' });
+m('shroomfrog', 'กบเห็ด', 32, 'aquatic', 'ranged', { region: 'verdant', spr: 'm_hd_frogman', scale: 0.95, tint: [-113, 0.9, -4], range: 5, d: 'กบที่มีเห็ดงอกบนหลัง พ่นเมือกจากระยะไกล' });
+m('eldercap', 'เห็ดยักษ์โบราณ', 33, 'plant', 'caster', { role: 'elite', region: 'verdant', spr: 'm_hd_mushroom', tint: [95, 1.3, -8], scale: 1.85, respawn: 480, skills: ['spore'], d: 'อีลิท: เห็ดอายุนับร้อยปีที่เป็นต้นตอสปอร์ ระเบิดสปอร์รอบตัว' });
 // Spirit Grove (Lv30-38): sacred grove, spirits restless since the fallen star
-m('leafwisp', 'ภูตใบไม้ร่วง', 31, 'spirit', 'caster', { region: 'verdant', spr: 'm_lpc_ghost', tint: [90, 1.0, 6], scale: 0.8, element: 'wind', d: 'วิญญาณใบไม้ที่ร่วงหล่นในสวนศักดิ์สิทธิ์' });
-m('spiritwolf', 'หมาป่าวิญญาณ', 34, 'spirit', 'pack', { region: 'verdant', spr: 'm_lpc_wolf', tint: [170, 0.6, 14], d: 'วิญญาณหมาป่าผู้พิทักษ์สวน ล่าเป็นฝูง' });
-m('mossgolem', 'โกเลมมอส', 36, 'elemental', 'passive', { region: 'verdant', spr: 'm_lpc_golem', tint: [80, 0.9, -6], scale: 1.1, hpMul: 1.3, d: 'หินมีชีวิตที่หลับใหลมานาน ทนทานแต่ไม่ก้าวร้าว' });
-m('grovewarden', 'ผู้เฝ้าสวนวิญญาณ', 38, 'elemental', 'boss', Object.assign({ region: 'verdant', spr: 'm_lpc_golem', tint: [170, 0.8, 10], scale: 2.1, respawn: 1200, skills: ['spore', 'quake', 'summon'], minions: 'leafwisp', element: 'holy',
+m('leafwisp', 'ภูตใบไม้ร่วง', 31, 'spirit', 'caster', { region: 'verdant', spr: 'm_hd_wisp', tint: [34, 1.0, 6], scale: 1.12, element: 'wind', d: 'วิญญาณใบไม้ที่ร่วงหล่นในสวนศักดิ์สิทธิ์' });
+m('spiritwolf', 'หมาป่าวิญญาณ', 34, 'spirit', 'pack', { region: 'verdant', spr: 'm_hd_wolf', scale: 1.72, tint: [-40, 0.6, 14], d: 'วิญญาณหมาป่าผู้พิทักษ์สวน ล่าเป็นฝูง' });
+m('mossgolem', 'โกเลมมอส', 36, 'elemental', 'passive', { region: 'verdant', spr: 'm_hd_golem', tint: [55, 0.9, -6], scale: 1.08, hpMul: 1.3, d: 'หินมีชีวิตที่หลับใหลมานาน ทนทานแต่ไม่ก้าวร้าว' });
+m('grovewarden', 'ผู้เฝ้าสวนวิญญาณ', 38, 'elemental', 'boss', Object.assign({ region: 'verdant', spr: 'm_hd_golem', tint: [145, 0.8, 10], scale: 2.06, respawn: 1200, skills: ['spore', 'quake', 'summon'], minions: 'leafwisp', element: 'holy',
   phases: [{ at: 0.6, atk: 1.2, msg: 'ผู้เฝ้าสวนปลุกวิญญาณใบไม้!' }, { at: 0.3, atk: 1.45, spd: 1.2, msg: 'ศิลาของผู้เฝ้าสวนแตกร้าว... มันคลุ้มคลั่ง!' }], d: 'บอสสนาม: ผู้พิทักษ์ศิลาที่ถูกเมล็ดวอยด์บิดเบือน' }, VB));
 // Beast Valley (Lv32-42): the Fang tribe of orcs and the great beasts
-m('valleywolf', 'หมาป่าหุบเขา', 33, 'beast', 'pack', { region: 'verdant', spr: 'm_lpc_wolf', tint: [20, 0.9, -4], d: 'หมาป่าสีน้ำตาลที่ล่าเป็นฝูงในทุ่งหญ้าสูง' });
-m('fangorc', 'ออร์คเผ่าเขี้ยว', 37, 'orc', 'aggressive', { region: 'verdant', spr: 'm_lpc_goblin', tint: [10, 0.7, -10], scale: 1.35, d: 'นักรบออร์คที่บุกเข้ามาในหุบเขา' });
-m('fangarcher', 'ออร์คนักธนูเผ่าเขี้ยว', 39, 'orc', 'ranged', { region: 'verdant', spr: 'm_lpc_goblin', tint: [-30, 0.7, -8], scale: 1.3, range: 6, d: 'ออร์คนักยิงที่คอยหนุนแนวหน้า' });
-m('grizzly', 'หมีกริซลี่', 40, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_bear', tint: [10, 0.8, -8], scale: 1.15, hpMul: 1.15, d: 'หมียักษ์ที่ครองหุบเขาก่อนพวกออร์คจะมา' });
-m('silvermane', 'หมาป่าขนเงิน', 41, 'beast', 'pack', { role: 'elite', region: 'verdant', spr: 'm_lpc_werewolf', tint: [0, 0.1, 18], scale: 1.3, respawn: 540, skills: ['charge'], d: 'อีลิท: จ่าฝูงหมาป่าขนเงิน พุ่งเข้าใส่จากระยะไกล' });
-m('grimpaw', 'กริมพอว์ ราชาหมีหุบเขา', 42, 'beast', 'boss', Object.assign({ region: 'verdant', spr: 'm_lpc_bear', tint: [-10, 0.6, -14], scale: 2.3, respawn: 1200, skills: ['root_slam', 'charge', 'summon'], minions: 'valleywolf',
+m('valleywolf', 'หมาป่าหุบเขา', 33, 'beast', 'pack', { region: 'verdant', spr: 'm_hd_wolf', scale: 1.72, tint: [170, 0.9, -4], d: 'หมาป่าสีน้ำตาลที่ล่าเป็นฝูงในทุ่งหญ้าสูง' });
+m('fangorc', 'ออร์คเผ่าเขี้ยว', 37, 'orc', 'aggressive', { region: 'verdant', spr: 'm_hd_orc', tint: [-57, 0.7, -10], scale: 1.55, d: 'นักรบออร์คที่บุกเข้ามาในหุบเขา' });
+m('fangarcher', 'ออร์คนักธนูเผ่าเขี้ยว', 39, 'orc', 'ranged', { region: 'verdant', spr: 'm_hd_orc', tint: [-97, 0.7, -8], scale: 1.49, range: 6, d: 'ออร์คนักยิงที่คอยหนุนแนวหน้า' });
+m('grizzly', 'หมีกริซลี่', 40, 'beast', 'aggressive', { region: 'verdant', spr: 'm_hd_bear', tint: [14, 0.8, -8], scale: 1.34, hpMul: 1.15, d: 'หมียักษ์ที่ครองหุบเขาก่อนพวกออร์คจะมา' });
+m('silvermane', 'หมาป่าขนเงิน', 41, 'beast', 'pack', { role: 'elite', region: 'verdant', spr: 'm_hd_werewolf', tint: [-4, 0.1, 18], scale: 1.11, respawn: 540, skills: ['charge'], d: 'อีลิท: จ่าฝูงหมาป่าขนเงิน พุ่งเข้าใส่จากระยะไกล' });
+m('grimpaw', 'กริมพอว์ ราชาหมีหุบเขา', 42, 'beast', 'boss', Object.assign({ region: 'verdant', spr: 'm_hd_bear', tint: [-6, 0.6, -14], scale: 2.68, respawn: 1200, skills: ['root_slam', 'charge', 'summon'], minions: 'valleywolf',
   phases: [{ at: 0.6, atk: 1.25, msg: 'กริมพอว์คำรามเรียกฝูงหมาป่า!' }, { at: 0.3, atk: 1.55, spd: 1.3, msg: 'กริมพอว์คลั่งเลือด!' }], d: 'บอสสนาม: ราชาหมีที่ปกครองหุบเขามานับร้อยปี' }, VB));
 // Thornmire (Lv38-45): a rotting swamp where the void seed's roots surfaced
-m('mirefrog', 'กบหนองมืด', 39, 'aquatic', 'aggressive', { region: 'verdant', spr: 'm_lpc_frogman', tint: [40, 0.7, -12], d: 'กบยักษ์ที่ซุ่มอยู่ใต้น้ำขุ่น' });
-m('bogviper', 'งูหนองพิษ', 41, 'beast', 'aggressive', { region: 'verdant', spr: 'm_lpc_snake', tint: [200, 0.6, -14], aggro: 5, element: 'shadow', d: 'งูพิษดำในหนองหนาม กัดเจ็บและเร็ว' });
-m('bogzombie', 'ซอมบี้หนอง', 42, 'undead', 'aggressive', { region: 'verdant', spr: 'm_lpc_zombie', tint: [60, 0.8, -6], d: 'นักเดินทางที่จมหนองแล้วถูกรากวอยด์ปลุกขึ้นมา' });
-m('marshwisp', 'ภูตไฟหนอง', 43, 'spirit', 'caster', { region: 'verdant', spr: 'm_lpc_ghost', tint: [-160, 1.2, 10], element: 'fire', d: 'ไฟผีที่ล่อคนหลงทางให้เดินลงหนอง' });
-m('mireking', 'ราชากบหนอง', 44, 'aquatic', 'aggressive', { role: 'elite', region: 'verdant', spr: 'm_lpc_frogman', tint: [80, 0.9, -4], scale: 1.6, respawn: 600, skills: ['quake'], d: 'อีลิท: กบยักษ์ผู้ครองหนอง กระโดดทับพื้นเป็นวงกว้าง' });
+m('mirefrog', 'กบหนองมืด', 39, 'aquatic', 'aggressive', { region: 'verdant', spr: 'm_hd_frogman', scale: 0.95, tint: [47, 0.7, -12], d: 'กบยักษ์ที่ซุ่มอยู่ใต้น้ำขุ่น' });
+m('bogviper', 'งูหนองพิษ', 41, 'beast', 'aggressive', { region: 'verdant', spr: 'm_hd_viper', scale: 1.11, tint: [-22, 0.6, -14], aggro: 5, element: 'shadow', d: 'งูพิษดำในหนองหนาม กัดเจ็บและเร็ว' });
+m('bogzombie', 'ซอมบี้หนอง', 42, 'undead', 'aggressive', { region: 'verdant', spr: 'm_hd_zombie', scale: 0.89, tint: [-7, 0.8, -6], d: 'นักเดินทางที่จมหนองแล้วถูกรากวอยด์ปลุกขึ้นมา' });
+m('marshwisp', 'ภูตไฟหนอง', 43, 'spirit', 'caster', { region: 'verdant', spr: 'm_hd_wisp', scale: 1.39, tint: [144, 1.2, 10], element: 'fire', d: 'ไฟผีที่ล่อคนหลงทางให้เดินลงหนอง' });
+m('mireking', 'ราชากบหนอง', 44, 'aquatic', 'aggressive', { role: 'elite', region: 'verdant', spr: 'm_hd_frogman', tint: [87, 0.9, -4], scale: 1.52, respawn: 600, skills: ['quake'], d: 'อีลิท: กบยักษ์ผู้ครองหนอง กระโดดทับพื้นเป็นวงกว้าง' });
 // Ancient Tree (dungeon, Lv38-45): the hollow heart of the oldest tree, where the second void seed took root
-m('heartgrub', 'หนอนแก่นไม้', 38, 'insect', 'pack', { region: 'verdant', spr: 'm_lpc_centipede', tint: [90, 0.9, 4], scale: 0.55, d: 'ตัวอ่อนที่กัดกินแก่นไม้จากข้างใน' });
-m('rootguard', 'ผู้พิทักษ์ราก', 40, 'plant', 'aggressive', { region: 'verdant', spr: 'm_lpc_flower', tint: [10, 0.6, -10], scale: 1.6, hpMul: 1.1, d: 'รากไม้ที่ลุกขึ้นปกป้องหัวใจต้นไม้' });
-m('sapspirit', 'ภูตยางไม้', 42, 'spirit', 'healer', { region: 'verdant', spr: 'm_lpc_ghost', tint: [-120, 1.1, 8], d: 'วิญญาณยางไม้ที่ซ่อมแซมผู้พิทักษ์ราก' });
-m('barkspider', 'แมงมุมเปลือกไม้', 44, 'insect', 'aggressive', { region: 'verdant', spr: 'm_lpc_spider', tint: [20, 0.6, -6], scale: 1.1, d: 'แมงมุมที่ชักใยตามโพรงไม้มืด' });
-m('rotheart', 'รอทฮาร์ท หัวใจไม้เน่า', 45, 'plant', 'boss', Object.assign({ region: 'verdant', spr: 'm_lpc_flower', tint: [250, 0.7, -16], scale: 2.7, respawn: 1500, hpMul: 1.15, skills: ['root_slam', 'spore', 'summon'], minions: 'heartgrub', element: 'shadow',
+m('heartgrub', 'หนอนแก่นไม้', 38, 'insect', 'pack', { region: 'verdant', spr: 'm_hd_centipede', tint: [86, 0.9, 4], scale: 1.05, d: 'ตัวอ่อนที่กัดกินแก่นไม้จากข้างใน' });
+m('rootguard', 'ผู้พิทักษ์ราก', 40, 'plant', 'aggressive', { region: 'verdant', spr: 'm_hd_treant', tint: [11, 0.6, -10], scale: 1.56, hpMul: 1.1, d: 'รากไม้ที่ลุกขึ้นปกป้องหัวใจต้นไม้' });
+m('sapspirit', 'ภูตยางไม้', 42, 'spirit', 'healer', { region: 'verdant', spr: 'm_hd_ghost', scale: 1.28, tint: [-93, 1.1, 8], d: 'วิญญาณยางไม้ที่ซ่อมแซมผู้พิทักษ์ราก' });
+m('barkspider', 'แมงมุมเปลือกไม้', 44, 'insect', 'aggressive', { region: 'verdant', spr: 'm_hd_spider', tint: [-132, 0.6, -6], scale: 1.31, d: 'แมงมุมที่ชักใยตามโพรงไม้มืด' });
+m('rotheart', 'รอทฮาร์ท หัวใจไม้เน่า', 45, 'plant', 'boss', Object.assign({ region: 'verdant', spr: 'm_hd_treant', tint: [-109, 0.7, -16], scale: 2.63, respawn: 1500, hpMul: 1.15, skills: ['root_slam', 'spore', 'summon'], minions: 'heartgrub', element: 'shadow',
   phases: [{ at: 0.7, atk: 1.15, msg: 'รากเน่าทะลุพื้นขึ้นมา!' }, { at: 0.45, atk: 1.35, msg: 'รอทฮาร์ทดูดพลังจากเมล็ดวอยด์!' }, { at: 0.2, atk: 1.6, spd: 1.25, msg: 'หัวใจไม้เน่ากำลังจะแตก... มันบ้าคลั่ง!' }], d: 'บอสดันเจี้ยน: หัวใจของต้นไม้โบราณที่ถูกเมล็ดวอยด์กัดกิน' }, VB));
 
 // ---- tiered drop tables (server rolls): common / uncommon / rare / veryRare. [item, chance]
