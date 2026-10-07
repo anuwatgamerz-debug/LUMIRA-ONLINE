@@ -17,7 +17,7 @@ module.exports = G => {
   for (const [x, y, rx, ry] of [[16, 12, 9, 7], [16, 40, 10, 6], [36, 38, 8, 6], [54, 12, 8, 6], [26, 26, 5, 4]]) blob(m, r, x, y, rx, ry, 1, 0.18);
   clear(m, 1, 23, 4, 27); clear(m, 65, 24, 68, 28);
   portal(m, 0, 25, 'deep_forest', 69, 32);
-  portal(m, 69, 26, 'ash_plains', 1, 28, { locked: 1 }, 'ที่ราบเถ้า (ยังไม่เปิด)');
+  portal(m, 69, 26, 'ash_plains', 1, 28, { lv: 40 }, 'ที่ราบเถ้า (Lv 40+)');
   m.deco = [['prop_tent_01', 52.5, 33.5], ['prop_tent_01', 58.5, 33.4], ['prop_campfire_01', 56.5, 37.4], ['prop_flag_red_01', 60.4, 38.6], ['prop_weaponrack_01', 51.4, 39.2],
     ['prop_tent_01', 5.4, 22.6], ['prop_flag_blue_01', 8.6, 23.4]];
   m.spawns = [

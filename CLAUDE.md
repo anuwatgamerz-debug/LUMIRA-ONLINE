@@ -21,7 +21,7 @@ so work continues from where the previous sessions stopped.
 - Don't commit secrets (`.env`, `data/.session-secret`, `data/admins.txt`).
 - Assets: only CC0 / CC-BY (commercial) or the owner's own art. No ripped game assets (no Ragnarok etc.).
   Record every new asset in `docs/ASSET_LICENSES.md` or `docs/VFX_ASSET_LICENSES.md`.
-- Not started on purpose (wait for the owner): Market UI, PvP, Guild War, World Boss, Endgame, M4 Region 3.
+- Not started on purpose (wait for the owner): Market UI, PvP, Guild War, World Boss, Endgame, M5 Region 4.
 
 ## Project map
 
@@ -40,14 +40,19 @@ Key facts: tile = 32 art px; maps use tile codes from `engine/mapgen.js`; the cl
 (pixel art, LPC characters); skills point at VFX ids (`castVfx/projectileVfx/hitVfx/areaVfx`), never image paths;
 characters store `portraitId` only; 1 account = up to 3 characters; roles PLAYER / GM / ADMIN live in the database.
 
-## Current state (2026-10-07)
+## Current state (2026-10-08)
 
 Done: M1 cleanup · M2 Verdant Wilds (Lv20-45) · M3 second-class skills · rebrand to ELYNDRA + new login ·
 VFX Phase 1 (basic + first-class skills) · character portraits · Pre-Public Foundation (SQLite, bcrypt, sessions,
 rate limits, GM/ADMIN + ban/mute + audit log, multi-character + character select, mail/friend/market foundation,
 backups, /health, HTTPS-ready) · second-class LPC outfits (12 classes, own class layer + back item: capes,
 wings, packs; `tools/art/lpc/build_chars.py`, LPC_ROOT = blobless clone of the Universal LPC repo) · VFX Phase 2
-(all 60 active second-class skills + level-up / monster death / walk dust; effects drawn 1.7x) — deployed 2026-10-07.
+(all 60 active second-class skills + level-up / monster death / walk dust; effects drawn 1.7x) — deployed 2026-10-07 ·
+M4 Region 3 Ashen Frontier (Lv40-65; 2026-10-08): Emberhold + 4 fields + 2 dungeons, 20 monsters + 4 elites + 4 bosses,
+Tier 3 gear (ids 247-266, 323-332, 371-376, 419-426; materials/quest items 500-569, potions 570-572), chapter 3 mq16-mq21,
+8 side + 2 daily. Art: `tools/art/lpc/build_mobs2.py` (Region 3 sheets, extra skin ramps), `build_ashen_world.py`
+(dead trees / basalt / lava rocks), `extend_icons.py` (icons = recoloured atlas cells). Client env flags in
+`public/world.js` ENV: `tone` (ground colour grade), `lava` (water tiles drawn as lava), `embers`, `rocks`, `vegAll`.
 Last commit: see `git log`.
 
 Art direction notes from the owner (2026-10-07): likes the LPC look extended with library parts; procedurally drawn
@@ -59,7 +64,7 @@ Waiting on the owner:
 1. Review VFX Phase 1 + 2 in game.
 2. A domain for HTTPS (Caddy + `.env` production — steps in `docs/PRODUCTION_SETUP.md`). Until then the game runs
    as http://168.222.28.53:3400 in development mode — don't open it to the public yet.
-3. Next milestone from the roadmap: M4 Region 3 Ashen Frontier (Lv40-65), then Market (M6).
+3. Review Region 3 in game. Next milestone from the roadmap: M5 Region 4 Azure Coast (Lv55-80) or Market (M6).
 
 ## Deploy (Windows VPS)
 

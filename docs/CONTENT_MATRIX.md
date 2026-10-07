@@ -1,6 +1,6 @@
 # LUMIRA ONLINE — CONTENT MATRIX
 
-สร้างจาก data จริงใน `content/` (สคริปต์นับอัตโนมัติ) · อัปเดต 2026-10-07 · หลัง Milestone 1 + 2
+สร้างจาก data จริงใน `content/` (สคริปต์นับอัตโนมัติ) · อัปเดต 2026-10-08 · หลัง Milestone 1 + 2 + 4
 
 **Status:** PLANNED = มีชื่อ/Lv ใน `content/world.js` แต่ยังไม่มีไฟล์แผนที่ · IMPLEMENTING = กำลังสร้าง · PLAYABLE = เข้าเล่นได้ · TESTED = เล่นได้ + มี automated test · COMPLETE = ครบตามเกณฑ์ Region (เมือง, field 4–7, dungeon 1–2, elite, field boss + dungeon boss, story, side quest, resource, equipment tier, BGM เฉพาะ)
 
@@ -10,15 +10,15 @@
 |---|---|---|---|---|---|---|---|
 | 1 Heartland | 1–33 | 14 | 12 | 2 | 5 (+2 planned) | 5 | TESTED (dungeon ใช้ BGM ร่วมกัน) |
 | 2 Verdant Wilds | 20–45 | 7 | 7 | 1 | 5 | 1 | TESTED (M2 เสร็จ) |
-| 3 Ashen Frontier | 40–65 | 5 | 0 | 1 | 2 | 2 | PLANNED (field น้อยกว่าเกณฑ์ 4) |
+| 3 Ashen Frontier | 40–65 | 7 | 7 | 1 | 4 | 2 | TESTED (M4 เสร็จ) |
 | 4 Azure Coast | 55–80 | 5 | 0 | 1 | 3 | 1 | PLANNED (field น้อยกว่าเกณฑ์) |
 | 5 Sandsea | 70–95 | 6 | 0 | 1 | 3 | 2 | PLANNED |
 | 6 Frostland | 90–115 | 6 | 0 | 1 | 3 | 2 | PLANNED |
 | 7 Arcane Highlands | 105–130 | 5 | 0 | 1 | 2 | 2 | PLANNED |
 | 8 Void Frontier | 125–150 | 5 | 0 | 1 | 2 | 2 | PLANNED |
-| **รวม** | | **53** | **19** | 9 | 25 | 17 | |
+| **รวม** | | **55** | **26** | 9 | 29 | 17 | |
 
-> หมายเหตุ: Region 3–8 ใน data ปัจจุบันมี field 2–3 แผนที่ ต่ำกว่าเกณฑ์ "4–7 Field Maps" ต้องเพิ่มแผนที่ใน `content/world.js` ตอนทำแต่ละ Milestone
+> หมายเหตุ: Region 4–8 ใน data ปัจจุบันมี field 2–3 แผนที่ ต่ำกว่าเกณฑ์ "4–7 Field Maps" ต้องเพิ่มแผนที่ใน `content/world.js` ตอนทำแต่ละ Milestone
 
 ## รายแผนที่
 
@@ -47,11 +47,13 @@
 | 2 Verdant Wilds | ancient_tree | dungeon | 38–45 | 4 | 0 | รอทฮาร์ท หัวใจไม้เน่า | 0 | 0 | 0 | ✔ | T2 (Lv30-45) | bgm_verdant_dungeon | TESTED |
 | 2 Verdant Wilds | beast_valley | field | 32–42 | 5 | 1 | กริมพอว์ ราชาหมีหุบเขา | 1 | 1 | 0 | - | T2 (Lv30-45) | bgm_verdant_field | TESTED |
 | 2 Verdant Wilds | thornmire | field | 38–45 | 5 | 1 | - | 0 | 0 | 0 | - | T2 (Lv30-45) | bgm_thornmire | TESTED |
-| 3 Ashen Frontier | emberhold | mining_city | 40–65 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 3 Ashen Frontier | ash_plains | field | 40–48 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 3 Ashen Frontier | volcanic_road | field | 46–54 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 3 Ashen Frontier | fire_cavern | dungeon | 52–60 | - | - | - | - | - | - | ✔ | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
-| 3 Ashen Frontier | ruined_fortress | dungeon | 58–65 | - | - | - | - | - | - | ✔ | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
+| 3 Ashen Frontier | emberhold | mining_city | 40–65 | 0 | 0 | - | 15 | 13 | 3 | - | T3 (Lv46-65) | bgm_ashen_town | TESTED |
+| 3 Ashen Frontier | ash_plains | field | 40–48 | 4 | 1 | - | 2 | 1 | 1 | - | T3 (Lv46-65) | bgm_ashen_field | TESTED |
+| 3 Ashen Frontier | volcanic_road | field | 46–54 | 5 | 1 | คอร์แร็ก จอมทัพเขี้ยวเถ้า | 1 | 1 | 0 | - | T3 (Lv46-65) | bgm_volcanic_road | TESTED |
+| 3 Ashen Frontier | scorched_quarry | field | 48–56 | 4 | 1 | - | 0 | 0 | 0 | - | T3 (Lv46-65) | bgm_ashen_field | TESTED |
+| 3 Ashen Frontier | molten_lake | field | 54–62 | 4 | 1 | อิกนารอธ ยักษ์แมกมา | 0 | 0 | 0 | - | T3 (Lv46-65) | bgm_molten_lake | TESTED |
+| 3 Ashen Frontier | fire_cavern | dungeon | 52–60 | 5 | 0 | ไพโรลอร์ด จ้าวแห่งเพลิง | 0 | 0 | 0 | ✔ | T3 (Lv46-65) | bgm_ashen_dungeon | TESTED |
+| 3 Ashen Frontier | ruined_fortress | dungeon | 58–65 | 4 | 0 | ผู้ประกาศเถ้าถ่าน | 0 | 0 | 0 | ✔ | T3 (Lv46-65) | bgm_ruined_fortress | TESTED |
 | 4 Azure Coast | azure_port | port | 55–80 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
 | 4 Azure Coast | coastal_road | field | 55–62 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |
 | 4 Azure Coast | coral_beach | field | 60–68 | - | - | - | - | - | - | - | - | (กำหนดชื่อไว้แล้ว) | PLANNED |

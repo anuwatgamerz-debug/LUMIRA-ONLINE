@@ -48,7 +48,26 @@ MOBS = {
     'm_lpc2_bogzombie': ('male', ZOMB('zombie_green') + W('torso/shirts/shortsleeve/torso_clothes_shortsleeve.json', 'green') + W('legs/pants/legs_pants.json', 'charcoal'), 'slash', 'ซอมบี้หนอง'),
     'm_lpc2_lizard':    ('male', LIZ('dark_green') + W('torso/armour/torso_armour_leather.json') + W('legs/pants/legs_pants.json', 'teal') + W('weapons/polearm/weapon_polearm_trident.json'), 'thrust', 'ตัวซุ่มบ่อ (มนุษย์กิ้งก่า)'),
     'm_lpc2_minoguard': ('male', MINO('fur_brown') + W('torso/armour/torso_armour_plate.json', 'bronze') + W('arms/shoulders/shoulders_legion.json', 'bronze') + W('legs/legs_armour.json', 'bronze') + W('weapons/polearm/weapon_polearm_halberd.json'), 'thrust', 'ยามเขาวงกต'),
+    # ---- Region 3: Ashen Frontier (ash-grey and crimson orcs, a troll shaman, salamanders, the Cinder Cult)
+    'm_lpc2_ashorc':    ('male', ORC('ash') + W('torso/armour/torso_armour_leather.json') + W('arms/shoulders/shoulders_pauldrons.json', 'iron') + W('legs/pants/legs_pants.json', 'charcoal') + W('feet/boots/feet_boots_basic.json', 'black') + W('headwear/coverings/headbands/hat_headband_tied.json', 'red') + W('weapons/blunt/weapon_blunt_mace.json'), 'slash', 'ออร์คเผ่าเขี้ยวเถ้า'),
+    'm_lpc2_ashscout':  ('male', ORC('ash') + W('torso/armour/torso_armour_leather.json') + W('legs/pants/legs_pants.json', 'charcoal') + W('feet/boots/feet_boots_basic.json', 'black') + W('headwear/coverings/hoods/hat_hood_cloth.json', 'maroon') + W('torso/backpack/quiver.json') + W('weapons/ranged/bow/weapon_ranged_bow_great.json'), 'shoot', 'ออร์คหน่วยลาดตระเวนเถ้า'),
+    'm_lpc2_ashshaman': ('male', [('body/body.json', 'ash'), ('head/heads/fantasy/heads_troll.json', 'ash'), ('head/appendages/head_horns_curled.json', None)] + W('torso/shirts/torso_clothes_robe.json', 'maroon') + W('torso/waist/belt_mage.json', 'bronze') + W('headwear/neck/charms/neck_amulet_dangle.json') + W('weapons/magic/weapon_magic_gnarled.json'), 'spell', 'หมอผีโทรลเถ้า'),
+    'm_lpc2_orcbrute':  ('male', ORC('crimson') + W('torso/armour/torso_armour_plate.json', 'iron') + W('arms/shoulders/shoulders_legion.json', 'iron') + W('legs/legs_armour.json', 'iron') + W('headwear/helmets/helmets/hat_helmet_barbarian_viking.json', 'iron') + W('weapons/blunt/weapon_blunt_waraxe.json'), 'slash', 'ออร์คร่างยักษ์เถ้าถ่าน'),
+    'm_lpc2_warlord':   ('male', ORC('crimson') + W('torso/armour/torso_armour_plate.json', 'gold') + W('arms/shoulders/shoulders_pauldrons.json', 'gold') + W('legs/legs_armour.json', 'iron') + W('torso/cape/cape_tattered.json', 'red') + W('headwear/helmets/helmets/hat_helmet_horned.json', 'gold') + W('weapons/blunt/weapon_blunt_waraxe.json'), 'slash', 'จอมทัพออร์ค'),
+    'm_lpc2_salamander':('male', LIZ('ember') + W('torso/armour/torso_armour_leather.json') + W('arms/wrists/arms_bracers.json', 'bronze') + W('legs/pants/legs_pants.json', 'maroon') + W('weapons/polearm/weapon_polearm_dragonspear.json'), 'thrust', 'นักรบซาลาแมนเดอร์'),
+    'm_lpc2_ashgob':    ('male', GOB('ash') + W('torso/shirts/shortsleeve/torso_clothes_shortsleeve.json', 'maroon') + W('torso/aprons/torso_aprons_suspenders.json') + W('legs/pants/legs_pants.json', 'black') + W('headwear/helmets/helmets/hat_helmet_morion.json', 'copper') + W('tools/tool_hammer.json'), 'slash', 'ก็อบลินขุดเถ้า'),
+    'm_lpc2_cultist':   ('male', [('body/body.json', 'bronze'), ('head/heads/human/heads_human_male.json', 'bronze')] + W('torso/shirts/torso_clothes_robe.json', 'red') + W('torso/waist/belt_robe.json', 'charcoal') + W('headwear/coverings/hoods/hat_hood_cloth.json', 'black') + W('headwear/accessories/facial_mask_plain.json') + W('weapons/magic/weapon_magic_s.json'), 'spell', 'สาวกลัทธิเถ้า'),
+    'm_lpc2_cultknight':('male', [('body/body.json', 'taupe'), ('head/heads/human/heads_human_male.json', 'taupe')] + W('torso/armour/torso_armour_plate.json', 'iron') + W('arms/shoulders/shoulders_legion.json', 'iron') + W('arms/arms_armour.json', 'iron') + W('legs/legs_armour.json', 'iron') + W('torso/cape/cape_solid.json', 'maroon') + W('headwear/helmets/helmets/hat_helmet_greathelm.json', 'iron') + W('weapons/sword/weapon_sword_longsword_alt.json'), 'slash', 'อัศวินลัทธิเถ้า'),
+    'm_lpc2_ashskel':   ('male', SKEL + W('torso/torso_chainmail.json', 'copper') + W('torso/cape/cape_tattered.json', 'charcoal') + W('headwear/helmets/helmets/hat_helmet_nasal.json', 'copper') + W('weapons/sword/weapon_sword_longsword.json'), 'slash', 'ทหารเถ้ากระดูก'),
+    'm_lpc2_herald':    ('male', [('body/body.json', 'lavender'), ('head/heads/human/heads_human_male_gaunt.json', 'lavender')] + W('torso/shirts/torso_clothes_robe.json', 'black') + W('arms/shoulders/shoulders_mantal.json', 'maroon') + W('body/wings/wings_bat.json', 'black') + W('headwear/hats/formal/hat_formal_crown.json', 'gold') + W('weapons/magic/weapon_magic_crystal.json'), 'spell', 'ผู้ประกาศเถ้าถ่าน'),
 }
+# extra skin ramps for Region 3 (the ULPC body palette has no grey or red skin): borrowed from the LPCR "all" palette
+def _extra_skins():
+    import json as _j
+    allp = _j.load(open(B.L + '/palette_definitions/all/all_lpcr.json', encoding='utf-8'))
+    _, body = B.palette('body')
+    for name, src in (('ash', 'gray'), ('crimson', 'red'), ('ember', 'red_orange')): body.setdefault(name, allp[src])
+_extra_skins()
 
 def build(name):
     sx, items, atk, _ = MOBS[name]

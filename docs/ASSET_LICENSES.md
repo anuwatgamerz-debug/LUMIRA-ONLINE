@@ -26,6 +26,7 @@
 | `public/assets/world/trees/` | ต้นไม้ (`tree_*`) จาก [LPC] Trees / Plant Repack | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
 | `public/assets/world/vegetation/` | หญ้า พุ่มไม้ ดอกไม้ ฯลฯ (`veg_*`) จาก LPC | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
 | `public/assets/world/rocks/` | หิน แร่ (`rock_*`) จาก [LPC] Rocks; `rock_crystal_01` เป็นงาน LUMIRA | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
+| `public/assets/world/{trees,rocks,vegetation}/` ชุด Ashen (`tree_dead_*`, `tree_ash_01`, `rock_basalt_*`, `rock_lava_01`, `veg_ashgrass_*`, `veg_ember_bush_01`) | ย้อมสี/ดัดแปลงจากสไปรต์ LPC ข้างบน (กิ่งไม้แห้งวาดเพิ่มด้วยโค้ด) | `tools/art/lpc/build_ashen_world.py` | LPC เดิมของภาพต้นฉบับ (ดูหัวข้อ 1.5) |
 | `public/assets/world/props/` | พร็อพ (`prop_*`) จาก LPC | `tools/art/lpc/build_world.py` | LPC (ดูหัวข้อ 1.5) |
 | `public/assets/world/world.json` | ขนาด จุดยึด กล่องโปร่งใสของต้นไม้ (`src: "lpc"` = ภาพจาก LPC) | `tools/art/lpc/build_world.py` | ข้อมูลของโปรเจกต์ |
 | `public/assets/chr_hd/base/` | HD ร่างกายพื้นฐานชาย/หญิง (ต้นแบบ) | `tools/art/build_characters_hd.py` | LUMIRA original |
@@ -82,8 +83,8 @@ python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้น�
 | `public/assets/m_lpc_minotaur.png` | Minotaur | Jordan Irwin (AntumDeluge) | CC-BY 3.0/4.0 / OGA-BY 3.0 |
 | `public/assets/m_lpc_werewolf.png` | Werewolf (LPC) | Stephen Challener (Redshrike), William Thompson (William.Thompsonj), Jordan Irwin (AntumDeluge) | CC-BY-SA 3.0 |
 | `public/assets/m_lpc_pumpkin.png` | Pumpkin monster | Tuomo Untinen (Reemax) | CC-BY 3.0/4.0 / CC-BY-SA |
-| `public/assets/m_lpc2_*.png` (ออร์ค ก็อบลิน โจร โครงกระดูก ซอมบี้ มนุษย์กิ้งก่า มินอทอร์นักรบ — 15 ชีท) | ประกอบจาก Universal LPC Spritesheet Character Generator (ร่าง orc/goblin/lizard/minotaur/skeleton/zombie + ชุด + อาวุธ) ด้วย `tools/art/lpc/build_mobs2.py` | ดูรายไฟล์ใน `docs/credits/lpc/LPC_CHARACTERS_CREDITS.csv` | CC-BY-SA 3.0 / GPL 3.0 / OGA-BY 3.0 / CC-BY 4.0 / CC0 (ตามไฟล์) |
-| `public/assets/ui/items_lpc.png` | 496 pixel art icons for medieval/fantasy RPG | Henrique Lazarini (7Soul1) | CC0 |
+| `public/assets/m_lpc2_*.png` (ออร์ค ก็อบลิน โจร โครงกระดูก ซอมบี้ มนุษย์กิ้งก่า มินอทอร์นักรบ — 15 ชีท; Region 3: ออร์คเถ้า/จอมทัพ โทรล ซาลาแมนเดอร์ ลัทธิเถ้า ผู้ประกาศ — อีก 11 ชีท) | ประกอบจาก Universal LPC Spritesheet Character Generator (ร่าง orc/goblin/lizard/minotaur/skeleton/zombie + ชุด + อาวุธ) ด้วย `tools/art/lpc/build_mobs2.py` | ดูรายไฟล์ใน `docs/credits/lpc/LPC_CHARACTERS_CREDITS.csv` | CC-BY-SA 3.0 / GPL 3.0 / OGA-BY 3.0 / CC-BY 4.0 / CC0 (ตามไฟล์) |
+| `public/assets/ui/items_lpc.png` | 496 pixel art icons for medieval/fantasy RPG (ไอคอน Region 3 = ไอคอนเดิมย้อมสีใหม่ด้วย `tools/art/lpc/extend_icons.py`) | Henrique Lazarini (7Soul1) | CC0 |
 | `public/assets/items/` (weapons/armor/headgear/potions/consumables + `items.json`), `public/assets/source/equipment_sheet_*.webp` | ไอคอนอุปกรณ์ / อาวุธ / ยา ตัดจากชีตที่เจ้าของเกมส่งมา (`tools/art/` ไม่ใช้ — ตัดตามกรอบในชีต) | เจ้าของเกม LUMIRA ONLINE | ของโปรเจกต์ |
 | `public/assets/legacy/lumira/login_land.webp`, `login_port.webp` (เลิกใช้ เก็บไว้ตรวจก่อนลบ) | ภาพหน้าล็อกอิน | เจ้าของเกม LUMIRA ONLINE (ผู้ใช้ส่งมาเอง) | ของโปรเจกต์ |
 

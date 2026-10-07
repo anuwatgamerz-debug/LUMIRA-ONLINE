@@ -1321,7 +1321,8 @@ function portalBlock(c, pt) {
   if (r.quest && !Q.done(c, r.quest)) return `ต้องทำเควส "${QUESTS[r.quest].th}" ให้สำเร็จก่อน`;
   return '';
 }
-const AOE_SKILLS = { quake: { r: 2.6, mult: 1.4, ms: 900 }, root_slam: { r: 2.0, mult: 1.8, ms: 1100 }, spore: { r: 3.4, mult: 1.0, ms: 1200, self: 1 } };
+const AOE_SKILLS = { quake: { r: 2.6, mult: 1.4, ms: 900 }, root_slam: { r: 2.0, mult: 1.8, ms: 1100 }, spore: { r: 3.4, mult: 1.0, ms: 1200, self: 1 },
+  eruption: { r: 2.4, mult: 1.7, ms: 1000 }, flame_nova: { r: 3.2, mult: 1.25, ms: 1200, self: 1 } }; // eruption / flame_nova: Ashen Frontier fire attacks
 // boss / elite actions: phases (stronger/faster), area slam with a warning circle, summoning helpers, charge
 function bossTick(mob, d, tgt, now) {
   const r = mob.hp / mob.maxhp;
@@ -1336,10 +1337,10 @@ function bossTick(mob, d, tgt, now) {
   const pick = sk[Math.floor(Math.random() * sk.length)];
   if (pick === 'charge' && Math.hypot(tgt.c.x - mob.x, tgt.c.y - mob.y) > 3) { mob.x = tgt.c.x + (mob.x > tgt.c.x ? 1 : -1); mob.y = tgt.c.y; if (!walkable(MAPS[mob.map], Math.round(mob.x), Math.round(mob.y))) { mob.x = tgt.c.x; mob.y = tgt.c.y; } mob.path = null; bcast(mob.map, { t: 'fx', k: 'charge', id: mob.id }); return; }
   // area attacks: warn first (circle on the ground), hit everyone still inside when it lands.
-  // quake: on the target, root_slam: small and heavy on the target, spore: wide ring around the monster itself
+  // quake / eruption: on the target, root_slam: small and heavy on the target, spore / flame_nova: wide ring around the monster itself
   const S = AOE_SKILLS[pick] || AOE_SKILLS.quake, self = S.self;
   const ax = self ? mob.x : tgt.c.x, ay = self ? mob.y : tgt.c.y, R = S.r;
-  bcast(mob.map, { t: 'fx', k: 'aoe', id: mob.id, x: ax, y: ay, r: R, ms: S.ms });
+  bcast(mob.map, { t: 'fx', k: 'aoe', id: mob.id, x: ax, y: ay, r: R, ms: S.ms, sk: pick });
   setTimeout(() => {
     if (!mobs.has(mob.id)) return;
     for (const p of players.values()) if (!p.dead && p.c.map === mob.map && Math.hypot(p.c.x - ax, p.c.y - ay) <= R) hurtPlayer(p, Math.max(1, Math.round(d.atk[1] * S.mult * (mob.atkMul || 1) - p.c.def)), mob.id);

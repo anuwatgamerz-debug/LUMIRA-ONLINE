@@ -35,11 +35,13 @@ const M = [
   ['ancient_tree', 'ต้นไม้โบราณ', 'verdant', 'dungeon', 38, 45, 48, 64, 'heartwood', 'ancient', [18, 12], 'open'],
   ['beast_valley', 'หุบเขาสัตว์ป่า', 'verdant', 'field', 32, 42, 70, 50, 'valley', 'drums', [34, 26], 'open'],
   ['thornmire', 'หนองหนาม', 'verdant', 'field', 38, 45, 64, 56, 'swamp', 'bog', [8, 34], 'open'],
-  ['emberhold', 'เอมเบอร์โฮลด์', 'ashen', 'mining_city', 40, 65, 60, 50, 'town_sand', 'forge', [46, 18], 'planned'],
-  ['ash_plains', 'ที่ราบเถ้า', 'ashen', 'field', 40, 48, 72, 56, 'desert', 'ash_wind', [40, 26], 'planned'],
-  ['volcanic_road', 'ถนนภูเขาไฟ', 'ashen', 'field', 46, 54, 70, 48, 'desert', 'ash_wind', [52, 10], 'planned'],
-  ['fire_cavern', 'ถ้ำเพลิง', 'ashen', 'dungeon', 52, 60, 56, 56, 'cave', 'magma', [58, 22], 'planned'],
-  ['ruined_fortress', 'ป้อมปรักหักพัง', 'ashen', 'dungeon', 58, 65, 60, 60, 'cave', 'war', [40, 8], 'planned'],
+  ['emberhold', 'เอมเบอร์โฮลด์', 'ashen', 'mining_city', 40, 65, 60, 50, 'ash_town', 'forge', [46, 18], 'open'],
+  ['ash_plains', 'ที่ราบเถ้า', 'ashen', 'field', 40, 48, 72, 56, 'ashland', 'ash_wind', [40, 26], 'open'],
+  ['volcanic_road', 'ถนนภูเขาไฟ', 'ashen', 'field', 46, 54, 70, 48, 'volcanic', 'ash_wind', [50, 9], 'open'],
+  ['scorched_quarry', 'เหมืองหินไหม้', 'ashen', 'field', 48, 56, 64, 52, 'quarry', 'forge', [55, 27], 'open'],
+  ['molten_lake', 'ทะเลสาบลาวา', 'ashen', 'field', 54, 62, 66, 54, 'magma', 'magma', [62, 12], 'open'],
+  ['fire_cavern', 'ถ้ำเพลิง', 'ashen', 'dungeon', 52, 60, 56, 56, 'magma_cave', 'magma', [60, 21], 'open'],
+  ['ruined_fortress', 'ป้อมปรักหักพัง', 'ashen', 'dungeon', 58, 65, 60, 60, 'fortress', 'war', [40, 7], 'open'],
   ['azure_port', 'ท่าเรืออาซูร์', 'azure', 'port', 55, 80, 64, 50, 'town_sand', 'harbor', [46, 78], 'planned'],
   ['coastal_road', 'ถนนเลียบชายฝั่ง', 'azure', 'field', 55, 62, 72, 44, 'meadow', 'waves', [42, 70], 'planned'],
   ['coral_beach', 'หาดปะการัง', 'azure', 'field', 60, 68, 64, 52, 'desert', 'waves', [54, 86], 'planned'],
@@ -71,8 +73,8 @@ const M = [
 const MAPS_META = {};
 // audio profile: every map names its music (bgm) and ambient bed; ids live in public/audio-registry.js.
 // Maps without their own theme use their region's town / field / dungeon theme.
-const BGM = { mushroom_hollow: 'bgm_mushroom_hollow', spirit_grove: 'bgm_spirit_grove', thornmire: 'bgm_thornmire', lumira: 'bgm_lumira_village', solkara: 'bgm_elyndra_capital', beginner_meadow: 'bgm_beginner_meadow', greenwood: 'bgm_greenwood', moonlit_creek: 'bgm_moonlit_creek', old_mine: 'bgm_old_mine', plains: 'bgm_golden_fields', woods: 'bgm_oasis_woods' };
-const AMBIENT_BY_ENV = { verdant_town: 'amb_village', jungle: 'amb_jungle', mushroom: 'amb_spores', spirit: 'amb_spirit', valley: 'amb_meadow', swamp: 'amb_swamp', heartwood: 'amb_dungeon', village: 'amb_village', town_sand: 'amb_town', meadow: 'amb_meadow', forest: 'amb_forest', forest_deep: 'amb_forest', night_creek: 'amb_night_creek', cave: 'amb_cave', desert: 'amb_desert', snow: 'amb_snow' };
+const BGM = { volcanic_road: 'bgm_volcanic_road', molten_lake: 'bgm_molten_lake', ruined_fortress: 'bgm_ruined_fortress', mushroom_hollow: 'bgm_mushroom_hollow', spirit_grove: 'bgm_spirit_grove', thornmire: 'bgm_thornmire', lumira: 'bgm_lumira_village', solkara: 'bgm_elyndra_capital', beginner_meadow: 'bgm_beginner_meadow', greenwood: 'bgm_greenwood', moonlit_creek: 'bgm_moonlit_creek', old_mine: 'bgm_old_mine', plains: 'bgm_golden_fields', woods: 'bgm_oasis_woods' };
+const AMBIENT_BY_ENV = { ash_town: 'amb_town', ashland: 'amb_desert', volcanic: 'amb_volcano', quarry: 'amb_desert', magma: 'amb_volcano', magma_cave: 'amb_volcano', fortress: 'amb_dungeon', verdant_town: 'amb_village', jungle: 'amb_jungle', mushroom: 'amb_spores', spirit: 'amb_spirit', valley: 'amb_meadow', swamp: 'amb_swamp', heartwood: 'amb_dungeon', village: 'amb_village', town_sand: 'amb_town', meadow: 'amb_meadow', forest: 'amb_forest', forest_deep: 'amb_forest', night_creek: 'amb_night_creek', cave: 'amb_cave', desert: 'amb_desert', snow: 'amb_snow' };
 const AMBIENT = { azure_port: 'amb_ocean', coastal_road: 'amb_ocean', coral_beach: 'amb_ocean', pirate_cove: 'amb_ocean', fire_cavern: 'amb_volcano', volcanic_road: 'amb_volcano', astralis: 'amb_magic', rune_valley: 'amb_magic', floating_ruins: 'amb_magic', mana_rift: 'amb_magic', void_plains: 'amb_void', dark_citadel: 'amb_void', broken_realm: 'amb_void', abyss_gate: 'amb_void', last_haven: 'amb_void', ruined_fortress: 'amb_dungeon', sunken_temple: 'amb_dungeon', ancient_pyramid: 'amb_dungeon', lost_ruins: 'amb_dungeon', frozen_citadel: 'amb_snow', crystal_cave: 'amb_cave', mage_tower: 'amb_magic', ancient_tree: 'amb_forest' };
 for (const [id, name, region, kind, l0, l1, w, h, env, music, pos, status] of M) {
   const town = /village|capital|city|port/.test(kind), type = town ? 'town' : kind === 'dungeon' ? 'dungeon' : 'field';
@@ -85,7 +87,7 @@ const LINKS = [
   ['lumira', 'beginner_meadow'], ['lumira', 'solkara'], ['beginner_meadow', 'greenwood'], ['beginner_meadow', 'ancient_farm'],
   ['greenwood', 'moonlit_creek'], ['moonlit_creek', 'old_mine'], ['beginner_meadow', 'slime_burrow'], ['greenwood', 'spider_nest'], ['moonlit_creek', 'moon_crypt'], ['old_mine', 'iron_labyrinth'], ['solkara', 'plains'], ['solkara', 'woods'], ['solkara', 'bandit_road'],
   ['greenwood', 'deep_forest'], ['deep_forest', 'verdant_haven'], ['verdant_haven', 'mushroom_hollow'], ['verdant_haven', 'spirit_grove'], ['spirit_grove', 'ancient_tree'], ['deep_forest', 'beast_valley'], ['mushroom_hollow', 'thornmire'],
-  ['beast_valley', 'ash_plains'], ['ash_plains', 'emberhold'], ['emberhold', 'volcanic_road'], ['emberhold', 'fire_cavern'], ['volcanic_road', 'ruined_fortress'],
+  ['beast_valley', 'ash_plains'], ['ash_plains', 'emberhold'], ['emberhold', 'volcanic_road'], ['emberhold', 'scorched_quarry'], ['volcanic_road', 'molten_lake'], ['molten_lake', 'fire_cavern'], ['volcanic_road', 'ruined_fortress'],
   ['bandit_road', 'coastal_road'], ['coastal_road', 'azure_port'], ['azure_port', 'coral_beach'], ['coral_beach', 'sunken_temple'], ['azure_port', 'pirate_cove'],
   ['azure_port', 'great_desert'], ['great_desert', 'solara'], ['solara', 'oasis'], ['solara', 'scorpion_canyon'], ['scorpion_canyon', 'ancient_pyramid'], ['ancient_pyramid', 'lost_ruins'],
   ['fire_cavern', 'frozen_forest'], ['frozen_forest', 'frostheim'], ['frostheim', 'ice_lake'], ['frostheim', 'snowfield'], ['ice_lake', 'crystal_cave'], ['snowfield', 'frozen_citadel'],

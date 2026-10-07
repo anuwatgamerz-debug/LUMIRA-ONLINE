@@ -984,5 +984,118 @@
 "ay": 40,
 "path": "world/props/prop_wall_v_01",
 "src": "lpc"
+},
+"tree_dead_01": {
+"w": 84,
+"h": 146,
+"ax": 42,
+"ay": 139,
+"path": "world/trees/tree_dead_01",
+"fade": [
+4,
+2,
+76,
+109
+],
+"trunk": 6,
+"src": "lpc"
+},
+"tree_dead_02": {
+"w": 125,
+"h": 151,
+"ax": 62,
+"ay": 151,
+"path": "world/trees/tree_dead_02",
+"fade": [
+4,
+2,
+117,
+121
+],
+"trunk": 6,
+"src": "lpc"
+},
+"tree_ash_01": {
+"w": 83,
+"h": 106,
+"ax": 41,
+"ay": 100,
+"path": "world/trees/tree_ash_01",
+"fade": [
+4,
+2,
+75,
+70
+],
+"trunk": 6,
+"src": "lpc"
+},
+"rock_basalt_01": {
+"w": 56,
+"h": 53,
+"ax": 28,
+"ay": 51,
+"path": "world/rocks/rock_basalt_01",
+"src": "lpc"
+},
+"rock_basalt_02": {
+"w": 64,
+"h": 87,
+"ax": 32,
+"ay": 81,
+"path": "world/rocks/rock_basalt_02",
+"src": "lpc"
+},
+"rock_basalt_03": {
+"w": 59,
+"h": 43,
+"ax": 29,
+"ay": 41,
+"path": "world/rocks/rock_basalt_03",
+"src": "lpc"
+},
+"rock_basalt_04": {
+"w": 58,
+"h": 57,
+"ax": 29,
+"ay": 57,
+"path": "world/rocks/rock_basalt_04",
+"src": "lpc"
+},
+"rock_lava_01": {
+"w": 56,
+"h": 53,
+"ax": 28,
+"ay": 51,
+"path": "world/rocks/rock_lava_01",
+"src": "lpc",
+"glow": [
+28,
+26
+]
+},
+"veg_ashgrass_01": {
+"w": 12,
+"h": 20,
+"ax": 6,
+"ay": 19,
+"path": "world/vegetation/veg_ashgrass_01",
+"src": "lpc"
+},
+"veg_ashgrass_02": {
+"w": 18,
+"h": 15,
+"ax": 9,
+"ay": 13,
+"path": "world/vegetation/veg_ashgrass_02",
+"src": "lpc"
+},
+"veg_ember_bush_01": {
+"w": 31,
+"h": 30,
+"ax": 15,
+"ay": 30,
+"path": "world/vegetation/veg_ember_bush_01",
+"src": "lpc"
 }
 }

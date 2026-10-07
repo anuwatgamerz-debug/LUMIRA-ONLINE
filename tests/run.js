@@ -10,6 +10,7 @@ const aq = require('./aq.test');
 const autocfg = require('./autocfg.test');
 const social = require('./social.test');
 const verdant = require('./verdant.test');
+const ashen = require('./ashen.test');
 const brand = require('./brand.test');
 const skills2 = require('./skills2.test');
 const vfx = require('./vfx.test');
@@ -19,7 +20,7 @@ const prepublic = require('./prepublic.test');
 (async () => {
   const only = process.argv[2];
   const accounts = {};
-  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...aq.SEEDS, ...autocfg.SEEDS, ...social.SEEDS, ...verdant.SEEDS, ...brand.SEEDS, ...skills2.SEEDS, ...vfx.SEEDS, ...portrait.SEEDS, ...prepublic.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = ch && ch.char ? ch : H.account(ch); // a seed may already be a full account (role, …)
+  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...aq.SEEDS, ...autocfg.SEEDS, ...social.SEEDS, ...verdant.SEEDS, ...ashen.SEEDS, ...brand.SEEDS, ...skills2.SEEDS, ...vfx.SEEDS, ...portrait.SEEDS, ...prepublic.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = ch && ch.char ? ch : H.account(ch); // a seed may already be a full account (role, …)
   const srv = await H.startServer(accounts, 3400 + 100 + Math.floor(Math.random() * 400));
   const reps = [];
   try {
@@ -28,6 +29,7 @@ const prepublic = require('./prepublic.test');
     if (!only || only === 'art') { console.log('\n=== art suite (LUMIRA art bible) ==='); const r = H.reporter('art'); reps.push(r); await art.run(srv, r); }
     if (!only || only === 'server' || only === 'social') { console.log('\n=== social suite (rank / party / guild / trade) ==='); const r = H.reporter('social'); reps.push(r); await social.run(srv, r); }
     if (!only || only === 'server' || only === 'verdant') { console.log('\n=== M1 cleanup + Region 2 Verdant Wilds suite ==='); const r = H.reporter('verdant'); reps.push(r); await verdant.run(srv, r); }
+    if (!only || only === 'server' || only === 'ashen') { console.log('\n=== M4 Region 3 Ashen Frontier suite ==='); const r = H.reporter('ashen'); reps.push(r); await ashen.run(srv, r); }
     if (!only || only === 'server' || only === 'skills2') { console.log('\n=== M3 second class skills suite ==='); const r = H.reporter('skills2'); reps.push(r); await skills2.run(srv, r); }
     if (!only || only === 'ui' || only === 'portrait') { console.log('\n=== character portrait suite ==='); const r = H.reporter('portrait'); reps.push(r); await portrait.run(srv, r); }
     if (!only || only === 'ui' || only === 'vfx') { console.log('\n=== ELYNDRA VFX Phase 1 suite ==='); const r = H.reporter('vfx'); reps.push(r); await vfx.run(srv, r); }

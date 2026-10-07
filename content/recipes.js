@@ -29,6 +29,19 @@ const RECIPES = {
   silver_bow: { out: [239, 1], in: [[196, 1], [182, 8], [190, 4]], zeny: 4500, station: 'smith', th: 'ธนูขนเงิน' },
   barkplate:  { out: [320, 1], in: [[189, 8], [188, 4], [120, 6]], zeny: 4800, station: 'smith', th: 'เกราะเปลือกแมงมุมไม้' },
   leaf_garb:  { out: [322, 1], in: [[170, 10], [174, 6], [173, 2]], zeny: 2600, station: 'craft', th: 'ชุดเงาใบไม้' },
+  // Ashen Frontier (Tier 3): fire iron (520) from the quarry and plains, fire crystals (521) from the Molten Lake / Fire Cavern
+  ember_water:{ out: [572, 2], in: [[504, 2], [521, 1], [570, 1]], zeny: 400, station: 'craft', th: 'น้ำแร่เย็นเอมเบอร์ ×2' },
+  cinder_charm:{ out: [421, 1], in: [[501, 8], [505, 6], [521, 2]], zeny: 3200, station: 'craft', th: 'เครื่องรางถ่านไฟ' },
+  ash_garb:   { out: [330, 1], in: [[500, 10], [510, 6], [503, 4]], zeny: 4200, station: 'craft', th: 'ชุดเงาเถ้า' },
+  sala_sword: { out: [256, 1], in: [[520, 8], [507, 8], [521, 2]], zeny: 5200, station: 'smith', th: 'ดาบเพลิงซาลาแมนเดอร์' },
+  sala_mail:  { out: [327, 1], in: [[507, 10], [520, 6], [502, 4]], zeny: 5600, station: 'smith', th: 'เกราะเกล็ดซาลาแมนเดอร์' },
+  sala_spear: { out: [262, 1], in: [[507, 8], [520, 8], [511, 3]], zeny: 6000, station: 'smith', th: 'หอกเกล็ดซาลาแมนเดอร์' },
+  basalt_arm: { out: [329, 1], in: [[511, 8], [520, 10], [508, 6]], zeny: 6400, station: 'smith', th: 'เกราะหินบะซอลต์' },
+  forge_hammer:{ out: [261, 1], in: [[532, 1], [520, 10], [511, 4]], zeny: 6800, station: 'smith', th: 'ค้อนผู้พิทักษ์เตาหลอม' },
+  magma_gun:  { out: [263, 1], in: [[514, 6], [520, 10], [516, 6]], zeny: 7000, station: 'smith', th: 'ปืนแกนแมกมา' },
+  hound_bow:  { out: [257, 1], in: [[513, 10], [530, 1], [521, 3]], zeny: 7000, station: 'smith', th: 'ธนูกระดูกสุนัขนรก' },
+  wraith_staff:{ out: [258, 1], in: [[512, 10], [517, 6], [521, 4]], zeny: 7000, station: 'smith', th: 'คทาวิญญาณเพลิง' },
+  hell_dagger:{ out: [260, 1], in: [[513, 8], [533, 1], [520, 6]], zeny: 7200, station: 'smith', th: 'มีดสั้นเขี้ยวนรก' },
 };
 for (const k in RECIPES) RECIPES[k].id = k;
 module.exports = { RECIPES };

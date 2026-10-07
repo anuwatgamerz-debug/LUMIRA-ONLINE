@@ -99,6 +99,9 @@ const PAL = {
   [DIRT]: ['#b0814f', '#a87a4a', '#ba8d5c', '#9f7346'].map(hex), // brown ramp
   [WATER]: ['#3c86c9', '#4590d2', '#3479bc', '#4b98d8'].map(hex),
 };
+// boss / elite area attacks: the effect that plays when the warning circle lands (server AOE_SKILLS ids)
+const MOB_AOE_VFX = { eruption: 'el.meteor.hit', flame_nova: 'ar.nova.hit', quake: 'kn.wave.hit' };
+const PAL_LAVA = ['#e8641e', '#f08a2a', '#c8401a', '#ffb347'].map(hex); // water tiles on maps with env.lava
 // LPC ground textures (assets/ground_lpc.png: rows grass, dark grass, dirt, sand, cave floor; 3 x 32px variants each)
 const GTEX = { d: null, row: { [GRASS]: 0, [DGRASS]: 1, [DIRT]: 2, [SAND]: 3 } };
 (function loadGround() { const i = new Image(); i.onload = () => { const c = mkCanvas(i.width, i.height), g = c.getContext('2d'); g.drawImage(i, 0, 0); GTEX.d = g.getImageData(0, 0, i.width, i.height).data; GTEX.w = i.width; if (typeof CAVE !== 'undefined') GTEX.row[CAVE] = 4; if (typeof map !== 'undefined' && map && ground) bakeMap(map); }; i.src = 'assets/ground_lpc.png'; })();
@@ -145,6 +148,7 @@ function genGround(m) {
   }
   ground = mkCanvas(W, H); const g = ground.getContext('2d'); const id = g.createImageData(W, H); const d = id.data;
   const get = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 255 : out[y * W + x];
+  const EV = envOf(m), LAVA = EV.lava, TONE = EV.tone; // Ashen maps: water tiles are lava; tone = [saturation, r, g, b] colour grade
   waterPx = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const c = out[y * W + x], i = (y * W + x) * 4; let col;
@@ -156,12 +160,13 @@ function genGround(m) {
       if (lx === 0 || ly === 0) col = [128, 120, 106]; else if (ly === 1 || lx === 1) col = [222, 215, 198]; else if (ly === 15 || lx === 15) col = [158, 150, 134];
       else col = r < 0.06 ? base.map(q => q - 14) : base;
     } else if (c === WATER) {
-      const n = vnoise(x / 11, y / 11); const p = PAL[WATER];
+      const n = vnoise(x / 11, y / 11); const p = LAVA ? PAL_LAVA : PAL[WATER];
       col = n < 0.35 ? p[2] : n < 0.6 ? p[0] : n < 0.8 ? p[1] : p[3];
-      // foam edge
-      if (get(x, y - 1) !== WATER || get(x - 1, y) !== WATER || get(x + 1, y) !== WATER || get(x, y + 1) !== WATER) col = [214, 238, 255];
-      else if (get(x, y - 2) !== WATER) col = [120, 180, 230];
-      else if (r < 0.0015) waterPx.push(x, y);
+      // foam edge (lava: cooled black crust, then a hot rim)
+      if (get(x, y - 1) !== WATER || get(x - 1, y) !== WATER || get(x + 1, y) !== WATER || get(x, y + 1) !== WATER) col = LAVA ? [54, 34, 30] : [214, 238, 255];
+      else if (get(x, y - 2) !== WATER || (LAVA && (get(x - 2, y) !== WATER || get(x + 2, y) !== WATER || get(x, y + 2) !== WATER))) col = LAVA ? [150, 52, 24] : [120, 180, 230];
+      else if (r < (LAVA ? 0.004 : 0.0015)) waterPx.push(x, y);
+      d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; continue; // never colour-graded
     } else if (c === ROCKW) { // cave wall: dark rock, lit top edge, shadowed foot
       const n = vnoise(x / 6, y / 6); const p = PAL[ROCKW]; col = p[n < 0.3 ? 3 : n < 0.55 ? 0 : n < 0.8 ? 1 : 2];
       if (get(x, y + 1) !== ROCKW && get(x, y + 1) !== 255) col = [24, 20, 26]; else if (get(x, y - 1) !== ROCKW && get(x, y - 1) !== 255) col = [96, 88, 104];
@@ -185,6 +190,7 @@ function genGround(m) {
         if ([get(x, y + 1), get(x, y - 1), get(x + 1, y), get(x - 1, y), get(x + 2, y), get(x - 2, y), get(x, y + 2), get(x, y - 2)].includes(WATER)) col = c === SAND ? [190, 158, 104] : [150, 110, 70];
       }
     }
+    if (TONE && c !== ROCKW) { const l = col[0] * 0.3 + col[1] * 0.59 + col[2] * 0.11, k = TONE[0]; col = [(l + (col[0] - l) * k) * TONE[1], (l + (col[1] - l) * k) * TONE[2], (l + (col[2] - l) * k) * TONE[3]]; }
     d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
   }
   g.putImageData(id, 0, 0);
@@ -206,7 +212,7 @@ function genGround(m) {
   // minimap
   miniC = mkCanvas(w, h); const mg = miniC.getContext('2d'); const mi = mg.createImageData(w, h);
   const MC = { [SAND]: [214, 186, 128], [GRASS]: [88, 160, 70], [DGRASS]: [50, 120, 50], [DIRT]: [170, 130, 84], [PLAZA]: [190, 182, 166], [WATER]: [60, 134, 201], [CAVE]: [96, 84, 72], [ROCKW]: [34, 30, 36] };
-  for (let i = 0; i < w * h; i++) { let c = MC[cls[i]]; const v = m.t[i]; if (v === 5) c = [30, 90, 40]; if (v === 6 && !envOf(m).cave) c = [130, 130, 130]; if (v === 7) c = [60, 140, 70]; if (v === 9 || v === 3) c = [150, 80, 50]; if (v === 8) c = [150, 220, 255]; mi.data.set([...c, 255], i * 4); }
+  for (let i = 0; i < w * h; i++) { let c = MC[cls[i]]; const v = m.t[i]; if (v === 5) c = [30, 90, 40]; if (v === 6 && !envOf(m).cave) c = [130, 130, 130]; if (v === 7) c = [60, 140, 70]; if (v === 9 || v === 3) c = [150, 80, 50]; if (v === 8) c = [150, 220, 255]; if (v === 2 && envOf(m).lava) c = [230, 96, 30]; mi.data.set([...c, 255], i * 4); }
   mg.putImageData(mi, 0, 0);
 }
 const treeOf = (E, r) => E.trees ? E.trees[Math.floor(r * E.trees.length)] : E.snow ? (r < 0.6 ? 'tree_pine_snow_01' : 'tree_pine_01') : E.treeDark ? ['tree_pine_01', 'tree_oak_02', 'tree_pine_02', 'tree_oak_01', 'tree_oak_03'][Math.floor(r * 5)] : ['tree_oak_01', 'tree_oak_02', 'tree_oak_03', 'tree_oak_01', 'tree_pine_01'][Math.floor(r * 5)];
@@ -221,11 +227,11 @@ function bakeMap(m) {
     const cx = x * TP + 16 + jx, cy = y * TP + 26 + jy;
     // LUMIRA sprites (n) with the older prop sheets as fallback (fb); trees/rocks carry their own baked shadow
     if (v === 5) props.push({ n: treeOf(E, r), x: cx, y: cy + 4, tree: 1, fb: r < 0.45 ? 'p_tree_single_A' : r < 0.9 ? 'p_tree_single_B' : 'p_trees_A_small', fsh: 14 });
-    else if (v === 6 && !E.cave) props.push({ n: ['rock_small_01', 'rock_medium_03', 'rock_medium_04', 'rock_large_05', 'rock_small_02'][Math.floor(r * 5)], x: cx, y: cy, fb: 'p_rock_single_' + 'ABCDE'[Math.floor(r * 5)], fsh: 10 });
+    else if (v === 6 && !E.cave) props.push({ n: (E.rocks || ['rock_small_01', 'rock_medium_03', 'rock_medium_04', 'rock_large_05', 'rock_small_02'])[Math.floor(r * (E.rocks ? E.rocks.length : 5))], x: cx, y: cy, fb: 'p_rock_single_' + 'ABCDE'[Math.floor(r * 5)], fsh: 10 });
     else if (v === 7) props.push({ n: 'veg_cactus_01', x: cx, y: cy, fb: 'p_cactus', fsh: 8 });
     else if (v === 3 && (x === 0 || y === 0 || x === w - 1 || y === h - 1)) { const vert = x === 0 || x === w - 1; props.push({ n: vert ? 'prop_wall_v_01' : 'prop_wall_h_01', x: x * TP + 16, y: y * TP + 28, fb: vert ? 'p_wallv' : 'p_wallh', fy: -8 }); }
     else if (v === 8) portals.push({ x: x * TP + 16, y: y * TP + 16 });
-    else if ((v === 1 || v === 0 && E.base === GRASS) && !m.town && r > 0.955) props.push({ n: vegOf(E, hash(y, x)), x: cx, y: cy - 6, veg: 1 }); // scattered vegetation
+    else if ((v === 1 || v === 0 && (E.base === GRASS || E.vegAll)) && !m.town && r > (E.vegAll ? 0.97 : 0.955)) props.push({ n: vegOf(E, hash(y, x)), x: cx, y: cy - 6, veg: 1 }); // scattered vegetation
   }
   for (const b of m.props || []) props.push({ n: `bld_${b.k}_${b.w}x${b.h}`, fb: `b_${b.k}_${b.w}x${b.h}`, x: (b.x + b.w / 2) * TP, y: (b.y + b.h / 2) * TP, sort: (b.y + b.h) * TP - 2 });
   for (const [n, x, y] of m.deco || []) props.push({ n, x: x * TP, y: y * TP }); // decorations listed by the map (content/maps)
@@ -458,7 +464,7 @@ function onFx(m) {
   else if (m.k === 'mheal') { fx.push(fxNew({ k: 'heal', id: m.to, t })); const e = ents.get(m.to); if (e && m.v) addNum(e, m.to, '+' + m.v, '#7dff8a', false); }
   else if (m.k === 'buff' || m.k === 'gather') { if (!vfxSelf(m.id, t)) fx.push(fxNew({ k: 'heal', id: m.id, t, buff: 1 })); }
   else if (m.k === 'phase') fx.push(fxNew({ k: 'ring', id: m.id, t, col: '#ff4d4d' }));
-  else if (m.k === 'aoe') fx.push(fxNew({ k: 'aoe', x: m.x, y: m.y, r: m.r, ms: m.ms, t }));
+  else if (m.k === 'aoe') { fx.push(fxNew({ k: 'aoe', x: m.x, y: m.y, r: m.r, ms: m.ms, t })); const v = MOB_AOE_VFX[m.sk]; if (V && v) setTimeout(() => V.play(v, { x: m.x, y: m.y, r: m.r }), m.ms); }
   else if (m.k === 'heal') {
     if (!vfxSelf(m.id, t)) fx.push(fxNew({ k: 'heal', id: m.id, t }));
     const e = ents.get(m.id);
@@ -939,8 +945,9 @@ function frame(t) {
   ctx.drawImage(ground, ox, oy);
   ctx.translate(ox, oy);
   const vx0 = -ox - 64, vy0 = -oy - 32, vx1 = -ox + VW + 64, vy1 = -oy + VH + 200;
-  // water glints
-  for (let i = 0; i < waterPx.length; i += 2) { const x = waterPx[i], y = waterPx[i + 1]; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue; const ph = (tn * 0.8 + hash(x, y) * 5) % 2.5; if (ph < 1) { ctx.fillStyle = ph < 0.5 ? '#e8f6ff' : '#a8d4f5'; ctx.fillRect(x - 2, y, 5, 1); if (ph < 0.5) ctx.fillRect(x, y - 1, 1, 1); } }
+  // water glints (lava bubbles on Ashen maps)
+  const LAVA_NOW = envOf(map).lava;
+  for (let i = 0; i < waterPx.length; i += 2) { const x = waterPx[i], y = waterPx[i + 1]; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue; const ph = (tn * 0.8 + hash(x, y) * 5) % 2.5; if (ph < 1) { ctx.fillStyle = LAVA_NOW ? (ph < 0.5 ? '#fff0a0' : '#ffb347') : ph < 0.5 ? '#e8f6ff' : '#a8d4f5'; ctx.fillRect(x - 2, y, 5, 1); if (ph < 0.5) ctx.fillRect(x, y - 1, 1, 1); } }
   // portals: magic circles
   for (const p of portals) drawMagicCircle(p.x, p.y, tn);
   if (clickMark && t - clickMark.t < 600) { const a = (t - clickMark.t) / 600; ctx.fillStyle = `rgba(255,236,150,${1 - a})`; const cx = clickMark.x * TP + 16, cy = clickMark.y * TP + 16, r = Math.round(4 + a * 8); ctx.fillRect(cx - r, cy, 3, 1); ctx.fillRect(cx + r - 2, cy, 3, 1); ctx.fillRect(cx, cy - r, 1, 3); ctx.fillRect(cx, cy + r - 2, 1, 3); }

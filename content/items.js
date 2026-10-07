@@ -223,6 +223,75 @@ acc(416, 'จี้หัวใจศิลา', 'necklace', 38, 3, { sell: 5000
 acc(417, 'แหวนรากโบราณ', 'ring', 45, 3, { sell: 6000, str: 4, vit: 4 });
 acc(418, 'เครื่องรางเขี้ยวงู', 'charm', 32, 1, { sell: 1200, crit: 3, luk: 2 });
 
+// ================= Region 3: Ashen Frontier (Lv40-65) — Tier 3 gear (Lv46-65), materials and quest items.
+// ids: 500-549 materials, 550-569 quest items, 570-579 consumables (the 100-199 material range is full)
+Object.assign(ITEMS, {
+  570: { n: 'ยาแดงภูเขาไฟ', ty: 'use', heal: 720, buy: 1500, req: 45, d: 'ยาแดงเข้มข้นที่ผสมแร่ภูเขาไฟ ฟื้นพลังได้มาก' },
+  571: { n: 'ยาฟ้าภูเขาไฟ', ty: 'use', sp: 170, buy: 2600, req: 45, d: 'ยาฟ้าที่กลั่นจากผลึกไฟ' },
+  572: { n: 'น้ำแร่เย็นเอมเบอร์', ty: 'use', heal: 950, sp: 50, buy: 0, sell: 300, req: 50, d: 'น้ำแร่จากบ่อน้ำเย็นใต้เมือง ปรุงได้ที่โต๊ะช่าง' },
+});
+for (const [id, n, sell, d, ty] of [
+  [500, 'ขนหมาป่าเถ้า', 120], [501, 'กระดองถ่านไฟ', 126], [502, 'เขี้ยวออร์คเถ้า', 134], [503, 'ขนนกแร้งเถ้า', 130], [504, 'ก้อนแมกมาเย็น', 140],
+  [505, 'เขาอิมป์เพลิง', 146], [506, 'ลูกปัดหมอผีโทรล', 150], [507, 'เกล็ดซาลาแมนเดอร์', 156], [508, 'เศษหินภูเขาไฟ', 138], [509, 'ปีกค้างคาวถ่านไฟ', 148],
+  [510, 'เปลือกตะขาบเถ้า', 158], [511, 'แกนหินบะซอลต์', 166], [512, 'ถ่านวิญญาณ', 170], [513, 'เขี้ยวสุนัขนรก', 176], [514, 'หัวใจแมกมา', 190],
+  [515, 'ผ้าคลุมลัทธิเถ้า', 184], [516, 'เมือกหนอนลาวา', 172], [517, 'ฝุ่นภูตเถ้า', 178], [518, 'กระดูกไหม้', 186], [519, 'ตราอัศวินลัทธิ', 200],
+  [520, 'แร่เหล็กเพลิง', 160, 'แร่ร้อนจากเหมืองหินไหม้ ใช้ตีอุปกรณ์ Tier 3'], [521, 'ผลึกไฟ', 220, 'ผลึกที่เก็บความร้อนของภูเขาไฟไว้ข้างใน'],
+  [530, 'แผงคอแอชมอว์', 1600, 'ดรอปจากอีลิทแอชมอว์'], [531, 'ขวานหักของออร์คยักษ์', 1800, 'ดรอปจากอีลิทออร์คร่างยักษ์'], [532, 'เฟืองเตาหลอมโบราณ', 1900, 'ดรอปจากอีลิทผู้พิทักษ์เตาหลอม'],
+  [533, 'แกนเพลิงอินเฟอร์โน', 2100, 'ดรอปจากอีลิทอินเฟอร์โนฮาวด์'], [534, 'แตรศึกคอร์แร็ก', 2800, 'ดรอปจากคอร์แร็ก'], [535, 'หัวใจลาวาอิกนารอธ', 3200, 'ดรอปจากอิกนารอธ'],
+  [536, 'เขาไพโรลอร์ด', 3600, 'ดรอปจากไพโรลอร์ด'], [537, 'คทาหักของผู้ประกาศ', 4200, 'ดรอปจากผู้ประกาศเถ้าถ่าน'],
+  [550, 'จดหมายถึงเอมเบอร์โฮลด์', 0, 'จดหมายจากผู้เฒ่าซิลวานาถึงผู้บัญชาการเอมเบอร์โฮลด์', 'quest'], [551, 'ตัวอย่างเถ้าวอยด์', 0, 'เถ้าสีดำที่มีประกายม่วง ไม่ใช่เถ้าธรรมดา', 'quest'],
+  [552, 'บันทึกลัทธิเถ้า', 0, 'กระดาษไหม้ครึ่งแผ่นที่เขียนด้วยอักษรรูนกลับด้าน', 'quest'], [553, 'แกนเปลวเพลิง', 0, 'ผลึกไฟที่ยังเต้นอยู่ในมือ', 'quest'],
+  [554, 'เมล็ดวอยด์เม็ดที่สาม', 0, 'เมล็ดสีดำที่ร้อนเหมือนถ่าน', 'quest'],
+]) ITEMS[id] = { n, ty: ty || 'etc', sell, d };
+// weapons: Emberhold shop (Lv46-48) / drops & crafting (Lv52-65)
+weapon(247, 'ดาบเหล็กเอมเบอร์', 'sword', 46, 0, { buy: 14000, cls: ['vanguard', 'rogue', 'artisan', 'adventurer'] });
+weapon(248, 'ดาบใหญ่เหล็กหลอม', 'greatsword', 48, 0, { buy: 16500, cls: ['vanguard', 'artisan'] });
+weapon(249, 'มีดสั้นถ่านไฟ', 'dagger', 46, 0, { buy: 13200, cls: ['rogue', 'ranger', 'adventurer'], crit: 2 });
+weapon(250, 'ธนูยาวไม้เถ้า', 'bow', 46, 0, { buy: 14400, cls: ['ranger', 'adventurer'] });
+weapon(251, 'คทาหินภูเขาไฟ', 'staff', 46, 0, { buy: 14400, cls: ['arcanist', 'cleric', 'adventurer'] });
+weapon(252, 'กระบองค้อนเหมือง', 'mace', 46, 0, { buy: 14000, cls: ['cleric', 'artisan', 'vanguard', 'adventurer'] });
+weapon(253, 'หอกทหารชายแดน', 'spear', 48, 0, { buy: 15800, cls: ['vanguard', 'artisan'] });
+weapon(254, 'ไม้กายสิทธิ์ถ่าน', 'wand', 48, 1, { buy: 17800, cls: ['arcanist', 'cleric'], sp: 30 });
+weapon(255, 'ปืนกลไกไอน้ำ', 'device', 48, 0, { buy: 16800, cls: ['artisan'] });
+weapon(256, 'ดาบเพลิงซาลาแมนเดอร์', 'sword', 52, 1, { sell: 4400, cls: ['vanguard', 'rogue', 'artisan', 'adventurer'], crit: 3 });
+weapon(257, 'ธนูกระดูกสุนัขนรก', 'bow', 56, 2, { sell: 6000, cls: ['ranger'], aspdPct: 5 });
+weapon(258, 'คทาวิญญาณเพลิง', 'staff', 56, 2, { sell: 6000, cls: ['arcanist', 'cleric'], int: 3, sp: 40 });
+weapon(259, 'ขวานศึกคอร์แร็ก', 'greatsword', 55, 3, { sell: 9500, cls: ['vanguard', 'artisan'], str: 4, crit: 3 });
+weapon(260, 'มีดสั้นเขี้ยวนรก', 'dagger', 58, 2, { sell: 6200, cls: ['rogue', 'ranger'], crit: 6 });
+weapon(261, 'ค้อนผู้พิทักษ์เตาหลอม', 'mace', 56, 2, { sell: 6000, cls: ['cleric', 'artisan', 'vanguard'], vit: 3 });
+weapon(262, 'หอกเกล็ดซาลาแมนเดอร์', 'spear', 54, 2, { sell: 5800, cls: ['vanguard', 'artisan'], str: 3 });
+weapon(263, 'ปืนแกนแมกมา', 'device', 58, 2, { sell: 6200, cls: ['artisan'], dex: 4, aspdPct: 5 });
+weapon(264, 'ไม้กายสิทธิ์ผู้ประกาศ', 'wand', 65, 3, { sell: 12000, cls: ['arcanist', 'cleric'], int: 5, sp: 60 });
+weapon(265, 'ดาบใหญ่จ้าวเพลิง', 'greatsword', 60, 3, { sell: 11000, cls: ['vanguard', 'artisan'], str: 5, hp: 150 });
+weapon(266, 'ธนูเปลวอิกนารอธ', 'bow', 62, 3, { sell: 11500, cls: ['ranger'], dex: 4, aspdPct: 6 });
+// armor
+armor(323, 'เสื้อเกราะหนังเถ้า', 'light', 46, 0, { buy: 12000 });
+armor(324, 'เกราะโซ่ชายแดน', 'medium', 48, 0, { buy: 14500, cls: ['vanguard', 'ranger', 'cleric', 'artisan', 'adventurer'] });
+armor(325, 'เกราะแผ่นเหล็กเอมเบอร์', 'heavy', 48, 0, { buy: 17000, cls: ['vanguard'] });
+armor(326, 'ชุดคลุมถ่านไฟ', 'robe', 46, 0, { buy: 13500, cls: ['arcanist', 'cleric', 'adventurer'] });
+armor(327, 'เกราะเกล็ดซาลาแมนเดอร์', 'medium', 54, 1, { sell: 4200, hp: 120 });
+armor(328, 'ชุดคลุมลัทธิเถ้า', 'robe', 58, 2, { sell: 5800, cls: ['arcanist', 'cleric'], int: 3, sp: 50 });
+armor(329, 'เกราะหินบะซอลต์', 'heavy', 56, 2, { sell: 6000, cls: ['vanguard', 'artisan'], vit: 3 });
+armor(330, 'ชุดเงาเถ้า', 'light', 52, 1, { sell: 4000, cls: ['rogue', 'ranger'], flee: 6 });
+armor(331, 'เกราะจอมทัพเขี้ยวเถ้า', 'heavy', 60, 3, { sell: 10500, cls: ['vanguard', 'artisan'], str: 3, vit: 3 });
+armor(332, 'เกราะแกนลาวา', 'medium', 62, 3, { sell: 11000, vit: 3, flee: 4, hp: 150 });
+// headgear
+head(371, 'หมวกเหล็กชายแดน', 'helmet', 'iron', 46, 0, { buy: 9800, cls: ['vanguard', 'artisan', 'cleric', 'adventurer'] });
+head(372, 'ฮู้ดนักเดินทางเถ้า', 'hood', 'hood', 46, 0, { buy: 9000, cls: ['ranger', 'rogue', 'arcanist', 'adventurer'], agi: 1 });
+head(373, 'หมวกหมอผีโทรล', 'hat', 'wizard', 52, 1, { sell: 3000, cls: ['arcanist', 'cleric', 'adventurer'], int: 3 });
+head(374, 'หมวกอัศวินลัทธิ', 'helmet', 'knight', 58, 2, { sell: 5200, cls: ['vanguard', 'artisan', 'cleric', 'adventurer'], vit: 3 });
+head(375, 'มงกุฎผู้ประกาศเถ้าถ่าน', 'crown', 'ironcrown', 65, 3, { sell: 9000, int: 4, str: 2 });
+head(376, 'หมวกคนงานเอมเบอร์', 'helmet', 'miner', 48, 1, { buy: 11500, light: 1, vit: 1, d: 'มีตะเกียงส่องทางในถ้ำเพลิงมืด' });
+// accessories
+acc(419, 'แหวนเหล็กเอมเบอร์', 'ring', 46, 0, { buy: 9500, hp: 110 });
+acc(420, 'สร้อยเขี้ยวเถ้า', 'necklace', 50, 1, { sell: 2600, str: 3, atk: 10 });
+acc(421, 'เครื่องรางถ่านไฟ', 'charm', 48, 1, { sell: 2400, int: 3, matk: 10 });
+acc(422, 'กำไลเกล็ดซาลาแมนเดอร์', 'bracelet', 54, 2, { sell: 4400, agi: 3, dex: 3 });
+acc(423, 'แหวนแกนเพลิง', 'ring', 58, 2, { sell: 5000, str: 3, int: 3 });
+acc(424, 'จี้หัวใจแมกมา', 'necklace', 62, 3, { sell: 8500, vit: 5, hp: 200 });
+acc(425, 'สร้อยแตรศึก', 'necklace', 54, 3, { sell: 7600, str: 4, agi: 2, atk: 12 });
+acc(426, 'แหวนเมล็ดเถ้า', 'ring', 65, 3, { sell: 9800, int: 5, vit: 3 });
+
 for (const k in ITEMS) {
   const it = ITEMS[k]; it.id = +k; if (it.rar == null) it.rar = 0; if (it.req == null) it.req = 1;
   for (const f of Object.keys(it)) if (it[f] === undefined) delete it[f];

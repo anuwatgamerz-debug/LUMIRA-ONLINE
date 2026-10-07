@@ -85,7 +85,7 @@ async function run(srv, R) {
   ok(vq.filter(q => q.type !== 'main' && q.repeat !== 'daily').length >= 6 && vq.filter(q => q.repeat === 'daily').length >= 1, 'Verdant side quests + daily notices');
   ok(Object.values(C.RECIPES).filter(r => C.ITEMS[r.out[0]].req >= 28 || r.out[0] === 9).length >= 8, 'Verdant crafting recipes (Tier 2 gear + tonic)');
   ok(['h_weapon', 'h_armor', 'h_general'].every(s => C.SHOPS[s]) && C.NPCS.filter(n => n.map === 'verdant_haven').map(n => n.role).filter((r, i, a) => a.indexOf(r) === i).length >= 10, 'Verdant Haven has full NPC services (shops, inn, healer, smith, craft, storage, teleport, board, quests)');
-  ok(C.MAPS.greenwood.portals.some(p => p.to === 'deep_forest' && p.req && p.req.lv === 20 && !p.req.locked) && C.MAPS.beast_valley.portals.some(p => p.to === 'ash_plains' && p.req.locked), 'Greenwood → Deep Forest opens at Lv 20; the road to Region 3 stays locked');
+  ok(C.MAPS.greenwood.portals.some(p => p.to === 'deep_forest' && p.req && p.req.lv === 20 && !p.req.locked) && C.MAPS.beast_valley.portals.some(p => p.to === 'ash_plains' && p.req.lv === 40), 'Greenwood → Deep Forest opens at Lv 20; the road to Region 3 opens at Lv 40');
   // gameplay: the Greenwood gate
   {
     const lo = await login(URL, 'v_gate15'); await walkTo(lo, 35, 0, 5000); await sleep(600);

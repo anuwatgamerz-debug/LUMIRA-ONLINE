@@ -284,9 +284,15 @@ const NODE_DRAW = {
   // Verdant Wilds
   totem: (x, y) => { R(ctx, x - 3, y - 22, 6, 22, '#7a5230'); R(ctx, x - 3, y - 22, 2, 22, '#9a6a40'); R(ctx, x - 6, y - 20, 12, 3, '#5e9e4b'); R(ctx, x - 2, y - 16, 1, 2, '#ffd34d'); R(ctx, x + 1, y - 16, 1, 2, '#ffd34d'); R(ctx, x - 2, y - 11, 4, 1, '#3a2414'); },
   sporevent: (x, y, tn) => { ctx.globalAlpha = 0.35 + Math.sin(tn * 2.2) * 0.2; disc(ctx, x, y - 6, 11, '#b07bff', 5); ctx.globalAlpha = 1; drawProp('veg_mushroom_01', x, y + 2) || disc(ctx, x, y - 6, 5, '#c0504d'); },
+  // Ashen Frontier
+  beacon: (x, y, tn, nd) => { R(ctx, x - 12, y - 6, 24, 7, '#2e2622'); R(ctx, x - 10, y - 8, 20, 3, '#5a4c44'); R(ctx, x - 4, y - 34, 8, 27, '#4a3a30'); R(ctx, x - 4, y - 34, 2, 27, '#6a5648'); R(ctx, x - 8, y - 38, 16, 5, '#3a302c'); R(ctx, x - 7, y - 39, 14, 2, '#6a5a50');
+    const lit = !nodeWanted(nd); if (lit) { ctx.globalAlpha = 0.4 + Math.sin(tn * 8) * 0.15; disc(ctx, x, y - 44, 14, '#ff9a3d', 9); ctx.globalAlpha = 1; R(ctx, x - 5, y - 48, 10, 8, '#ff7a1f'); R(ctx, x - 3, y - 52, 6, 6, '#ffd34d'); R(ctx, x - 1, y - 56 - Math.round(Math.sin(tn * 11) * 2), 2, 4, '#fff0a0'); } else { R(ctx, x - 6, y - 42, 12, 3, '#1e1816'); R(ctx, x - 3, y - 44, 2, 2, '#4a3c36'); } },
+  ashvent: (x, y, tn) => { ctx.globalAlpha = 0.3 + Math.sin(tn * 2.4) * 0.15; disc(ctx, x, y - 4, 12, '#9b6bff', 5); ctx.globalAlpha = 1; drawProp('rock_basalt_03', x, y + 4) || disc(ctx, x, y - 4, 8, '#2a2226', 5); for (let k = 0; k < 3; k++) { const p = (tn * 0.7 + k / 3) % 1; ctx.globalAlpha = 1 - p; R(ctx, x - 2 + Math.round(Math.sin(tn * 3 + k) * 3), Math.round(y - 10 - p * 22), 3, 3, k % 2 ? '#6a5a7a' : '#b07bff'); } ctx.globalAlpha = 1; },
+  cultnote: (x, y, tn) => { R(ctx, x - 7, y - 4, 14, 4, '#2a1a18'); R(ctx, x - 6, y - 10, 12, 7, '#d9c9a8'); R(ctx, x - 5, y - 9, 7, 1, '#6a2a2a'); R(ctx, x - 5, y - 7, 9, 1, '#6a2a2a'); R(ctx, x + 2, y - 11, 4, 3, '#2a1a18'); ctx.globalAlpha = 0.4 + Math.sin(tn * 3) * 0.2; R(ctx, x - 1, y - 13, 2, 2, '#b07bff'); ctx.globalAlpha = 1; },
+  firecrystal: (x, y, tn) => { ctx.globalAlpha = 0.35 + Math.sin(tn * 2.5) * 0.15; disc(ctx, x, y - 10, 11, '#ff9a3d'); ctx.globalAlpha = 1; for (const [a, h, w] of [[-5, 12, 4], [0, 18, 5], [5, 10, 4]]) { R(ctx, x + a - w / 2, y - h, w, h, '#d8501e'); R(ctx, x + a - w / 2, y - h, 1, h, '#ffd27a'); R(ctx, x + a - 1, y - h - 2, 2, 2, '#ffe08a'); } },
   spiritstone: (x, y, tn) => { R(ctx, x - 5, y - 22, 10, 22, '#6f8c8a'); R(ctx, x - 5, y - 22, 2, 22, '#9ab8b4'); ctx.globalAlpha = 0.35 + Math.sin(tn * 3) * 0.25; disc(ctx, x, y - 14, 10, '#7fffe0', 5); ctx.globalAlpha = 1; R(ctx, x - 1, y - 16, 2, 4, '#e8fff8'); },
 };
-const NODE_ICON = { totem: 'เครื่องราง', sporevent: 'สปอร์', spiritstone: 'ศิลาวิญญาณ', herb: 'สมุนไพร', ore: 'แร่', crystal: 'ผลึก', shrine: 'ศาล', shard: 'รูน', root: 'ราก', stash: 'หีบ', lumber: 'ไม้', journal: 'บันทึก', injured: 'ผู้บาดเจ็บ', flower: 'ดอกไม้' };
+const NODE_ICON = { beacon: 'หอสัญญาณ', ashvent: 'ปล่องเถ้า', cultnote: 'บันทึก', firecrystal: 'ผลึกไฟ', totem: 'เครื่องราง', sporevent: 'สปอร์', spiritstone: 'ศิลาวิญญาณ', herb: 'สมุนไพร', ore: 'แร่', crystal: 'ผลึก', shrine: 'ศาล', shard: 'รูน', root: 'ราก', stash: 'หีบ', lumber: 'ไม้', journal: 'บันทึก', injured: 'ผู้บาดเจ็บ', flower: 'ดอกไม้' };
 const nodeCd = {}; // node id -> time it's back (performance.now ms), from the server
 function nodeWanted(nd) { // does one of my quests need this node right now?
   if (!me || !me.qs || !QDEF) return false;
@@ -312,6 +318,7 @@ function drawNodes(list, vx0, vy0, vx1, vy1, tn, t) {
 const CAVE = 6, ROCKW = 7, SNOW = 8;
 PAL[CAVE] = ['#5a4e44', '#544840', '#62564a', '#4c423a'].map(hex);
 PAL[ROCKW] = ['#2e2a2e', '#36313a', '#2a262a', '#3c3640'].map(hex);
+const ASH_ROCKS = ['rock_basalt_01', 'rock_basalt_02', 'rock_basalt_03', 'rock_basalt_04'];
 const ENV = {
   town_sand: { base: SAND, bg: '#a88850' }, desert: { base: SAND, bg: '#a88850', flowerSand: 1 }, village: { base: GRASS, bg: '#3d7a32', wallDirt: 1 },
   meadow: { base: GRASS, bg: '#3d7a32' }, forest: { base: GRASS, bg: '#24461f', treeDark: 1 }, forest_deep: { base: GRASS, bg: '#1c3a1a', treeDark: 1, shade: 'rgba(10,30,10,0.18)' },
@@ -323,13 +330,22 @@ const ENV = {
   spirit: { base: GRASS, bg: '#0c1e26', treeDark: 1, night: 'rgba(8,46,62,0.56)', trees: ['tree_pine_02', 'tree_oak_01', 'tree_pine_01'], veg: ['veg_flowers_white_01', 'veg_fern_01', 'veg_flowers_violet_01', 'veg_grass_02'] },
   valley: { base: DIRT, bg: '#5a5426', trees: ['tree_oak_01', 'tree_pine_01'], veg: ['veg_tallgrass_01', 'veg_tallgrass_01', 'rock_small_02', 'veg_grass_01', 'veg_bush_small_01'] },
   swamp: { base: GRASS, bg: '#1c2812', treeDark: 1, shade: 'rgba(42,52,6,0.28)', trees: ['tree_pine_01', 'tree_oak_02'], veg: ['veg_reed_01', 'veg_reed_01', 'veg_fern_01', 'veg_mushroom_01', 'veg_tallgrass_01'] },
+  // Ashen Frontier (Region 3): ash-grey ground (tone = [saturation, r, g, b] grade), lava instead of water, drifting embers
+  ash_town: { base: CAVE, bg: '#3a2c26', tone: [0.5, 0.88, 0.8, 0.74], lava: 1, embers: 0.6, trees: ['tree_dead_01', 'tree_ash_01'], rocks: ASH_ROCKS },
+  ashland: { base: SAND, bg: '#5a514a', tone: [0.16, 0.84, 0.81, 0.8], embers: 0.5, vegAll: 1, shade: 'rgba(70,40,24,0.10)', trees: ['tree_dead_01', 'tree_dead_02', 'tree_ash_01'], rocks: ASH_ROCKS, veg: ['veg_ashgrass_01', 'veg_ashgrass_02', 'veg_ashgrass_01', 'rock_basalt_03'] },
+  volcanic: { base: DIRT, bg: '#2a1a16', tone: [0.32, 0.6, 0.47, 0.43], lava: 1, embers: 1, vegAll: 1, shade: 'rgba(110,26,0,0.15)', trees: ['tree_dead_01', 'tree_dead_02'], rocks: [...ASH_ROCKS, 'rock_lava_01'], veg: ['veg_ember_bush_01', 'veg_ashgrass_02', 'rock_basalt_03'] },
+  quarry: { base: SAND, bg: '#5e4c40', tone: [0.3, 0.8, 0.71, 0.64], embers: 0.3, vegAll: 1, trees: ['tree_dead_02', 'tree_ash_01'], rocks: ASH_ROCKS, veg: ['veg_ashgrass_01', 'rock_basalt_03', 'veg_ashgrass_02'] },
+  magma: { base: CAVE, bg: '#1a0e0c', tone: [0.42, 0.66, 0.46, 0.42], lava: 1, embers: 1.6, vegAll: 1, shade: 'rgba(130,34,0,0.18)', trees: ['tree_dead_01'], rocks: [...ASH_ROCKS, 'rock_lava_01', 'rock_lava_01'], veg: ['veg_ember_bush_01', 'rock_basalt_03'] },
+  magma_cave: { base: CAVE, bg: '#120806', cave: 1, lava: 1, embers: 0.9, tone: [0.75, 1.05, 0.8, 0.7], night: 'rgba(34,8,0,0.45)' },
+  fortress: { base: CAVE, bg: '#100c0c', cave: 1, embers: 0.4, tone: [0.4, 0.82, 0.76, 0.74], night: 'rgba(22,8,6,0.42)' },
   heartwood: { base: CAVE, bg: '#14100a', cave: 1, night: 'rgba(10,22,6,0.58)' }, cave: { base: CAVE, bg: '#141016', cave: 1, night: 'rgba(6,4,10,0.62)' }, snow: { base: SAND, bg: '#d8e4ee', snow: 1 },
 };
 const envOf = m => ENV[m.env] || (m.id === 'woods' ? ENV.forest : m.id === 'plains' ? ENV.desert : m.town ? ENV.town_sand : ENV.desert);
 // light overlay (night / cave): dark everywhere except a soft circle around the player
 let lightC = null, lightKey = '';
 function drawLight(t) {
-  const E = envOf(map); if (!E.night && !E.shade) return;
+  const E = envOf(map); if (E.embers) drawEmbers(E.embers, t);
+  if (!E.night && !E.shade) return;
   if (E.shade && !E.night) { ctx.fillStyle = E.shade; ctx.fillRect(0, 0, DW, DH); return; }
   const lamp = me && me.eq && me.eq.head && ITEMS[me.eq.head] && ITEMS[me.eq.head].light;
   const r = Math.round(Math.min(DW, DH) * (lamp ? 0.62 : E.cave ? 0.36 : 0.5)), key = DW + 'x' + DH + E.night + r;
@@ -347,6 +363,21 @@ function drawLight(t) {
   ctx.fillStyle = E.night;
   if (px > 0) ctx.fillRect(0, 0, Math.ceil(px), DH); if (px < 0) ctx.fillRect(DW + Math.floor(px), 0, Math.ceil(-px), DH);
   if (py > 0) ctx.fillRect(0, 0, DW, Math.ceil(py)); if (py < 0) ctx.fillRect(0, DH + Math.floor(py), DW, Math.ceil(-py));
+}
+
+// embers rising on Ashen maps: screen-space sparks with a little parallax, no state kept between frames
+function drawEmbers(k, t) {
+  const n = Math.round(46 * k * [0.35, 0.6, 1][window.VFX ? window.VFX.quality() : 2]), s = t / 1000, px = Math.max(2, Math.round(Z * 1.5));
+  const cx = (typeof cam !== 'undefined' ? cam.x : 0) * Z * 0.35, cy = (typeof cam !== 'undefined' ? cam.y : 0) * Z * 0.35;
+  for (let i = 0; i < n; i++) {
+    const sp = 18 + hash(i, 3) * 34, life = (DH + 60) / (sp * Z * 0.6);
+    const ph = (s / life + hash(i, 7)) % 1, y = DH + 30 - ph * (DH + 60) - cy % (DH + 60);
+    const x = (((hash(i, 11) * DW + Math.sin(s * (0.6 + hash(i, 5)) + i) * 18 * Z - cx) % DW) + DW) % DW, yy = ((y % (DH + 60)) + DH + 60) % (DH + 60) - 30;
+    const a = Math.sin(ph * Math.PI) * (0.55 + 0.45 * Math.sin(s * 9 + i));
+    ctx.globalAlpha = Math.max(0, a); ctx.fillStyle = hash(i, 13) < 0.3 ? '#ffe08a' : hash(i, 13) < 0.7 ? '#ff9a3d' : '#ff5a1f';
+    const sz = hash(i, 17) < 0.2 ? px * 2 : px; ctx.fillRect(Math.round(x), Math.round(yy), sz, sz);
+  }
+  ctx.globalAlpha = 1;
 }
 
 // ------------------------------------------------------------ service windows: storage, bank, crafting

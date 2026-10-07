@@ -180,6 +180,49 @@ m('barkspider', 'แมงมุมเปลือกไม้', 44, 'insect', '
 m('rotheart', 'รอทฮาร์ท หัวใจไม้เน่า', 45, 'plant', 'boss', Object.assign({ region: 'verdant', spr: 'm_lpc_flower', tint: [250, 0.7, -16], scale: 2.7, respawn: 1500, hpMul: 1.15, skills: ['root_slam', 'spore', 'summon'], minions: 'heartgrub', element: 'shadow',
   phases: [{ at: 0.7, atk: 1.15, msg: 'รากเน่าทะลุพื้นขึ้นมา!' }, { at: 0.45, atk: 1.35, msg: 'รอทฮาร์ทดูดพลังจากเมล็ดวอยด์!' }, { at: 0.2, atk: 1.6, spd: 1.25, msg: 'หัวใจไม้เน่ากำลังจะแตก... มันบ้าคลั่ง!' }], d: 'บอสดันเจี้ยน: หัวใจของต้นไม้โบราณที่ถูกเมล็ดวอยด์กัดกิน' }, VB));
 
+// ---- Region 3: Ashen Frontier (Lv40-65). The Ashfang orc horde besieging Emberhold, fire creatures woken by the volcano
+// and the Cinder Cult that planted the third void seed. eruption / flame_nova are the fire area attacks (server AOE_SKILLS).
+const AB = { bgm: 'bgm_boss_ashen', spawnSound: 'boss_spawn', deathSound: 'boss_death' };
+const R3 = o => Object.assign({ region: 'ashen' }, o);
+// Ash Plains (Lv40-48): burnt grassland, orc scouting parties and ash-wolf packs
+m('ashwolf', 'หมาป่าเถ้า', 41, 'beast', 'pack', R3({ spr: 'm_lpc_wolf', tint: [0, 0.12, 6], hpMul: 0.92, d: 'หมาป่าขนสีเถ้าที่ล่าเป็นฝูงในทุ่งไหม้' }));
+m('cinderbeetle', 'ด้วงถ่านไฟ', 42, 'insect', 'passive', R3({ spr: 'm_lpc_beetle', tint: [-30, 1.3, -16], scale: 1.15, hpMul: 1.15, element: 'fire', d: 'ด้วงกระดองแดงที่กินถ่านไฟเป็นอาหาร ไม่ทำร้ายใครถ้าไม่ถูกรบกวน' }));
+m('ashorc', 'ออร์คเผ่าเขี้ยวเถ้า', 44, 'orc', 'aggressive', R3({ spr: 'm_lpc2_ashorc', scale: 1.15, d: 'นักรบออร์คที่ทาตัวด้วยเถ้าก่อนออกศึก' }));
+m('ashscout', 'ออร์คลาดตระเวนเถ้า', 45, 'orc', 'ranged', R3({ spr: 'm_lpc2_ashscout', scale: 1.1, range: 6, d: 'พลธนูออร์คที่ซุ่มยิงจากเนินเถ้า' }));
+m('ashmaw', 'แอชมอว์ จ่าฝูงเถ้า', 47, 'beast', 'pack', R3({ role: 'elite', spr: 'm_lpc_werewolf', tint: [0, 0.15, 4], scale: 1.35, respawn: 540, skills: ['charge', 'quake'], d: 'อีลิท: มนุษย์หมาป่าสีเถ้าที่นำฝูงหมาป่าบุกกองคาราวาน' }));
+// Volcanic Road (Lv46-54): lava streams along the old road to the fortress; the Ashfang war camp
+m('magmaslime', 'สไลม์แมกมา', 47, 'slime', 'aggressive', R3({ spr: 'm_lpc_slime', tint: [-120, 1.6, 2], scale: 1.2, element: 'fire', aggro: 4, d: 'สไลม์ที่กลืนลาวาจนตัวร้อนแดง' }));
+m('fireimp', 'อิมป์เพลิง', 49, 'demon', 'caster', R3({ spr: 'm_lpc_imp', tint: [10, 1.1, 4], scale: 0.9, element: 'fire', d: 'อิมป์ที่ถูกเรียกขึ้นมาจากปากปล่องภูเขาไฟ ปาลูกไฟจากระยะไกล' }));
+m('ashshaman', 'หมอผีโทรลเถ้า', 50, 'orc', 'healer', R3({ spr: 'm_lpc2_ashshaman', scale: 1.1, d: 'โทรลหมอผีที่รักษาและเร่งเร้านักรบเผ่าเขี้ยวเถ้า ควรจัดการก่อน' }));
+m('salamander', 'นักรบซาลาแมนเดอร์', 51, 'dragon', 'assist', R3({ spr: 'm_lpc2_salamander', scale: 1.1, hpMul: 0.7, atkMul: 0.85, element: 'fire', d: 'มนุษย์กิ้งก่าเผ่าไฟ ช่วยพวกพ้องทันทีที่ถูกโจมตี' }));
+m('cinderbrute', 'ออร์คร่างยักษ์เถ้าถ่าน', 53, 'orc', 'aggressive', R3({ role: 'elite', spr: 'm_lpc2_orcbrute', scale: 1.4, respawn: 600, skills: ['eruption', 'charge'], d: 'อีลิท: ออร์คร่างยักษ์ที่ฟาดขวานจนพื้นแตกเป็นลาวา' }));
+m('korrag', 'คอร์แร็ก จอมทัพเขี้ยวเถ้า', 54, 'orc', 'boss', Object.assign(R3({ spr: 'm_lpc2_warlord', scale: 2.0, respawn: 1500, skills: ['eruption', 'charge', 'quake', 'summon'], minions: 'ashorc', element: 'fire',
+  phases: [{ at: 0.65, atk: 1.2, msg: 'คอร์แร็กเป่าแตรศึก! นักรบเผ่าเขี้ยวเถ้าบุกเข้ามา!' }, { at: 0.3, atk: 1.55, spd: 1.3, msg: 'คอร์แร็กกลืนถ่านไฟ... ร่างของมันลุกเป็นไฟ!' }], d: 'บอสสนาม: จอมทัพผู้รวมเผ่าออร์คทั้งหมดของชายแดนเถ้าถ่าน' }), AB));
+// Scorched Quarry (Lv48-56): Emberhold's old quarry, taken by ash goblins and stone creatures woken by the heat
+m('ashgoblin', 'ก็อบลินขุดเถ้า', 48, 'goblin', 'assist', R3({ spr: 'm_lpc2_ashgob', scale: 0.95, d: 'ก็อบลินที่ยึดเหมืองหินร้าง ทุบทุกอย่างที่เข้ามาใกล้' }));
+m('emberbat', 'ค้างคาวถ่านไฟ', 50, 'beast', 'aggressive', R3({ spr: 'm_lpc_bat', tint: [120, 1.6, 0], scale: 1.35, aggro: 6, element: 'fire', d: 'ค้างคาวที่ปีกคุด้วยถ่านไฟ บินโฉบเป็นฝูง' }));
+m('cindercrawler', 'ตะขาบเถ้า', 52, 'insect', 'aggressive', R3({ spr: 'm_lpc_centipede', tint: [0, 0.35, -14], scale: 0.8, d: 'ตะขาบยักษ์ที่มุดอยู่ใต้กองเถ้า' }));
+m('basaltgolem', 'โกเลมหินบะซอลต์', 53, 'elemental', 'passive', R3({ spr: 'm_lpc_golem', tint: [0, 0.1, -24], scale: 1.1, hpMul: 1.3, element: 'earth', d: 'หินลาวาเย็นตัวที่มีชีวิต แข็งแกร่งแต่ไม่ก้าวร้าว' }));
+m('forgeguardian', 'ผู้พิทักษ์เตาหลอม', 55, 'machine', 'aggressive', R3({ role: 'elite', spr: 'm_lpc_golem', tint: [-165, 1.8, -8], scale: 1.5, respawn: 600, skills: ['quake', 'flame_nova'], element: 'fire', d: 'อีลิท: หุ่นทองเหลืองโบราณที่เคยเฝ้าเตาหลอมของเอมเบอร์โฮลด์' }));
+// Molten Lake (Lv54-62): a lake of lava under the volcano, fire spirits and the Cinder Cult's ritual grounds
+m('flamewraith', 'วิญญาณเปลวเพลิง', 55, 'spirit', 'caster', R3({ spr: 'm_lpc_ghost', tint: [-35, 1.8, -6], element: 'fire', d: 'วิญญาณของคนงานที่ตายในเปลวไฟ เผาทุกสิ่งที่มีชีวิต' }));
+m('hellhound', 'สุนัขนรก', 56, 'demon', 'pack', R3({ spr: 'm_lpc_wolf', tint: [-15, 2.6, -8], scale: 1.15, element: 'fire', d: 'สุนัขเพลิงที่ลัทธิเถ้าเรียกขึ้นมา ล่าเป็นฝูง' }));
+m('magmaelemental', 'ธาตุแมกมา', 58, 'elemental', 'aggressive', R3({ spr: 'm_lpc_golem', tint: [170, 4, -10], scale: 1.15, element: 'fire', d: 'ลาวาที่ลุกขึ้นเป็นร่าง ร้อนจนอากาศรอบตัวบิดเบี้ยว' }));
+m('cultist', 'สาวกลัทธิเถ้า', 59, 'demon', 'caster', R3({ spr: 'm_lpc2_cultist', element: 'shadow', d: 'สาวกลัทธิเถ้าถ่านที่ร่ายเวทวอยด์ผสมไฟ' }));
+m('infernohound', 'อินเฟอร์โนฮาวด์', 60, 'demon', 'aggressive', R3({ role: 'elite', spr: 'm_lpc_werewolf', tint: [-10, 2.2, -2], scale: 1.45, respawn: 600, skills: ['charge', 'flame_nova'], element: 'fire', d: 'อีลิท: สัตว์อสูรเพลิงที่ลัทธิเถ้าใช้เฝ้าแท่นพิธี' }));
+m('ignaroth', 'อิกนารอธ ยักษ์แมกมา', 62, 'elemental', 'boss', Object.assign(R3({ spr: 'm_lpc_golem', tint: [175, 4, -2], scale: 2.4, respawn: 1500, hpMul: 1.1, skills: ['eruption', 'flame_nova', 'summon'], minions: 'magmaelemental', element: 'fire',
+  phases: [{ at: 0.6, atk: 1.2, msg: 'อิกนารอธดึงลาวาจากทะเลสาบเข้าสู่ร่าง!' }, { at: 0.3, atk: 1.55, spd: 1.2, msg: 'เปลือกหินของอิกนารอธแตก... เปลวไฟพวยพุ่งออกมา!' }], d: 'บอสสนาม: ยักษ์ลาวาที่หลับใหลใต้ทะเลสาบ ถูกลัทธิเถ้าปลุกขึ้นมา' }), AB));
+// Fire Cavern (dungeon, Lv52-60): tunnels inside the volcano down to the fire altar
+m('lavaworm', 'หนอนลาวา', 54, 'insect', 'pack', R3({ spr: 'm_lpc_centipede', tint: [-10, 1.3, 4], scale: 0.9, element: 'fire', d: 'หนอนยักษ์ที่ว่ายในลาวาเหมือนว่ายน้ำ' }));
+m('ashwisp', 'ภูตเถ้า', 56, 'spirit', 'healer', R3({ spr: 'm_lpc_ghost', tint: [-40, 0.2, -14], scale: 0.85, element: 'fire', d: 'ภูตเถ้าลอยที่ซ่อมแซมสัตว์ไฟรอบตัว' }));
+m('pyrelord', 'ไพโรลอร์ด จ้าวแห่งเพลิง', 60, 'demon', 'boss', Object.assign(R3({ spr: 'm_lpc_minotaur', tint: [15, 1.4, 6], scale: 2.4, respawn: 1800, hpMul: 1.15, skills: ['eruption', 'flame_nova', 'charge', 'summon'], minions: 'lavaworm', element: 'fire',
+  phases: [{ at: 0.7, atk: 1.15, msg: 'ไพโรลอร์ดคำราม แท่นบูชาไฟลุกโชน!' }, { at: 0.45, atk: 1.35, msg: 'ไพโรลอร์ดดูดพลังจากหัวใจภูเขาไฟ!' }, { at: 0.2, atk: 1.6, spd: 1.25, msg: 'ภูเขาไฟสั่นสะเทือน... ไพโรลอร์ดเข้าสู่ความบ้าคลั่ง!' }], d: 'บอสดันเจี้ยน: จ้าวแห่งเพลิงผู้เฝ้าแท่นบูชาไฟใต้ภูเขาไฟ' }), AB));
+// Ruined Fortress (dungeon, Lv58-65): the old border fortress, now the Cinder Cult's stronghold
+m('ashskeleton', 'ทหารเถ้ากระดูก', 59, 'undead', 'aggressive', R3({ spr: 'm_lpc2_ashskel', d: 'ทหารรักษาป้อมที่ตายในไฟสงครามเมื่อร้อยปีก่อน ถูกลัทธิปลุกขึ้นมา' }));
+m('cultknight', 'อัศวินลัทธิเถ้า', 61, 'demon', 'assist', R3({ spr: 'm_lpc2_cultknight', scale: 1.1, hpMul: 1.1, element: 'shadow', d: 'อัศวินชุดดำผู้พิทักษ์ผู้ประกาศเถ้าถ่าน' }));
+m('ashherald', 'ผู้ประกาศเถ้าถ่าน', 65, 'demon', 'boss', Object.assign(R3({ spr: 'm_lpc2_herald', scale: 1.7, respawn: 1800, hpMul: 1.25, skills: ['flame_nova', 'eruption', 'quake', 'summon'], minions: 'cultknight', element: 'shadow', magic: 1,
+  phases: [{ at: 0.7, atk: 1.15, msg: 'ผู้ประกาศเถ้าถ่านเรียกอัศวินลัทธิ!' }, { at: 0.45, atk: 1.4, msg: 'เมล็ดวอยด์เม็ดที่สามเต้นแรง... พลังวอยด์ไหลเข้าสู่ร่างของมัน!' }, { at: 0.2, atk: 1.7, spd: 1.3, msg: '"ไฟจะเผาเอลินดรา และวอยด์จะงอกจากเถ้า!"' }], d: 'บอสดันเจี้ยน: ผู้นำลัทธิเถ้าถ่าน ผู้ฝังเมล็ดวอยด์ในป่าและภูเขาไฟ' }), AB));
+
 // ---- tiered drop tables (server rolls): common / uncommon / rare / veryRare. [item, chance]
 const DROPS = {
   dewslime: { common: [[103, .55]], uncommon: [[1, .12]], rare: [[401, .01]] },
@@ -267,6 +310,36 @@ const DROPS = {
   sapspirit: { common: [[188, .45]], uncommon: [[6, .06]], rare: [[416, .003]] },
   barkspider: { common: [[189, .45], [130, .2]], uncommon: [[9, .06]], rare: [[320, .008]] },
   rotheart: { common: [[195, 1], [188, 1]], uncommon: [[9, 1], [321, .2], [243, .15], [244, .15]], rare: [[416, .12], [370, .2]], veryRare: [[417, .05]] },
+
+  // Ashen Frontier
+  ashwolf: { common: [[500, .5]], uncommon: [[570, .05]], rare: [[249, .006]] },
+  cinderbeetle: { common: [[501, .5], [520, .15]], uncommon: [[570, .04]], rare: [[421, .006]] },
+  ashorc: { common: [[502, .45]], uncommon: [[570, .05]], rare: [[420, .008], [253, .005]] },
+  ashscout: { common: [[502, .3], [503, .35]], uncommon: [[570, .05]], rare: [[250, .008], [372, .006]] },
+  ashmaw: { common: [[530, .6], [500, 1]], uncommon: [[570, .3], [422, .05]], rare: [[257, .04], [330, .05]], veryRare: [[425, .01]] },
+  magmaslime: { common: [[504, .5]], uncommon: [[571, .04]], rare: [[421, .006]] },
+  fireimp: { common: [[505, .45]], uncommon: [[571, .06]], rare: [[254, .006], [328, .003]] },
+  ashshaman: { common: [[506, .45], [502, .2]], uncommon: [[571, .07], [570, .05]], rare: [[373, .01], [251, .006]] },
+  salamander: { common: [[507, .5]], uncommon: [[570, .05]], rare: [[262, .005], [422, .004]] },
+  cinderbrute: { common: [[531, .6], [502, 1]], uncommon: [[570, .3], [420, .08]], rare: [[259, .03], [331, .02]], veryRare: [[425, .015]] },
+  korrag: { common: [[534, 1], [502, 1]], uncommon: [[570, 1], [425, .25], [420, .3]], rare: [[259, .12], [331, .1]], veryRare: [[424, .03]] },
+  ashgoblin: { common: [[508, .45], [520, .2]], uncommon: [[570, .05]], rare: [[376, .006], [252, .005]] },
+  emberbat: { common: [[509, .5]], uncommon: [[571, .04]], rare: [[249, .006]] },
+  cindercrawler: { common: [[510, .5]], uncommon: [[570, .05]], rare: [[330, .006]] },
+  basaltgolem: { common: [[511, .45], [508, .3]], uncommon: [[520, .25]], rare: [[329, .006]] },
+  forgeguardian: { common: [[532, .6], [520, 1]], uncommon: [[571, .3], [261, .05]], rare: [[263, .04], [329, .04]], veryRare: [[424, .01]] },
+  flamewraith: { common: [[512, .45]], uncommon: [[571, .06]], rare: [[258, .005], [421, .008]] },
+  hellhound: { common: [[513, .5]], uncommon: [[570, .06]], rare: [[257, .004], [260, .004]] },
+  magmaelemental: { common: [[514, .45], [504, .3]], uncommon: [[521, .2]], rare: [[332, .003], [263, .004]] },
+  cultist: { common: [[515, .45]], uncommon: [[571, .07]], rare: [[328, .008], [264, .001]] },
+  infernohound: { common: [[533, .6], [513, 1]], uncommon: [[570, .3], [423, .06]], rare: [[260, .05], [266, .015]], veryRare: [[424, .015]] },
+  ignaroth: { common: [[535, 1], [514, 1]], uncommon: [[521, 1], [424, .2], [423, .25]], rare: [[266, .1], [332, .1]], veryRare: [[426, .03]] },
+  lavaworm: { common: [[516, .5]], uncommon: [[521, .1]], rare: [[263, .004]] },
+  ashwisp: { common: [[517, .45]], uncommon: [[571, .07]], rare: [[258, .006]] },
+  pyrelord: { common: [[536, 1], [521, 1]], uncommon: [[570, 1], [265, .15], [423, .25]], rare: [[332, .12], [424, .1]], veryRare: [[426, .04]] },
+  ashskeleton: { common: [[518, .45]], uncommon: [[570, .06]], rare: [[374, .008], [331, .002]] },
+  cultknight: { common: [[519, .45], [515, .2]], uncommon: [[571, .06]], rare: [[374, .01], [265, .002]] },
+  ashherald: { common: [[537, 1], [519, 1]], uncommon: [[571, 1], [264, .2], [375, .15]], rare: [[426, .12], [328, .25]], veryRare: [[265, .05]] },
 };
 for (const id in DROPS) if (MOBS[id]) MOBS[id].drops = DROPS[id];
 // legacy flat lists -> tiers by chance

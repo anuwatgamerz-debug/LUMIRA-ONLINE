@@ -33,7 +33,7 @@ npc('lumira', 'kid', 'ทิลลี่', 'lore', 22, 27, H(3, 1, 2, 5), { labe
 npc('solkara', 'iris', 'ไอริส', 'quest', 21, 12, 'iris', { label: '[เควส] ไอริส', legacy: 1 });
 npc('solkara', 'shop', 'พ่อค้าซาฮีร์', 'shop', 16, 19, 'merchant', { label: '[ร้านค้า] ซาฮีร์', shop: 'legacy' });
 npc('solkara', 'heal', 'นางพยาบาลมีน่า', 'heal', 26, 19, 'nurse', { label: '[ฮีลฟรี] มีน่า' });
-npc('solkara', 'warp', 'นักเดินทางคาเรน', 'teleport', 26, 13, 'warper', { label: '[วาร์ป] คาเรน', dest: [['plains', 3, 22, 'ทุ่งทรายสีทอง (Lv 1-10)'], ['woods', 25, 2, 'ป่าโอเอซิส (Lv 5-15)'], ['lumira', 25, 20, 'หมู่บ้านลูมิร่า'], ['beginner_meadow', 3, 24, 'ทุ่งหญ้าผู้เริ่มต้น (Lv 1-8)'], ['greenwood', 3, 50, 'ป่ากรีนวูด (Lv 8-18)', 8], ['moonlit_creek', 3, 26, 'ลำธารแสงจันทร์ (Lv 14-24)', 14], ['verdant_haven', 30, 26, 'เวอร์แดนต์ เฮเวน · ป่าเขียวขจี (Lv 22+)', 22]] });
+npc('solkara', 'warp', 'นักเดินทางคาเรน', 'teleport', 26, 13, 'warper', { label: '[วาร์ป] คาเรน', dest: [['plains', 3, 22, 'ทุ่งทรายสีทอง (Lv 1-10)'], ['woods', 25, 2, 'ป่าโอเอซิส (Lv 5-15)'], ['lumira', 25, 20, 'หมู่บ้านลูมิร่า'], ['beginner_meadow', 3, 24, 'ทุ่งหญ้าผู้เริ่มต้น (Lv 1-8)'], ['greenwood', 3, 50, 'ป่ากรีนวูด (Lv 8-18)', 8], ['moonlit_creek', 3, 26, 'ลำธารแสงจันทร์ (Lv 14-24)', 14], ['verdant_haven', 30, 26, 'เวอร์แดนต์ เฮเวน · ป่าเขียวขจี (Lv 22+)', 22], ['emberhold', 30, 26, 'เอมเบอร์โฮลด์ · ชายแดนเถ้าถ่าน (Lv 40+)', 40]] });
 npc('solkara', 'sell', 'นักสะสมโบราณ', 'sell', 16, 13, 'sage', { label: '[รับซื้อของ] ปราชญ์' });
 npc('solkara', 'smith', 'ช่างตีเหล็กการ์แรน', 'smith', 37, 10, H(4, 0, 0, 0, 'leather'), { label: '[ช่างตีเหล็ก] การ์แรน', station: 'smith', say: ['เตาของข้าร้อนพอจะหลอมเหล็กกล้า'] });
 npc('solkara', 'weapon', 'คลังอาวุธหลวง', 'shop', 8, 10, H(0, 0, 2, 0, 'iron'), { label: '[อาวุธ] คลังหลวง', shop: 'c_weapon' });
@@ -82,7 +82,7 @@ npc(VH, 'weapon', 'พ่อค้าอาวุธทอร์น', 'shop', 19
 npc(VH, 'armor', 'ช่างเกราะวิลโลว์', 'shop', 40, 40, H(1, 1, 6, 3), { label: '[ชุดเกราะ] วิลโลว์', shop: 'h_armor', say: ['เกราะหนังป่าลึก เบาแต่เหนียว'] });
 npc(VH, 'shop', 'พ่อค้าเสบียงพีท', 'shop', 47, 41, 'merchant', { label: '[เสบียง] พีท', shop: 'h_general', say: ['ยาเขียวป่าลึกขายดีที่สุดในร้าน!'] });
 npc(VH, 'sell', 'นักรับซื้อลินเดน', 'sell', 26, 33, H(3, 0, 1, 0, 'traveler'), { label: '[รับซื้อของ] ลินเดน', say: ['ขนสัตว์ หนัง สปอร์... ข้ารับซื้อหมด'] });
-npc(VH, 'warp', 'นักเดินทางเฟย์', 'teleport', 34, 22, 'warper', { label: '[วาร์ป] เฟย์', dest: [['solkara', 21, 20, 'นครเอลินดรา'], ['lumira', 25, 20, 'หมู่บ้านลูมิร่า'], ['deep_forest', 36, 60, 'ป่าลึก (Lv 22-30)'], ['mushroom_hollow', 56, 28, 'โพรงเห็ด (Lv 26-34)', 26], ['spirit_grove', 30, 52, 'สวนวิญญาณ (Lv 30-38)', 30], ['beast_valley', 3, 25, 'หุบเขาสัตว์ป่า (Lv 32-42)', 32], ['thornmire', 60, 28, 'หนองหนาม (Lv 38-45)', 38]] });
+npc(VH, 'warp', 'นักเดินทางเฟย์', 'teleport', 34, 22, 'warper', { label: '[วาร์ป] เฟย์', dest: [['solkara', 21, 20, 'นครเอลินดรา'], ['lumira', 25, 20, 'หมู่บ้านลูมิร่า'], ['deep_forest', 36, 60, 'ป่าลึก (Lv 22-30)'], ['mushroom_hollow', 56, 28, 'โพรงเห็ด (Lv 26-34)', 26], ['spirit_grove', 30, 52, 'สวนวิญญาณ (Lv 30-38)', 30], ['beast_valley', 3, 25, 'หุบเขาสัตว์ป่า (Lv 32-42)', 32], ['thornmire', 60, 28, 'หนองหนาม (Lv 38-45)', 38], ['emberhold', 30, 26, 'เอมเบอร์โฮลด์ · ชายแดนเถ้าถ่าน (Lv 40+)', 40]] });
 npc(VH, 'board', 'กระดานประกาศเฮเวน', 'board', 26, 21, 'board', { label: '[กระดานประกาศ]' });
 npc(VH, 'shaman', 'หมอผีโอลู', 'quest', 24, 28, H(2, 0, 7, 2, 'feather'), { label: '[หมอผีเผ่าใบไม้] โอลู', say: ['เผ่าใบไม้ไม่ใช่ศัตรู... พวกเราแค่กลัว', 'สปอร์สีม่วงทำให้คนในเผ่าคลั่ง'] });
 npc(VH, 'alchemist', 'นักเล่นแร่แปรธาตุไอวี่', 'craft', 36, 29, H(1, 1, 5, 4, 'wizard'), { label: '[งานฝีมือ/นักเล่นแร่] ไอวี่', station: 'craft', say: ['สปอร์นี่... มีบางอย่างที่ไม่ใช่ของโลกเราปนอยู่'] });
@@ -96,6 +96,27 @@ npc('beast_valley', 'hunter', 'นักล่าบรันด์', 'quest', 6
 // class at its best). sex 0/1, hair style 0-5, hc hair colour 0-8, outfit = npc_outfit_* layer, or arm/cls for
 // adventurer-style gear, wpn = weapon type, shield, back item, head = headgear visual, scale (children).
 const M = (o) => o;
+// ---------------- Region 3: Ashen Frontier
+const EH = 'emberhold';
+npc(EH, 'commander', 'ผู้บัญชาการวาเลรา', 'quest', 38, 8, 'sage', { label: '[ผู้บัญชาการ] วาเลรา', say: ['กำแพงเอมเบอร์โฮลด์ไม่เคยแตก และจะไม่แตกในยุคของข้า', 'ออร์คเผ่าเขี้ยวเถ้าไม่ได้บุกมาเอง... มีบางอย่างต้อนพวกมันมา'] });
+npc(EH, 'heal', 'นักบวชเปลวไฟซีเรีย', 'heal', 49, 8, 'nurse', { label: '[รักษา] ซีเรีย', say: ['เปลวไฟที่อบอุ่นรักษา เปลวไฟที่โกรธแค้นเผาผลาญ'] });
+npc(EH, 'priestess', 'นักบวชหญิงอิกนิส', 'quest', 53, 8, 'sage', { label: '[วิหารเพลิง] อิกนิส', say: ['ภูเขาไฟคือหัวใจของชายแดน ช่วงนี้มันเต้นผิดจังหวะ', 'ไฟศักดิ์สิทธิ์ใต้ภูเขาไม่เคยมืดมาพันปี... จนถึงตอนนี้'] });
+npc(EH, 'inn', 'เจ้าของโรงเตี๊ยมแอชลีย์', 'inn', 7, 18, 'sage', { label: '[โรงเตี๊ยม] แอชลีย์', rest: 160, say: ['ห้องพักอุ่นที่สุดในชายแดน ไม่ต้องจุดเตาผิงเลย'] });
+npc(EH, 'storage', 'ผู้ดูแลคลังโบลต์', 'storage', 46, 18, 'sage', { label: '[คลังเก็บของ] โบลต์' });
+npc(EH, 'lorekeeper', 'นักประวัติศาสตร์ออลเดน', 'lore', 53, 18, 'sage', { label: 'นักประวัติศาสตร์ออลเดน', say: ['ป้อมชายแดนทางเหนือเคยกันศัตรูได้ร้อยปี จนคืนที่ไฟลุกท่วม', 'ลัทธิเถ้าถ่านบูชา "เปลวไฟที่ไม่มีวันดับ" — ข้าเพิ่งเข้าใจว่ามันคือวอยด์', 'เอมเบอร์โฮลด์สร้างบนลาวาเย็นตัว คนที่นี่ทนร้อนเก่งที่สุดในเอลินดรา'] });
+npc(EH, 'board', 'กระดานประกาศเอมเบอร์', 'board', 26, 20, 'board', { label: '[กระดานประกาศ]' });
+npc(EH, 'warp', 'นักเดินทางไอริน', 'teleport', 34, 20, 'warper', { label: '[วาร์ป] ไอริน', dest: [['solkara', 21, 20, 'นครเอลินดรา'], ['verdant_haven', 30, 26, 'เวอร์แดนต์ เฮเวน'], ['ash_plains', 3, 28, 'ที่ราบเถ้า (Lv 40-48)'], ['volcanic_road', 35, 45, 'ถนนภูเขาไฟ (Lv 46-54)', 46], ['scorched_quarry', 2, 26, 'เหมืองหินไหม้ (Lv 48-56)', 48], ['molten_lake', 2, 27, 'ทะเลสาบลาวา (Lv 54-62)', 54]] });
+npc(EH, 'sell', 'นักรับซื้อแร่ทอร์', 'sell', 24, 28, 'sage', { label: '[รับซื้อของ] ทอร์', say: ['เขี้ยวออร์ค แร่ร้อน เกล็ดซาลาแมนเดอร์... ข้ารับซื้อหมด'] });
+npc(EH, 'foreman', 'หัวหน้าคนงานบรอค', 'quest', 36, 28, 'sage', { label: '[หัวหน้าคนงาน] บรอค', say: ['เหมืองหินทางตะวันออกเป็นของเรา! ก็อบลินพวกนั้นมาจากไหนก็ไม่รู้'] });
+npc(EH, 'smith', 'ช่างตีเหล็กดูริน', 'smith', 7, 38, 'sage', { label: '[ช่างตีเหล็ก] ดูริน', station: 'smith', say: ['เหล็กเพลิงต้องตีตอนยังร้อน ช้าไปนิดเดียวก็เสียของ'] });
+npc(EH, 'weapon', 'พ่อค้าอาวุธเกรเวน', 'shop', 15, 39, 'sage', { label: '[อาวุธ] เกรเวน', shop: 'e_weapon', say: ['อาวุธที่ตีจากเหล็กเอมเบอร์ ไม่บิ่นแม้ฟันลาวา'] });
+npc(EH, 'alchemist', 'นักเล่นแร่มาร์ลา', 'craft', 23, 39, 'sage', { label: '[งานฝีมือ/นักเล่นแร่] มาร์ลา', station: 'craft', say: ['น้ำแร่เย็นจากใต้เมืองผสมผลึกไฟ... ได้ยาที่ดีที่สุดในชายแดน'] });
+npc(EH, 'armor', 'ช่างเกราะฮิลดิส', 'shop', 39, 39, 'sage', { label: '[ชุดเกราะ] ฮิลดิส', shop: 'e_armor', say: ['เกราะโซ่ชายแดน กันทั้งขวานและเปลวไฟ'] });
+npc(EH, 'shop', 'พ่อค้าเสบียงพิพพา', 'shop', 47, 39, 'merchant', { label: '[เสบียง] พิพพา', shop: 'e_general', say: ['ยาแดงภูเขาไฟ ขายดีจนผลิตไม่ทัน!'] });
+npc('ash_plains', 'scout', 'หน่วยสอดแนมเคด', 'quest', 10, 26, 'sage', { label: '[ค่ายสอดแนม] เคด', say: ['ทางตะวันออกเฉียงเหนือคือเอมเบอร์โฮลด์ ระวังพวกออร์คในค่ายทางใต้'] });
+npc('ash_plains', 'trader', 'พ่อค้าค่ายเรน', 'shop', 13, 29, 'merchant', { label: '[ร้านค้าค่าย] เรน', shop: 'camp3' });
+npc('volcanic_road', 'captain', 'กัปตันลาดตระเวนไรซ์', 'quest', 38, 41, 'sage', { label: '[ป้อมยาม] ไรซ์', say: ['ข้ามสะพานลาวาไปทางตะวันออกคือค่ายสงครามของคอร์แร็ก อย่าไปคนเดียว'] });
+
 const VIS = {
   'lumira:elder': M({ sex: 0, hair: 0, hc: 4, outfit: 'elder', head: '' }), 'lumira:inn': M({ sex: 1, hair: 5, hc: 2, outfit: 'innkeeper' }),
   'lumira:heal': M({ sex: 1, hair: 3, hc: 3, outfit: 'healer', head: 'circlet' }), 'lumira:weapon': M({ sex: 0, hair: 1, hc: 1, outfit: 'merchant', wpn: 'sword' }),
@@ -138,6 +159,16 @@ const VIS = {
   'verdant_haven:lorekeeper': M({ sex: 0, hair: 0, hc: 4, outfit: 'scholar', head: 'traveler' }),
   'deep_forest:warden': M({ sex: 1, hair: 2, hc: 6, outfit: 'traveler', head: 'hood_green', wpn: 'bow' }), 'deep_forest:trader': M({ sex: 0, hair: 0, hc: 1, outfit: 'merchant' }),
   'beast_valley:hunter': M({ sex: 0, hair: 0, hc: 2, outfit: 'guard', head: 'leather', wpn: 'spear' }),
+  'emberhold:commander': M({ sex: 1, hair: 2, hc: 1, arm: 'plate', cls: 'vanguard', back: 'cape_red', wpn: 'sword', shield: 'kite', head: 'knight' }),
+  'emberhold:heal': M({ sex: 1, hair: 3, hc: 1, outfit: 'healer', head: 'circlet' }), 'emberhold:priestess': M({ sex: 1, hair: 5, hc: 1, arm: 'robe_ivory', cls: 'cleric', wpn: 'staff', head: 'circlet' }),
+  'emberhold:inn': M({ sex: 1, hair: 4, hc: 2, outfit: 'innkeeper' }), 'emberhold:storage': M({ sex: 0, hair: 0, hc: 0, outfit: 'storage', head: 'miner' }),
+  'emberhold:lorekeeper': M({ sex: 0, hair: 3, hc: 4, outfit: 'scholar', head: 'traveler' }), 'emberhold:board': 'board',
+  'emberhold:warp': M({ sex: 1, hair: 3, hc: 1, outfit: 'mage', head: 'witch', wpn: 'wand' }), 'emberhold:sell': M({ sex: 0, hair: 1, hc: 0, outfit: 'merchant', head: 'miner' }),
+  'emberhold:foreman': M({ sex: 0, hair: 0, hc: 1, outfit: 'miner', head: 'miner', wpn: 'pickaxe' }), 'emberhold:smith': M({ sex: 0, hair: 1, hc: 1, outfit: 'blacksmith', wpn: 'mace' }),
+  'emberhold:weapon': M({ sex: 0, hair: 0, hc: 1, outfit: 'merchant', wpn: 'greatsword' }), 'emberhold:alchemist': M({ sex: 1, hair: 2, hc: 1, outfit: 'scholar', head: 'wizard', cls: 'artisan' }),
+  'emberhold:armor': M({ sex: 1, hair: 1, hc: 6, outfit: 'merchant', shield: 'round' }), 'emberhold:shop': M({ sex: 1, hair: 5, hc: 2, outfit: 'merchant' }),
+  'ash_plains:scout': M({ sex: 0, hair: 2, hc: 1, outfit: 'traveler', head: 'traveler', wpn: 'bow' }), 'ash_plains:trader': M({ sex: 0, hair: 0, hc: 2, outfit: 'merchant' }),
+  'volcanic_road:captain': M({ sex: 0, hair: 1, hc: 0, outfit: 'guard', head: 'iron', wpn: 'spear' }),
 };
 for (const n of N) { const v = VIS[n.map + ':' + n.id]; if (v) n.look = v === 'board' ? 'board' : Object.assign({ sex: 0, hair: 0, hc: 0, cc: 0 }, v); }
 // interactive spots that are people (Cleric trial): injured guards beside the arena
