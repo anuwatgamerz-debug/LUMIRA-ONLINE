@@ -87,7 +87,7 @@ All runtime paths are relative to `public/assets/vfx/`.
 3. resized from 512 px to 32–96 px (mobile-friendly) and saved as lossless **WebP**.
 
 Colours, scale, rotation, timing and blending are applied at runtime by `public/vfx.js` (no extra files per colour).
-Total runtime size ≈ 200 KB for 34 textures.
+Total runtime size ≈ 50 KB for 34 textures.
 
 ## Missing / not used
 
