@@ -34,7 +34,7 @@ const st = pg => pg.evaluate(() => ({ map: map && map.id, on: AQ.on, phase: AQ.p
 async function waitFor(pg, fn, ms, arg) { const t = Date.now(); while (Date.now() - t < ms) { if (await pg.evaluate(fn, arg).catch(() => false)) return true; await sleep(400); } return false; }
 
 async function run(srv, R) {
-  const pw = loadPlaywright(); if (!pw) { R.skip('Auto Quest browser tests (Playwright not installed)'); return; }
+  const pw = loadPlaywright(); if (!pw) { R.skipped('Auto Quest browser tests', 'playwright not installed'); return; }
   const b = await pw.chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(() => pw.chromium.launch());
   try {
     // ---------------- login
