@@ -1,4 +1,4 @@
-// ============================================================ LUMIRA ONLINE — audio registry
+// ============================================================ ELYNDRA ONLINE — audio registry
 // Every sound the game can play, by id. Game code only ever uses these ids (never file paths).
 //
 // To use a real recording: put the file under public/assets/audio/... and set `file` on the entry
@@ -164,6 +164,8 @@
   mus('bgm_spirit_grove', 'field', 'verdant', { bpm: 66, root: 63, mode: 'lydian', prog: [0, 4, 1, 4, 0, 5, 1, 4], lead: 'bell', vib: 1, bass: 'sine', pad: 'sine', drums: 0.05, density: 0.3, delay: 0.6, seed: 223 }, { use: 'สวนวิญญาณ', mood: 'ศักดิ์สิทธิ์ เงียบสงบ' });
   mus('bgm_thornmire', 'field', 'verdant', { bpm: 78, root: 53, mode: 'phrygian', prog: [0, 1, 0, 5, 0, 1, 6, 5], lead: 'triangle', bass: 'sawtooth', pad: 'drone', drums: 0.45, density: 0.4, delay: 0.4, tribal: 1, seed: 227 }, { use: 'หนองหนาม', mood: 'หนองมืด อันตราย' });
   mus('bgm_boss_verdant', 'boss', 'verdant', { bpm: 144, root: 59, mode: 'dorian', prog: [0, 0, 6, 4, 0, 0, 3, 6], lead: 'sawtooth', bass: 'sawtooth', pad: 'drone', drums: 1, density: 0.8, delay: 0.2, boss: 1, tribal: 1, seed: 233 }, { use: 'บอสป่าเขียวขจี', mood: 'กลองชนเผ่า ดุดัน' });
+  // login screen theme (placeholder until a final track is set): slow, celestial, a little quieter than the game
+  mus('bgm_login_elyndra', 'event', 'any', { bpm: 72, root: 62, mode: 'lydian', prog: [0, 4, 5, 3, 0, 4, 1, 4], lead: 'bell', vib: 1, bass: 'sine', pad: 'sine', drums: 0.08, density: 0.38, delay: 0.55, seed: 401 }, { vol: 0.75, use: 'หน้า Login ELYNDRA ONLINE', mood: 'ดวงดาว เวทมนตร์ ยิ่งใหญ่ สงบ' });
   mus('bgm_boss_common', 'boss', 'any', { bpm: 150, root: 57, mode: 'harmonicMinor', prog: [0, 0, 5, 4, 0, 0, 6, 4], lead: 'sawtooth', bass: 'sawtooth', pad: 'sawtooth', drums: 1, density: 0.8, delay: 0.15, boss: 1, seed: 201 }, { use: 'บอสทั่วไป', mood: 'เข้มข้น เร็ว', len: '1.5-2 นาที loop' });
   mus('bgm_boss_thornwood', 'boss', 'heartland', { bpm: 138, root: 55, mode: 'dorian', prog: [0, 0, 6, 3, 0, 0, 4, 6], lead: 'sawtooth', bass: 'sawtooth', pad: 'drone', drums: 1, density: 0.75, delay: 0.2, boss: 1, tribal: 1, seed: 211 }, { use: 'บอส Elder Thornwood', mood: 'ป่าคลั่ง กลองหนัก', len: '1.5-2 นาที loop' });
   mus('bgm_boss_ironjaw', 'boss', 'heartland', { bpm: 156, root: 52, mode: 'phrygian', prog: [0, 1, 0, 6, 0, 1, 4, 1], lead: 'square', bass: 'sawtooth', pad: 'sawtooth', drums: 1, density: 0.85, delay: 0.15, boss: 1, march: 1, seed: 223 }, { use: 'บอส Ironjaw', mood: 'เครื่องจักร ดุดัน', len: '1.5-2 นาที loop' });

@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — world visuals
+// ============================================================ ELYNDRA ONLINE — world visuals
 // Monster sprite variants (recoloured / resized sheets and small procedural sprites), the character paperdoll
 // (hair colour, hair style, headgear following the head in 4 directions), map nodes, environments and NPC looks.
 // Shares globals with game.js (META, IMG, img, drawChar, ctx, TP ...).

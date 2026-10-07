@@ -84,7 +84,7 @@ python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้น�
 | `public/assets/m_lpc_pumpkin.png` | Pumpkin monster | Tuomo Untinen (Reemax) | CC-BY 3.0/4.0 / CC-BY-SA |
 | `public/assets/ui/items_lpc.png` | 496 pixel art icons for medieval/fantasy RPG | Henrique Lazarini (7Soul1) | CC0 |
 | `public/assets/items/` (weapons/armor/headgear/potions/consumables + `items.json`), `public/assets/source/equipment_sheet_*.webp` | ไอคอนอุปกรณ์ / อาวุธ / ยา ตัดจากชีตที่เจ้าของเกมส่งมา (`tools/art/` ไม่ใช้ — ตัดตามกรอบในชีต) | เจ้าของเกม LUMIRA ONLINE | ของโปรเจกต์ |
-| `public/assets/ui/login_land.webp`, `login_port.webp` | ภาพหน้าล็อกอิน | เจ้าของเกม LUMIRA ONLINE (ผู้ใช้ส่งมาเอง) | ของโปรเจกต์ |
+| `public/assets/legacy/lumira/login_land.webp`, `login_port.webp` (เลิกใช้ เก็บไว้ตรวจก่อนลบ) | ภาพหน้าล็อกอิน | เจ้าของเกม LUMIRA ONLINE (ผู้ใช้ส่งมาเอง) | ของโปรเจกต์ |
 
 ## 2. ภาพเดิมที่ยังใช้อยู่ (บุคคลที่สาม)
 
@@ -99,3 +99,11 @@ python3 tools/art/build_characters_hd.py  # ตัวละคร HD (ต้น�
 
 - มอนสเตอร์ส่วนใหญ่ใช้ชุด LPC แล้ว (หัวข้อ 1.5); วิสป์/วิญญาณตะเกียง/เป้าซ้อม ยังวาดด้วยโค้ด, โครงกระดูกยังใช้ชีตเดิม
 - เมื่อเพิ่มภาพจากแหล่งภายนอก ต้องเพิ่มแถวในตารางที่ 2 พร้อมลิงก์ที่มา ผู้สร้าง และสัญญาอนุญาตก่อน commit
+
+
+## ELYNDRA ONLINE branding (2026-10-07)
+
+| ไฟล์ | ใช้ทำอะไร | ที่มา / สิทธิ์ |
+|---|---|---|
+| `public/assets/branding/elyndra-logo*.png/.webp`, `elyndra-emblem.png`, `favicon*`, `icon-*.png`, `apple-touch-icon.png` | โลโก้ ไอคอน favicon PWA | ภาพที่เจ้าของเกม ELYNDRA ONLINE ส่งมา (ต้นฉบับใน `tools/art/branding_source/`) ตัด/ทำความสะอาดขอบด้วย `tools/art/build_branding.py` |
+| `public/assets/branding/login-bg-desktop.webp`, `login-bg-mobile.webp`, `cover-desktop.webp`, `cover-mobile.webp`, `og-cover.jpg` | พื้นหลัง Login, ภาพปก, ภาพแชร์โซเชียล | ภาพที่เจ้าของเกมส่งมา (ต้นฉบับใน `tools/art/branding_source/`) |

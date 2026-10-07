@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — social UI
+// ============================================================ ELYNDRA ONLINE — social UI
 // Tap another player: info · whisper · trade · party invite · guild invite. Party / guild windows, invites,
 // the trade window (offer items + zeny, lock, confirm) and the ranking board. Every action is checked by the server.
 let PARTY = { id: 0, members: [], leader: 0 }, GUILD = null, TRADE = null, RANK = null, PINFO = {};

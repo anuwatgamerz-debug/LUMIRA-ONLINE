@@ -1,4 +1,4 @@
-// ============================================================ LUMIRA ONLINE — game events -> sounds
+// ============================================================ ELYNDRA ONLINE — game events -> sounds
 // The only place that decides which sound goes with which game event. game.js reports what already happened
 // (server messages, map changes, the local player's state) through SND.*; nothing here changes gameplay.
 // Combat results (hits, crits, deaths, drops) only sound when the server's message arrives.

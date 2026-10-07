@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — social systems (server authority)
+// ============================================================ ELYNDRA ONLINE — social systems (server authority)
 // Rankings (level / monster kills / boss kills / wealth / quests), player info, party (in-session, max 6, shared EXP
 // for members nearby), guilds (saved in db.guilds) and player-to-player trade (items + zeny, both sides lock then
 // confirm; the server re-checks every item, the zeny and the bag space at the moment of the swap).

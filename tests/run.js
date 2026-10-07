@@ -10,11 +10,12 @@ const aq = require('./aq.test');
 const autocfg = require('./autocfg.test');
 const social = require('./social.test');
 const verdant = require('./verdant.test');
+const brand = require('./brand.test');
 
 (async () => {
   const only = process.argv[2];
   const accounts = {};
-  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...aq.SEEDS, ...autocfg.SEEDS, ...social.SEEDS, ...verdant.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = H.account(ch);
+  for (const [u, ch] of Object.entries({ ...server.SEEDS, ...world.SEEDS, ...art.SEEDS, ...aq.SEEDS, ...autocfg.SEEDS, ...social.SEEDS, ...verdant.SEEDS, ...brand.SEEDS, ...(ui ? ui.SEEDS : {}) })) accounts[u] = H.account(ch);
   const srv = await H.startServer(accounts, 3400 + 100 + Math.floor(Math.random() * 400));
   const reps = [];
   try {
@@ -23,6 +24,7 @@ const verdant = require('./verdant.test');
     if (!only || only === 'art') { console.log('\n=== art suite (LUMIRA art bible) ==='); const r = H.reporter('art'); reps.push(r); await art.run(srv, r); }
     if (!only || only === 'server' || only === 'social') { console.log('\n=== social suite (rank / party / guild / trade) ==='); const r = H.reporter('social'); reps.push(r); await social.run(srv, r); }
     if (!only || only === 'server' || only === 'verdant') { console.log('\n=== M1 cleanup + Region 2 Verdant Wilds suite ==='); const r = H.reporter('verdant'); reps.push(r); await verdant.run(srv, r); }
+    if (!only || only === 'ui' || only === 'brand') { console.log('\n=== ELYNDRA ONLINE rebrand + login suite ==='); const r = H.reporter('brand'); reps.push(r); await brand.run(srv, r); }
     if (!only || only === 'ui' || only === 'auto') { console.log('\n=== AUTO settings + item art suite ==='); const r = H.reporter('auto-settings'); reps.push(r); await autocfg.run(srv, r); }
     if (!only || only === 'ui' || only === 'aq') { console.log('\n=== UX + quest navigation suite ==='); const r = H.reporter('ux-quest'); reps.push(r); await aq.run(srv, r); }
     if ((!only || only === 'ui') && ui) { console.log('\n=== browser suite ==='); const r = H.reporter('browser'); reps.push(r); await ui.run(srv, r); }

@@ -1,4 +1,4 @@
-// LUMIRA ONLINE - server (pixel MMORPG)
+// ELYNDRA ONLINE - server (pixel MMORPG). Internal names (LUMIRA_DATA, map id 'lumira', save keys) stay as they are.
 // node server.js  ->  http://<host>:3400
 // Game content (maps, monsters, NPCs, classes, quests, items, drops, shops) lives in content/; this file is the
 // engine: networking, characters, combat, monster AI, quests and the game loop.
@@ -12,7 +12,8 @@ const C = require('./content');
 const createQuests = require('./engine/quests');
 
 const PORT = +process.env.PORT || 3400;
-const DATA = process.env.LUMIRA_DATA ? path.resolve(process.env.LUMIRA_DATA) : path.join(__dirname, 'data', 'db.json');
+const DATA_ENV = process.env.ELYNDRA_DATA || process.env.LUMIRA_DATA;
+const DATA = DATA_ENV ? path.resolve(DATA_ENV) : path.join(__dirname, 'data', 'db.json');
 const PUB = path.join(__dirname, 'public');
 const TICK = 100;
 if (C.report.err.length) { console.error('[content] errors:\n  ' + C.report.err.join('\n  ')); process.exit(1); }
@@ -71,6 +72,35 @@ setInterval(saveDb, 15000);
 // failed logins per account: 10 wrong passwords within 10 minutes lock the account's login for 5 minutes
 const loginFails = new Map(), LOGIN_MAX_FAILS = 10, LOGIN_LOCK_MS = 300000;
 setInterval(() => { const now = Date.now(); for (const [u, f] of loginFails) if (now - f.t > 600000 && !(f.lock > now)) loginFails.delete(u); }, 60000);
+// ---- account ids: the old a-z0-9_ ids or an e-mail address (both stored lower-case as the account key).
+// Guest and Google accounts use keys with a ':' (guest:..., google:...) so a password login can never reach them.
+const EMAIL_RE = /^[a-z0-9._%+-]{1,64}@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/;
+const validId = u => (/^[a-z0-9_]{3,16}$/.test(u) || (u.length <= 80 && EMAIL_RE.test(u)));
+const ID_ERR = 'ใส่อีเมล หรือไอดี (a-z 0-9 _ ยาว 3-16 ตัว)';
+// ---- "remember me" sessions: random tokens, only their sha256 is stored with the account (max 5, 30 days)
+const SESSION_MS = 30 * 864e5, sha = t => crypto.createHash('sha256').update(String(t)).digest('hex');
+function issueToken(p, u) {
+  const a = db.accounts[u]; if (!a) return;
+  const tok = crypto.randomBytes(24).toString('hex'), now = Date.now();
+  a.tokens = (Array.isArray(a.tokens) ? a.tokens : []).filter(t => t && t.exp > now).slice(-4); a.tokens.push({ h: sha(tok), exp: now + SESSION_MS }); dirty = true;
+  send(p, { t: 'session', u, tok, guest: !!a.guest });
+}
+function tokenOk(a, tok) { const h = sha(tok), now = Date.now(); return !!(a && Array.isArray(a.tokens) && a.tokens.some(t => t && t.exp > now && t.h.length === h.length && crypto.timingSafeEqual(Buffer.from(t.h), Buffer.from(h)))); }
+// ---- guests: limited per address so nobody can flood the database
+const guestBy = new Map(), GUEST_PER_HOUR = 6;
+const cleanLook = m => ({ hair: Math.max(0, Math.min(5, m.hair | 0)), hc: Math.max(0, Math.min(8, m.hc | 0)), cc: Math.max(0, Math.min(4, m.cc | 0)), sex: m.sex ? 1 : 0 });
+const validName = n => /^[A-Za-z0-9ก-๙ _]{2,14}$/.test(n);
+function guestName() { for (let i = 0; i < 50; i++) { const n = 'Guest' + (1000 + Math.floor(Math.random() * 9000)); if (!nameTaken(n)) return n; } return 'Guest' + Date.now() % 1e6; }
+// ---- Google sign-in: enabled only when a client id is configured (env GOOGLE_CLIENT_ID or data/google-client-id.txt);
+// the ID token is verified by Google's tokeninfo endpoint, the account key is google:<subject>
+function googleId() { if (process.env.GOOGLE_CLIENT_ID) return process.env.GOOGLE_CLIENT_ID.trim(); try { return fs.readFileSync(path.join(path.dirname(DATA), 'google-client-id.txt'), 'utf8').trim() || null; } catch (e) { return null; } }
+function verifyGoogle(cred, cb) {
+  const cid = googleId(); if (!cid) return cb(null);
+  require('https').get('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(String(cred).slice(0, 4000)), res => {
+    let b = ''; res.on('data', d => { b += d; if (b.length > 20000) res.destroy(); });
+    res.on('end', () => { try { const j = JSON.parse(b); const ok = res.statusCode === 200 && j.aud === cid && /^(https:\/\/)?accounts\.google\.com$/.test(j.iss) && +j.exp * 1000 > Date.now() && j.sub; cb(ok ? j : null); } catch (e) { cb(null); } });
+  }).on('error', () => cb(null)).setTimeout(8000, function () { this.destroy(); });
+}
 function hashPw(pw, salt, cb) { crypto.scrypt(pw, salt, 32, (e, k) => cb(e, k && k.toString('hex'))); }
 function samePw(a, b) { const x = Buffer.from(a, 'hex'), y = Buffer.from(String(b), 'hex'); return x.length === y.length && crypto.timingSafeEqual(x, y); }
 
@@ -210,7 +240,7 @@ function me(p) {
   const now = Date.now(), B = buffsOf(c);
   send(p, { t: 'me', c: { name: c.name, lv: c.lv, exp: c.exp, next: expNext(c.lv), zeny: c.zeny, pts: c.pts, st: c.st, hp: c.hp, maxhp: c.maxhp, sp: c.sp, maxsp: c.maxsp, atk: c.atk, def: c.def, hit: c.hit, flee: c.flee, aspd: c.aspd, crit: c.crit,
     matk: c.matk, mdef: c.mdef, rng: c.range, inv: c.inv, eq: c.eq, q: c.q, look: c.look, hot: c.hot, sk: Object.fromEntries(skillsFor(c).filter(id => ownsSkill(c, id)).map(id => [id, skLv(c, SKILLS[id])])),
-    cls: clsOf(c).id, guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
+    cls: clsOf(c).id, guest: !!(db.accounts[p.acct] || {}).guest, guild: c.guild || '', kills: c.kills || 0, bkills: c.bkills || 0, jlv: c.jlv, jexp: c.jexp, jnext: jobNext(c), bank: c.bank, save: c.save.map, qs: Q.view(c), npcq: npcMarks(c), maxlv: MAX_LV, auto: c.auto || null,
     buffs: Object.entries(B).filter(([, b]) => b.until > now).map(([id, b]) => ({ id, th: b.th, ms: b.until - now })) } });
 }
 function sys(p, m, col) { send(p, { t: 'sys', m, col }); }
@@ -618,6 +648,7 @@ const server = http.createServer((req, res) => {
   let u;
   try { u = decodeURIComponent(req.url.split('?')[0]); } catch (e) { res.writeHead(400); return res.end(); }
   if (u.includes('\0')) { res.writeHead(400); return res.end(); }
+  if (u === '/api/config') { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' }); return res.end(JSON.stringify({ name: 'ELYNDRA ONLINE', google: googleId() })); }
   if (u === '/') u = '/index.html';
   const f = path.join(PUB, path.normalize(u).replace(/^(\.\.[\/\\])+/, ''));
   if (!f.startsWith(PUB + path.sep)) { res.writeHead(403); return res.end(); }
@@ -626,7 +657,7 @@ const server = http.createServer((req, res) => {
   fs.stat(f, (se, st) => {
     if (se || !st.isFile()) { res.writeHead(404); return res.end('not found'); }
     const etag = `W/"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
-    const type = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.webp': 'image/webp', '.css': 'text/css' }[path.extname(f)] || 'application/octet-stream';
+    const type = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.webp': 'image/webp', '.css': 'text/css', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg' }[path.extname(f)] || 'application/octet-stream';
     if (req.headers['if-none-match'] === etag) { res.writeHead(304, { ETag: etag, 'Cache-Control': 'no-cache' }); return res.end(); }
     fs.readFile(f, (e, b) => {
       if (e) { res.writeHead(404); return res.end('not found'); }
@@ -637,8 +668,8 @@ const server = http.createServer((req, res) => {
 });
 const wss = new WebSocketServer({ server, maxPayload: 4096 });
 const conns = new Set();
-wss.on('connection', ws => {
-  const p = { id: NID++, ws, c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0, authBusy: false, authFails: 0, cd: {}, gcd: 0 };
+wss.on('connection', (ws, req) => {
+  const p = { id: NID++, ws, ip: (req && req.socket && req.socket.remoteAddress) || '?', c: null, acct: null, path: null, target: null, nextAtk: 0, msgs: 0, lastChat: 0, authBusy: false, authFails: 0, cd: {}, gcd: 0 };
   conns.add(p);
   // without a listener, a protocol error (e.g. a message over maxPayload) is thrown and kills the process
   ws.on('error', e => console.error('[ws]', e.message));
@@ -733,7 +764,7 @@ function handle(p, m) {
   if (!p.c) {
     if (m.t === 'register' || m.t === 'login') {
       const u = String(m.u || '').trim().toLowerCase(), pw = String(m.p || '');
-      if (!/^[a-z0-9_]{3,16}$/.test(u)) return send(p, { t: 'err', m: 'ไอดีต้องเป็น a-z 0-9 _ ยาว 3-16 ตัว' });
+      if (!validId(u)) return send(p, { t: 'err', m: ID_ERR });
       if (pw.length < 4 || pw.length > 64) return send(p, { t: 'err', m: 'รหัสผ่านต้องยาว 4 ตัวขึ้นไป' });
       if (p.authBusy) return; // one password check at a time per connection
       if (m.t === 'register') {
@@ -752,7 +783,7 @@ function handle(p, m) {
           if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
           db.accounts[u] = { salt, hash, char: newChar(name, look), created: Date.now() };
           dirty = true; saveDb();
-          enterWorld(p, u);
+          enterWorld(p, u); if (m.rem) issueToken(p, u);
         });
       } else {
         const a = db.accounts[u], lf = loginFails.get(u);
@@ -765,15 +796,60 @@ function handle(p, m) {
           if (!a || db.accounts[u] !== a || !samePw(hash, a.hash)) {
             const f = loginFails.get(u) || { n: 0, t: Date.now() }; if (Date.now() - f.t > 600000) { f.n = 0; f.t = Date.now(); } f.n++; loginFails.set(u, f);
             if (f.n >= LOGIN_MAX_FAILS) f.lock = Date.now() + LOGIN_LOCK_MS;
-            send(p, { t: 'err', m: 'ไอดีหรือรหัสผ่านไม่ถูกต้อง' });
+            send(p, { t: 'err', m: 'อีเมล/ไอดี หรือรหัสผ่านไม่ถูกต้อง' });
             if (++p.authFails >= 5) p.ws.close();
             return;
           }
           loginFails.delete(u);
-          enterWorld(p, u);
+          enterWorld(p, u); if (m.rem) issueToken(p, u);
         });
       }
+    } else if (m.t === 'tlogin') { // remembered session (also how a guest comes back)
+      const u = String(m.u || '').slice(0, 96), a = Object.hasOwn(db.accounts, u) ? db.accounts[u] : null;
+      if (!a || !tokenOk(a, m.tok)) return send(p, { t: 'err', m: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', code: 'session' });
+      enterWorld(p, u);
+    } else if (m.t === 'guest') {
+      const ip = p.ip || '?', now = Date.now(), list = (guestBy.get(ip) || []).filter(t => now - t < 3600000);
+      if (list.length >= GUEST_PER_HOUR) return send(p, { t: 'err', m: 'สร้างบัญชี Guest บ่อยเกินไป ลองใหม่ภายหลัง' });
+      let name = String(m.name || '').trim(); if (!validName(name) || nameTaken(name)) name = guestName();
+      list.push(now); guestBy.set(ip, list);
+      let u; do { u = 'guest:' + crypto.randomBytes(8).toString('hex'); } while (db.accounts[u]);
+      db.accounts[u] = { salt: '', hash: '', guest: 1, char: newChar(name, cleanLook(m)), created: now }; dirty = true; saveDb();
+      enterWorld(p, u); issueToken(p, u);
+    } else if (m.t === 'glogin') {
+      if (!googleId()) return send(p, { t: 'err', m: 'ยังไม่ได้เปิดใช้การเข้าสู่ระบบด้วย Google บนเซิร์ฟเวอร์นี้' });
+      if (p.authBusy) return; p.authBusy = true;
+      verifyGoogle(m.cred, j => {
+        p.authBusy = false; if (p.ws.readyState !== 1 || p.c) return;
+        if (!j) return send(p, { t: 'err', m: 'ยืนยันบัญชี Google ไม่สำเร็จ ลองใหม่อีกครั้ง' });
+        const u = 'google:' + j.sub;
+        if (!db.accounts[u]) {
+          const name = String(m.name || '').trim();
+          if (!name) return send(p, { t: 'needchar', via: 'google', email: j.email || '' });
+          if (!validName(name)) return send(p, { t: 'err', m: 'ชื่อตัวละคร 2-14 ตัวอักษร (ไทย/อังกฤษ/ตัวเลข)' });
+          if (nameTaken(name)) return send(p, { t: 'err', m: 'ชื่อตัวละครนี้มีคนใช้แล้ว' });
+          db.accounts[u] = { salt: '', hash: '', google: j.email || 1, char: newChar(name, cleanLook(m)), created: Date.now() }; dirty = true; saveDb();
+        }
+        enterWorld(p, u); if (m.rem) issueToken(p, u);
+      });
     }
+    return;
+  }
+  if (m.t === 'revoke') { const a = db.accounts[p.acct], h = sha(m.tok); if (a && Array.isArray(a.tokens)) { a.tokens = a.tokens.filter(t => t.h !== h); dirty = true; } return; }
+  if (m.t === 'bind') { // a guest keeps the character and gets a normal e-mail / id + password login
+    const a = db.accounts[p.acct], u = String(m.u || '').trim().toLowerCase(), pw = String(m.p || '');
+    if (!a || !a.guest) return sys(p, 'บัญชีนี้ไม่ใช่บัญชี Guest', '#ff8b8b');
+    if (!validId(u)) return send(p, { t: 'bindres', ok: false, m: ID_ERR });
+    if (pw.length < 4 || pw.length > 64) return send(p, { t: 'bindres', ok: false, m: 'รหัสผ่านต้องยาว 4 ตัวขึ้นไป' });
+    if (db.accounts[u]) return send(p, { t: 'bindres', ok: false, m: 'อีเมล/ไอดีนี้มีคนใช้แล้ว' });
+    if (p.authBusy) return; p.authBusy = true;
+    const salt = crypto.randomBytes(12).toString('hex');
+    hashPw(pw, salt, (e, hash) => {
+      p.authBusy = false; if (e || !p.c || db.accounts[p.acct] !== a) return;
+      if (db.accounts[u]) return send(p, { t: 'bindres', ok: false, m: 'อีเมล/ไอดีนี้มีคนใช้แล้ว' });
+      a.char = p.c; delete db.accounts[p.acct]; delete a.guest; a.salt = salt; a.hash = hash; a.tokens = []; db.accounts[u] = a; p.acct = u; dirty = true; saveDb();
+      send(p, { t: 'bindres', ok: true, u, m: 'ผูกบัญชีสำเร็จ! ครั้งหน้าเข้าเกมด้วยอีเมล/ไอดีนี้ได้เลย' }); issueToken(p, u); me(p);
+    });
     return;
   }
   const c = p.c, map = MAPS[c.map];
@@ -1137,4 +1213,4 @@ setInterval(() => { if (!fs.existsSync(RESTART_FLAG)) return; try { fs.unlinkSyn
 process.on('uncaughtException', e => { console.error('[fatal]', e); try { syncChars(); dirty = true; saveDb(); } catch (e2) { } process.exit(1); });
 setInterval(syncChars, 30000);
 server.on('error', e => { console.error(`[http] ${e.code === 'EADDRINUSE' ? 'port ' + PORT + ' is already in use' : e.message}`); process.exit(1); });
-server.listen(PORT, () => console.log(`LUMIRA ONLINE running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`ELYNDRA ONLINE running on http://localhost:${PORT}`));

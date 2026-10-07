@@ -1,4 +1,4 @@
-// ============================================================ LUMIRA ONLINE — placeholder sound synth
+// ============================================================ ELYNDRA ONLINE — placeholder sound synth
 // Renders the registry's synth recipes into raw samples with plain JS math (no AudioContext needed), so
 // a placeholder plays instantly on first use and the same code can be checked in Node tests.
 (function (root) {

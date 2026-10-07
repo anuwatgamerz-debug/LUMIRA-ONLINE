@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE client — HD pixel style
+// ============================================================ ELYNDRA ONLINE client — HD pixel style
 const $ = id => document.getElementById(id);
 const cv = $('game'); const ctx = cv.getContext('2d');
 const TP = 32; // art pixels per tile
@@ -303,8 +303,12 @@ const now = () => performance.now() / 1000;
 function onMsg(m) {
   snd('msg', m);
   switch (m.t) {
-    case 'err': if (typeof setBusy === 'function' && loginBusy) { setBusy(false); $('err').textContent = m.m; break; } $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
-    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; $('login').style.display = 'none'; $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked) localStorage.setItem('lmo_u', $('u').value); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6;
+    case 'session': store.set(m.guest ? 'ely_guest' : 'ely_session', { u: m.u, tok: m.tok }); break;
+    case 'needchar': setMode('gchar'); loginErr('บัญชี Google นี้ยังไม่มีตัวละคร — ตั้งชื่อและเลือกหน้าตาได้เลย'); break;
+    case 'bindres': $('bindMsg').textContent = m.m; if (m.ok) { store.set('ely_guest', null); $('bindP').value = ''; } break;
+    case 'err': if (m.code === 'session') { const g = store.get('ely_guest'); if (mode === 'guest' && g) store.set('ely_guest', null); else store.set('ely_session', null); }
+      if (typeof setBusy === 'function' && loginBusy) { setBusy(false); loginErr(m.m); break; } $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
+    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; { const L = $('login'); setBusy(true, 'กำลังเข้าสู่โลก Elyndra...'); L.classList.add('leaving'); setTimeout(() => { L.style.display = 'none'; }, 560); loginBusy = false; } $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked && mode === 'login') localStorage.setItem('lmo_u', $('u').value.trim().toLowerCase()); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6;
       QDEF = m.quests || {}; GUIDE = m.guide || null; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
     case 'map': { const first = !map; map = m.map; snd('map', map, first); } ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
     case 'me': { const prev = me; me = m.c; updHud(); snd('me', prev, me); break; }
@@ -412,10 +416,10 @@ function updQuestTrack() {
 const QN = [10, 8, 10, 1];
 const QT = ['ปราบ เจลลอป\n(ทุ่งทรายสีทอง)', 'ปราบ ปูทราย\n(ทุ่งทรายสีทอง)', 'ปราบ ลีฟลิง\n(ป่าโอเอซิส)', 'ปราบ ราชาเจลลอป\n(บอส ทุ่งทราย)'];
 function updHud() {
-  $('hName').textContent = me.name; $('lvb').textContent = 'Lv ' + me.lv; $('hJob').textContent = (CLSDEF[me.cls] && CLSDEF[me.cls].th) || 'นักผจญภัย';
+  $('hName').textContent = me.name; $('lvb').innerHTML = `<i>Lv</i><b class="d${String(me.lv).length}">${me.lv}</b>`; $('lvb').setAttribute('aria-label', 'Lv ' + me.lv); $('hJob').textContent = (CLSDEF[me.cls] && CLSDEF[me.cls].th) || 'นักผจญภัย';
   $('hpb').style.width = (me.hp / me.maxhp * 100) + '%'; $('hpt').textContent = `${me.hp} / ${me.maxhp}`;
   $('spb').style.width = (me.sp / me.maxsp * 100) + '%'; $('spt').textContent = `${me.sp} / ${me.maxsp}`;
-  $('xpb').style.width = (me.exp / me.next * 100) + '%'; $('hX').textContent = (me.exp / me.next * 100).toFixed(1) + '%';
+  $('xpb').style.width = (me.next ? me.exp / me.next * 100 : 100) + '%'; $('hX').textContent = me.next ? (me.exp / me.next * 100).toFixed(1) + '%' : 'MAX';
   $('hpP').textContent = Math.round(me.hp / me.maxhp * 100) + '%'; $('spP').textContent = Math.round(me.sp / me.maxsp * 100) + '%';
   if ($('hX2')) $('hX2').textContent = $('hX').textContent;
   const z = me.zeny.toLocaleString(); if ($('hZ').textContent !== z) { $('hZ').textContent = z; HUD.fitBar(); } // wider gold can push buttons out of the bar
@@ -438,7 +442,7 @@ function skinHud() {
     const [x, y, w, h] = rel ? [(b[0] - rel[0]) / rel[2] * 100, (b[1] - rel[1]) / rel[3] * 100, b[2] / rel[2] * 100, b[3] / rel[3] * 100] : b;
     Object.assign(el.style, { left: x + '%', top: y + '%', width: w + '%', height: h + '%' });
   };
-  put($('pport'), B.portrait); put($('lvb'), B.level, B.portrait); put($('hName'), B.name); put($('hJob'), B.job);
+  put($('pport'), B.portrait); put($('lvb'), [B.level[0] - B.level[2] * 0.3, B.level[1] - B.level[3] * 0.4, B.level[2] * 1.6, B.level[3] * 1.8], B.portrait); // the medallion under the portrait is bigger than its painted slot put($('hName'), B.name); put($('hJob'), B.job);
   const tall = b => [b[0], b[1] - b[3] * 0.3, b[2], b[3] * 1.6]; // the art's tracks are thin: cover their outline so numbers fit
   put(P.querySelector('.bar.hp'), tall(B.hp)); put(P.querySelector('.bar.sp'), tall(B.sp)); put(P.querySelector('.bar.xp'), [B.exp[0], B.exp[1] - B.exp[3] * 0.3, B.exp[2], B.exp[3] * 1.6]); // never taller than HP/SP
   put($('hpP'), B.hpv); put($('spP'), B.spv);
@@ -648,6 +652,7 @@ function renderQuest() {
   $('questbody').querySelectorAll('[data-ab]').forEach(b => b.onclick = () => { if (confirm('ยกเลิกเควสนี้?')) send({ t: 'quest', a: 'abandon', id: b.dataset.ab }); });
 }
 function renderSettings() {
+  $('bindset').style.display = me && me.guest ? 'block' : 'none';
   document.querySelectorAll('#wSet .seg[data-k]').forEach(sg => sg.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(HUD.S[sg.dataset.k]) === b.dataset.v)));
 }
 document.querySelectorAll('#wSet .seg[data-k] button').forEach(b => b.onclick = () => {
@@ -658,7 +663,7 @@ document.querySelectorAll('#wSet .seg[data-k] button').forEach(b => b.onclick = 
 $('bFull').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => { }); } catch (e) { } };
 const MORE = [['char', 'ตัวละคร', 'pport'], ['skill', 'สกิล', 'bSkill'], ['equip', 'อุปกรณ์', 'bEquip'], ['bag', 'กระเป๋า', 'bBag'], ['quest', 'เควส', 'bQuest'], ['map', 'แผนที่', 'bMap'],
   ['party', 'ปาร์ตี้', 'bParty'], ['guild', 'กิลด์', 'bGuild'], ['auto', 'ออโต้', 'bAuto'], ['chat', 'แชท', 'bChat'], ['gear', 'ตั้งค่า', 'bSet'], ['quest', 'อันดับ', () => openRank()],
-  ['quest', 'เครดิตภาพ', () => open('credits.html', '_blank')], ['more', 'ออกจากระบบ', () => { if (confirm('ออกจากระบบ?')) { me = null; try { ws.close(); } catch (e) { } location.reload(); } }]];
+  ['quest', 'เครดิตภาพ', () => open('credits.html', '_blank')], ['more', 'ออกจากระบบ', () => { if (!confirm(me && me.guest ? 'ออกจากระบบ? (บัญชี Guest ยังเข้าต่อได้จากเครื่องนี้ แต่ถ้าล้างข้อมูลเบราว์เซอร์จะหาย — ผูกบัญชีได้ที่ ตั้งค่า)' : 'ออกจากระบบ?')) return; const sv = store.get('ely_session'); if (sv && me && !me.guest) { send({ t: 'revoke', tok: sv.tok }); store.set('ely_session', null); } setTimeout(() => { me = null; try { ws.close(); } catch (e) { } location.reload(); }, 150); }]];
 function renderMore() {
   const g = $('moregrid'); g.innerHTML = '';
   for (const [ic, lab, act] of MORE) {
@@ -1059,65 +1064,119 @@ function drawTitle(t) {
 requestAnimationFrame(frame);
 HUD.applyIcons();
 
-// ------------------------------------------------------------ login / create
-let mode = 'login', loginBusy = false;
+// ------------------------------------------------------------ ELYNDRA ONLINE: splash, login, guest, Google, sessions
+// No password is ever stored on the device: "remember me" keeps a random session token from the server
+// (localStorage 'ely_session'); a guest keeps its own token ('ely_guest'). Old saves of the ID ('lmo_u') still prefill.
+let mode = 'login', loginBusy = false, gcred = null, GCFG = { google: null };
 const look = { sex: 0, hair: 0, hc: 0, cc: 0 };
-function setMode(m) { mode = m; $('tLogin').classList.toggle('on', m === 'login'); $('tReg').classList.toggle('on', m === 'reg'); $('regbox').style.display = m === 'reg' ? 'block' : 'none'; $('remrow').style.display = m === 'reg' ? 'none' : 'flex'; $('login').classList.toggle('reg', m === 'reg'); setBusy(false); $('err').textContent = ''; loginLayout(); }
-$('tLogin').onclick = () => setMode('login'); $('tReg').onclick = () => setMode('reg');
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
+function setMode(m) {
+  mode = m; const L = $('login');
+  $('tLogin').classList.toggle('on', m === 'login' || m === 'reg'); $('tGuest').classList.toggle('on', m === 'guest'); $('tGoogle').classList.toggle('on', m === 'google');
+  $('pAcc').hidden = !(m === 'login' || m === 'reg' || m === 'gchar'); $('pGuest').hidden = m !== 'guest'; $('pGoogle').hidden = m !== 'google';
+  $('regbox').style.display = m === 'reg' || m === 'gchar' ? 'block' : 'none'; $('remrow').style.display = m === 'reg' ? 'none' : 'flex';
+  $('tReg').textContent = m === 'reg' || m === 'gchar' ? '‹ กลับไปหน้าเข้าสู่ระบบ' : 'ยังไม่มีบัญชี? สร้างตัวละครใหม่';
+  L.classList.toggle('reg', m === 'reg'); L.classList.toggle('gchar', m === 'gchar'); L.classList.toggle('guestm', m === 'guest');
+  $('p').autocomplete = m === 'reg' ? 'new-password' : 'current-password';
+  setBusy(false); $('err').textContent = ''; loginHint(); loginLayout();
+  if (m === 'google') renderGoogle();
+}
+$('tLogin').onclick = () => setMode('login'); $('tGuest').onclick = () => setMode('guest'); $('tGoogle').onclick = () => setMode('google');
+$('tReg').onclick = () => setMode(mode === 'reg' || mode === 'gchar' ? 'login' : 'reg');
 const OUTFIT_TH = ['ชุดเดินทางสีฟ้า', 'ชุดเดินทางสีน้ำตาล', 'ชุดเดินทางสีเขียว', 'ชุดเดินทางสีแดง', 'ชุดเดินทางสีม่วง']; // everyone starts as an Adventurer: the choice is the tunic colour
 document.querySelectorAll('.sel button').forEach(b => b.onclick = () => {
   const k = b.dataset.k, L = { cc: 5, sex: 2, hair: 6, hc: 9 }[k]; look[k] = (look[k] + +b.dataset.d + L) % L;
   $('v_cc').textContent = OUTFIT_TH[look.cc]; $('v_sex').textContent = look.sex ? 'หญิง' : 'ชาย'; $('v_hair').textContent = HAIR_STYLE_TH[look.hair]; $('v_hc').textContent = HAIR_TH[look.hc];
 });
 (function prev() {
-  requestAnimationFrame(prev); if (mode !== 'reg') return;
+  requestAnimationFrame(prev); if (mode !== 'reg' && mode !== 'gchar') return;
   const c = $('preview'), g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 96, 96);
   const n = heroOf(look), L = META.lpc[n], im = img(n); img('h_knight_' + (look.sex ? 'f' : 'm')); if ((!L || !im) && !CHR) return;
   const tn = performance.now() / 1000, ph = Math.floor(tn / 2) % 6;
   const row = [2, 3, 0, 1, 2, 2][ph], atk = ph === 5;
   drawHero(look, atk ? 'atk' : 'walk', atk ? (tn % 2) * 0.45 : tn, row, 48, 92, 1, 0, g, { wpn: 200, cls: 'adventurer' });
 })();
-setMode('login');
-try { if (localStorage.getItem('lmo_rem') === '0') $('rem').checked = false; else $('u').value = localStorage.getItem('lmo_u') || ''; } catch (e) { }
 // login busy state: button disabled with a spinner until the server answers (welcome / err / connection lost)
-function setBusy(b) {
-  loginBusy = b; $('go').disabled = b;
-  $('go').innerHTML = b ? `<span class="spin"></span>${mode === 'reg' ? 'กำลังสร้างตัวละคร...' : 'กำลังเข้าสู่ระบบ...'}` : (mode === 'reg' ? 'สร้างตัวละครและเข้าเกม' : 'เข้าเกม');
+function setBusy(b, txt) {
+  loginBusy = b; for (const id of ['go', 'guestGo', 'altGuest', 'altGoogle']) $(id).disabled = b;
+  const idle = mode === 'reg' ? 'สร้างตัวละครและเข้าเกม ›' : mode === 'gchar' ? 'สร้างตัวละครด้วย Google ›' : 'เข้าเกม ›';
+  $('go').innerHTML = b ? `<span class="spin"></span>${txt || (mode === 'reg' || mode === 'gchar' ? 'กำลังสร้างตัวละคร...' : 'กำลังเข้าสู่ระบบ...')}` : idle;
+  $('guestGo').innerHTML = b && mode === 'guest' ? '<span class="spin"></span>กำลังเข้าสู่โลก Elyndra...' : '👤 เข้าเล่นแบบ Guest';
 }
+function loginErr(t) { const e = $('err'); e.textContent = t; e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); }
+function loginHint() {
+  const sv = store.get('ely_session'), h = $('lhint');
+  h.textContent = mode === 'login' && sv && !/^(guest|google):/.test(sv.u) && $('u').value.trim().toLowerCase() === sv.u && !$('p').value ? '✓ จดจำไว้ในอุปกรณ์นี้แล้ว — กด "เข้าเกม" ได้เลย' : '';
+}
+function startLogin(msg, txt) { $('err').textContent = ''; setBusy(true, txt); if (ws) try { ws.close(); } catch (e) { } connect(msg); }
 $('go').onclick = () => {
   if (loginBusy) return;
-  const u = $('u').value.trim(), p = $('p').value;
-  if (!u || !p) { $('err').textContent = 'กรอกไอดีและรหัสผ่าน'; return; }
-  if (mode === 'reg' && !$('cn').value.trim()) { $('err').textContent = 'ตั้งชื่อตัวละครก่อน'; return; }
-  $('err').textContent = ''; setBusy(true);
-  try { localStorage.setItem('lmo_rem', $('rem').checked ? '1' : '0'); if (!$('rem').checked) localStorage.removeItem('lmo_u'); } catch (e) { }
-  if (ws) try { ws.close(); } catch (e) { }
-  connect(mode === 'reg' ? { t: 'register', u, p, name: $('cn').value.trim(), ...look } : { t: 'login', u, p });
+  const u = $('u').value.trim().toLowerCase(), p = $('p').value, rem = $('rem').checked;
+  if (mode === 'gchar') { const name = $('cn').value.trim(); if (!name) return loginErr('ตั้งชื่อตัวละครก่อน'); return startLogin({ t: 'glogin', cred: gcred, name, ...look, rem: 1 }); }
+  const sv = store.get('ely_session');
+  if (mode === 'login' && !p && sv && sv.u === u) return startLogin({ t: 'tlogin', u, tok: sv.tok });
+  if (!u || !p) return loginErr('กรอกอีเมล/ไอดี และรหัสผ่าน');
+  if (mode === 'reg' && !$('cn').value.trim()) return loginErr('ตั้งชื่อตัวละครก่อน');
+  if (!rem) store.set('ely_session', null);
+  startLogin(mode === 'reg' ? { t: 'register', u, p, rem, name: $('cn').value.trim(), ...look } : { t: 'login', u, p, rem });
 };
+function guestLogin() {
+  if (loginBusy) return; if (mode !== 'guest') setMode('guest');
+  const g = store.get('ely_guest');
+  if (g && g.u && g.tok) return startLogin({ t: 'tlogin', u: g.u, tok: g.tok, guest: 1 }, 'กำลังเข้าสู่โลก Elyndra...');
+  const rnd = { sex: Math.random() < 0.5 ? 0 : 1, hair: Math.floor(Math.random() * 6), hc: Math.floor(Math.random() * 9), cc: Math.floor(Math.random() * 5) };
+  startLogin({ t: 'guest', ...rnd }, 'กำลังเข้าสู่โลก Elyndra...');
+}
+$('guestGo').onclick = guestLogin; $('altGuest').onclick = guestLogin;
+// Google: only when the server has a client id; the button is Google's own (Identity Services), the server verifies the token
+function renderGoogle() {
+  const box = $('gbtn'); if (!GCFG.google || box.dataset.done) return;
+  const draw = () => { try { google.accounts.id.initialize({ client_id: GCFG.google, callback: r => { gcred = r.credential; const sv = store.get('ely_session'); startLogin({ t: 'glogin', cred: gcred, rem: $('rem').checked ? 1 : 0 }); } }); google.accounts.id.renderButton(box, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'th' }); box.dataset.done = 1; } catch (e) { box.textContent = 'โหลดปุ่ม Google ไม่สำเร็จ'; } };
+  if (window.google && google.accounts) return draw();
+  const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true; sc.onload = draw; sc.onerror = () => { box.textContent = 'เชื่อมต่อ Google ไม่ได้'; }; document.head.appendChild(sc);
+}
+$('altGoogle').onclick = () => setMode('google');
+fetch('api/config').then(r => r.json()).then(c => { GCFG = c || {}; if (GCFG.google) { $('tGoogle').hidden = false; $('altGoogle').hidden = false; loginLayout(); } }).catch(() => { });
 $('peye').onclick = () => { const p = $('p'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; $('peye').textContent = show ? '🙈' : '👁'; $('peye').setAttribute('aria-label', show ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'); };
-$('uclr').onclick = () => { $('u').value = ''; $('u').focus(); };
-$('forgot').onclick = () => loginInfo('ลืมรหัสผ่าน?', 'ติดต่อผู้ดูแลเกมพร้อมชื่อไอดีและชื่อตัวละคร เพื่อขอรีเซ็ตรหัสผ่าน');
+$('uclr').onclick = () => { $('u').value = ''; $('u').focus(); loginHint(); };
+$('u').oninput = loginHint; $('p').oninput = loginHint;
+$('forgot').onclick = () => loginInfo('ลืมรหัสผ่าน?', 'ตอนนี้ยังรีเซ็ตรหัสผ่านทางอีเมลไม่ได้ — ติดต่อผู้ดูแลเกมพร้อมอีเมล/ไอดี และชื่อตัวละคร เพื่อขอรีเซ็ตรหัสผ่าน');
+$('forgot').onkeydown = e => { if (e.key === 'Enter') $('forgot').click(); };
 const LINFO = {
-  news: ['ข่าวสาร', 'อัปเดตล่าสุด: ภาพชุดใหม่ (LPC), ดันเจี้ยนใหม่ 4 แห่ง (โพรงสไลม์ · รังแมงมุม · สุสานจันทร์ · เขาวงกตเหล็ก), แผนที่โลกแบบใหม่ และระบบ Auto Quest'],
+  news: ['ข่าวสาร', 'ELYNDRA ONLINE · อัปเดตล่าสุด: ภูมิภาคใหม่ "ป่าเขียวขจี" (Lv 20-45) เมืองเวอร์แดนต์ เฮเวน ดันเจี้ยนต้นไม้โบราณ เนื้อเรื่องบทที่ 2 มอน Elite และอุปกรณ์ Tier 2'],
   guide: ['คู่มือเกม', 'เดินด้วยจอยสติ๊ก/WASD · แตะมอนสเตอร์เพื่อเลือกเป้า · ปุ่ม AUTO ตีอัตโนมัติ · แตะ ▶ ที่เควสเพื่อให้ตัวละครเดินไปทำภารกิจเอง · M เปิดแผนที่'],
-  contact: ['ติดต่อเรา', 'แจ้งปัญหาหรือข้อเสนอแนะได้ที่ผู้ดูแลเกม LUMIRA ONLINE'],
+  contact: ['ศูนย์ช่วยเหลือ', 'แจ้งปัญหาหรือข้อเสนอแนะได้ที่ผู้ดูแลเกม ELYNDRA ONLINE'],
   settings: ['ตั้งค่า', 'ปรับเสียง ขนาด UI และกราฟิกได้จากเมนู ⚙ ตั้งค่า หลังเข้าเกม'],
 };
 function loginInfo(t, b) { $('linfoT').textContent = t; $('linfoB').textContent = b; $('linfo').style.display = 'block'; }
-document.querySelectorAll('#lbtns button').forEach(b => b.onclick = () => loginInfo(...LINFO[b.dataset.i]));
+document.querySelectorAll('#ltop button').forEach(b => b.onclick = () => loginInfo(...LINFO[b.dataset.i]));
 $('linfoX').onclick = () => { $('linfo').style.display = 'none'; };
-// the stage is laid out in the key art's own pixels and scaled like background-size:cover, so the panel and the
-// buttons sit exactly on the painted spots; the create-character panel is taller, so it is fitted to the screen instead
+// the login column is laid out in CSS at its natural size, then scaled down (never up) to fit the screen
 function loginLayout() {
   const L = $('login'); if (!L || L.style.display === 'none') return;
-  const vw = innerWidth, vh = innerHeight, land = vw / vh >= 1.05, W0 = land ? 1672 : 941, H0 = land ? 941 : 1672, st = $('lstage');
-  L.classList.toggle('land', land); L.classList.toggle('port', !land); st.className = land ? 'land' : 'port';
-  let s = Math.max(vw / W0, vh / H0), ox = (vw - W0 * s) / 2, oy = (vh - H0 * s) / 2;
-  if (mode === 'reg') {
-    const bx = $('lstage').querySelector('.box'), bw = bx.offsetWidth, bh = bx.offsetHeight, x0 = bx.offsetLeft, y0 = bx.offsetTop;
-    s = Math.min(s, vw * 0.96 / bw, vh * 0.96 / bh); ox = vw / 2 - (x0 + bw / 2) * s; oy = vh / 2 - (y0 + bh / 2) * s;
-  }
-  st.style.transform = `translate(${ox}px,${oy}px) scale(${s})`;
+  const vw = innerWidth, vh = innerHeight, land = vw / vh >= 1.05, short = land && vh < 560;
+  L.classList.toggle('land', land); L.classList.toggle('port', !land); L.classList.toggle('short', short);
+  const w = $('lwrap'); w.style.transform = 'translateX(-50%)';
+  const up = land && !short ? Math.max(1, Math.min(1.4, vh / 820)) : 1; // big desktop screens: grow with the screen like the key art
+  const W = w.offsetWidth, H = w.offsetHeight, s = Math.min(up, (vh - 4) / H, (vw - 8) / W);
+  const top = Math.max(0, (vh - H * s) / 2 - (land && !short ? vh * 0.02 : 0));
+  w.style.transform = `translateX(-50%) scale(${s})`; w.style.top = top + 'px';
 }
 addEventListener('resize', loginLayout); addEventListener('orientationchange', () => setTimeout(loginLayout, 200));
+$('llogo').addEventListener('load', loginLayout);
 for (const f of ['u', 'p', 'cn']) $(f).onkeydown = e => { if (e.key === 'Enter') $('go').click(); };
+// guest -> e-mail / id binding (Settings window, guests only)
+$('bindGo').onclick = () => { const u = $('bindU').value.trim().toLowerCase(), p = $('bindP').value; if (!u || !p) { $('bindMsg').textContent = 'กรอกอีเมล/ไอดี และรหัสผ่าน'; return; } $('bindMsg').textContent = 'กำลังผูกบัญชี...'; send({ t: 'bind', u, p }); };
+// splash: wait for the logo + this screen's background (or 5 s at most), then fade into the login screen
+(function splash() {
+  const sp = $('splash'), bar = $('spbar'), land = innerWidth / innerHeight >= 1.05;
+  const want = ['assets/branding/elyndra-logo-small.webp', land ? 'assets/branding/login-bg-desktop.webp' : 'assets/branding/login-bg-mobile.webp'];
+  let n = 0; const t0 = performance.now();
+  const done = () => { if (sp.dataset.done) return; sp.dataset.done = 1; bar.style.width = '100%'; setTimeout(() => { sp.classList.add('out'); setTimeout(() => sp.remove(), 650); }, Math.max(150, 700 - (performance.now() - t0))); };
+  for (const src of want) { const i = new Image(); i.onload = i.onerror = () => { n++; bar.style.width = (10 + 90 * n / want.length) + '%'; if (n === want.length) done(); }; i.src = src; }
+  setTimeout(done, 5000);
+})();
+// login music: its own placeholder theme, a little quieter than the game; the first map track crossfades it out
+try { if (window.AUDIO) AUDIO.playBGM('bgm_login_elyndra', 1.5); } catch (e) { }
+setMode('login');
+{ const sv = store.get('ely_session'); let u0 = sv && !/^(guest|google):/.test(sv.u) ? sv.u : ''; try { if (!u0 && localStorage.getItem('lmo_rem') !== '0') u0 = localStorage.getItem('lmo_u') || ''; } catch (e) { } $('u').value = u0; loginHint(); }

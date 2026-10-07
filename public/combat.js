@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — combat UI
+// ============================================================ ELYNDRA ONLINE — combat UI
 // Target system, combat wheel, 6-slot skill hotbar, cooldown overlays, interact button, combat toasts.
 // The server decides everything that matters (range, line of sight, SP, cooldown, damage); this file
 // only does input, quick pre-checks for instant feedback, and display. Shares state with game.js.

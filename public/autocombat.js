@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — AUTO combat settings, Auto Skill, Auto Potion
+// ============================================================ ELYNDRA ONLINE — AUTO combat settings, Auto Skill, Auto Potion
 // Extends the existing AUTO (combat.js) instead of replacing it: the same 'attack' / 'cast' / 'use' / 'pick' messages a
 // player sends by hand, at a calm pace (one request per tick, per-skill back-off). The server still validates every
 // cast (ownership, SP, cooldown, range, line of sight, alive) and every potion (item exists, alive, cooldown, need).

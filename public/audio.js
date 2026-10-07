@@ -1,4 +1,4 @@
-// ============================================================ LUMIRA ONLINE — AudioManager
+// ============================================================ ELYNDRA ONLINE — AudioManager
 // The one audio system of the game. Game code calls ids from the audio registry (audio-registry.js); this file
 // owns the AudioContext, the volume buses (master / music / sfx / ambient / voice), music crossfades and
 // overrides (boss / event), ambient beds, positional sound, voice limits, priority, ducking and the mobile
@@ -134,7 +134,7 @@
   }
   function makeTrack(id) {
     const def = REG.MUSIC[id], g = ctx.createGain(); g.gain.value = 0.0001; g.connect(bus.music);
-    const T = { id, gain: g, n: ++stat.tracks, live: true, fade(to, s) { const t = now(); g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t); g.gain.linearRampToValueAtTime(Math.max(0.0001, to), t + Math.max(0.05, s)); } };
+    const T = { id, gain: g, n: ++stat.tracks, live: true, fade(to, s) { const t = now(); g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t); g.gain.linearRampToValueAtTime(Math.max(0.0001, to * ((def && def.vol) || 1)), t + Math.max(0.05, s)); } };
     let inner = null;
     if (def && def.file) {
       const el = new Audio(); el.loop = true; el.preload = 'auto'; el.crossOrigin = 'anonymous'; el.src = REG.base + def.file;

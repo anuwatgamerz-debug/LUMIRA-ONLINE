@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — layered characters (paperdoll)
+// ============================================================ ELYNDRA ONLINE — layered characters (paperdoll)
 // Players and NPCs are drawn from layer sheets made by tools/art. Two sets share one renderer:
 //   v1  assets/characters/chars.json  64x64 frames, ~42px characters (every look)
 //   hd  assets/chr_hd/chars.json      64x80 frames, ~50px HD characters (prototype looks; tools/art/build_characters_hd.py)

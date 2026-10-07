@@ -56,7 +56,7 @@ async function run(srv, R) {
       const err = await pg.$eval('#err', e => e.textContent), bh = await pg.$eval('#err', e => e.getBoundingClientRect().height);
       R.ok(shown === 'text' && hidden === 'password', 'login: password show / hide toggle');
       R.ok(busy, 'login: Enter submits and the button is disabled while the request runs (loading state)');
-      R.ok(err === 'ไอดีหรือรหัสผ่านไม่ถูกต้อง' && bh < 40 && !(await pg.$eval('#go', e => e.disabled)), 'login error: short message, button usable again', err);
+      R.ok(err === 'อีเมล/ไอดี หรือรหัสผ่านไม่ถูกต้อง' && bh < 40 && !(await pg.$eval('#go', e => e.disabled)), 'login error: short message, button usable again', err);
       await pg.context().close();
     }
     // ---------------- HUD: target panel + NPC nameplates

@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — Auto Quest / Quest Navigation
+// ============================================================ ELYNDRA ONLINE — Auto Quest / Quest Navigation
 // A high-level controller on top of the systems that already exist (it never moves, fights or loots by itself):
 //   * walking: asks the server to walk to a tile / NPC / node ({t:'move'}, {t:'npc'}, {t:'node'}) — the server
 //     runs its own A* on the collision grid, so paths go around buildings, trees, water and walls;

@@ -3,13 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#141a33">
+<meta name="theme-color" content="#0b1030">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LUMIRA ONLINE</title>
+<title>ELYNDRA ONLINE — Fantasy MMORPG</title>
+<meta name="description" content="ผจญภัยในโลกแฟนตาซี Elyndra MMORPG ออนไลน์ เล่นได้ทั้งมือถือและคอม">
+<meta name="application-name" content="ELYNDRA ONLINE">
+<meta name="apple-mobile-web-app-title" content="ELYNDRA">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ELYNDRA ONLINE">
+<meta property="og:title" content="ELYNDRA ONLINE">
+<meta property="og:description" content="ผจญภัยในโลกแฟนตาซี Elyndra MMORPG ออนไลน์ เล่นได้ทั้งมือถือและคอม">
+<meta property="og:image" content="assets/branding/og-cover.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ELYNDRA ONLINE">
+<meta name="twitter:description" content="ผจญภัยในโลกแฟนตาซี Elyndra MMORPG ออนไลน์ เล่นได้ทั้งมือถือและคอม">
+<meta name="twitter:image" content="assets/branding/og-cover.jpg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/branding/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/branding/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/branding/apple-touch-icon.png">
+<link rel="preload" as="image" href="assets/branding/elyndra-logo-small.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Mitr:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#0e1226;--nav:#1d2547;--nav2:#141a33;--gold:#e8c46a;--gold2:#9c7a2e;--txt:#f4ecd8;--dim:#a9a28f;--hp:#e5484d;--sp:#3d8bf0;--xp:#f2c46d}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -24,51 +42,85 @@ button:active{transform:translateY(1px);filter:brightness(1.25)}
 button:disabled{opacity:.4}
 button.ghost{background:#1a2042}
 input{font-family:inherit;font-size:15px;padding:8px 10px;border-radius:4px;border:2px solid #4b5694;background:#0c1022;color:var(--txt);width:100%}
-#login{position:fixed;inset:0;z-index:20;overflow:hidden;background:#0b1024 center/cover no-repeat}
-#login.land{background-image:url(assets/ui/login_land.webp)}#login.port{background-image:url(assets/ui/login_port.webp)}
-#login::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,#0b102466,#0b102400 60%);pointer-events:none}
-#login.reg::before{background:#0b1024b8}
-#lstage{position:absolute;left:0;top:0;transform-origin:0 0}
-#lstage.land{width:1672px;height:941px}#lstage.port{width:941px;height:1672px}
-#lstage.land #lbtns button{font-size:0}
-#login .box{position:absolute;box-sizing:border-box;padding:30px 44px 26px;background:linear-gradient(180deg,#141c3cf4,#0c1230f6);border:3px solid #c8913a;border-radius:10px;
-  box-shadow:0 0 0 3px #0a0d1c,0 0 0 6px #e8c46a,0 0 0 8px #5a3a14,0 18px 40px #000c,inset 0 0 0 2px #ffffff10,inset 0 0 40px #3d6fd822;font-size:24px;color:var(--txt)}
-#lstage.land .box{left:575px;top:322px;width:530px;min-height:448px}
-#lstage.port .box{left:126px;top:760px;width:689px;font-size:30px;padding:40px 52px 34px}
-#login .box::before,#login .box::after{content:'';position:absolute;width:22px;height:22px;top:-14px;background:radial-gradient(#9fe7ff,#2f7bd8 60%,#163a7a);transform:rotate(45deg);border:3px solid #e8c46a;box-shadow:0 0 14px #6fc3ff}
-#login .box::before{left:calc(50% - 13px)}#login .box::after{left:calc(50% - 13px);top:auto;bottom:-14px}
-#login h1,#login .sub{display:none}
-#login .sel{font-size:.78em;margin-top:.35em}#login .sel button{font-size:1em;padding:.15em .8em}#login .sel small{width:4.2em;font-size:.85em}#login .sel span{font-size:1em}
-#login #preview{width:5.5em;height:5.5em;margin:.4em auto .2em}
-#login .tabs{display:flex;gap:10px;margin-bottom:14px}
-#login .tabs button{flex:1;font-size:1em;padding:.35em 0;background:#121a3a;border:2px solid #3b4680;border-radius:6px;color:#e8e2cc}
-#login .tabs button.on{background:linear-gradient(180deg,#3d6fd8,#1f3f9a);border-color:#e8c46a;color:#fff;box-shadow:inset 0 1px 0 #ffffff40}
-#login label{display:block;font-size:.8em;color:#d8d0b8;margin:.5em 0 .25em}
-#login .fld{position:relative;display:flex;align-items:center;background:#0b1230;border:2px solid #3b4680;border-radius:8px;height:2.1em}
-#login .fld:focus-within{border-color:#e8c46a;box-shadow:0 0 0 2px #e8c46a44}
-#login .fld i{width:1.9em;text-align:center;font-style:normal;opacity:.75}
-#login .fld input{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:0;color:#fff;font-size:.95em;padding:0}
-#login .fld button{background:none;border:0;color:#cfd6f5;font-size:.8em;width:2.2em;height:100%;padding:0;cursor:pointer}
-#login .row{display:flex;align-items:center;justify-content:space-between;margin-top:.55em;font-size:.75em}
-#login .row label{display:flex;align-items:center;gap:.4em;margin:0;font-size:1em;color:#e8e2cc}
-#login .row input{width:1.1em;height:1.1em;accent-color:#3d6fd8}
-#login .row a{color:#7fd4ff;text-decoration:underline;cursor:pointer}
-#login #go{display:block;width:100%;margin-top:.7em;height:2.4em;font-size:1.15em;font-weight:700;color:#3a2208;background:linear-gradient(180deg,#ffe39a,#e8b04a 45%,#b8761e);border:2px solid #fff3c4;border-radius:10px;box-shadow:0 0 0 3px #5a3a14,0 4px 0 #3a2208,inset 0 2px 0 #fff8;cursor:pointer}
-#login #go:disabled{filter:grayscale(.5) brightness(.8);cursor:wait}
-#login #go .spin{display:inline-block;width:.8em;height:.8em;border:3px solid #3a220855;border-top-color:#3a2208;border-radius:50%;margin-right:.4em;vertical-align:-2px;animation:lspin .8s linear infinite}
+/* ---------------- ELYNDRA ONLINE: splash + login (laid out in CSS, scaled to fit by loginLayout()) */
+#splash{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 38%,#1f2f78 0,#0b1030 52%,#04060e 100%);transition:opacity .6s ease}
+#splash::before{content:'';position:absolute;inset:0;background-image:radial-gradient(1px 1px at 12% 22%,#fff 50%,#0000 51%),radial-gradient(1px 1px at 72% 14%,#cfe3ff 50%,#0000 51%),radial-gradient(1.5px 1.5px at 38% 68%,#fff 50%,#0000 51%),radial-gradient(1px 1px at 86% 58%,#fff 50%,#0000 51%),radial-gradient(1.5px 1.5px at 22% 84%,#9fe7ff 50%,#0000 51%),radial-gradient(1px 1px at 58% 36%,#fff 50%,#0000 51%),radial-gradient(1px 1px at 92% 88%,#fff 50%,#0000 51%);opacity:.8;pointer-events:none}
+#splash.out{opacity:0;pointer-events:none}
+#splash .in{position:relative;width:min(82vw,560px);text-align:center}
+#splash img{width:100%;height:auto;filter:drop-shadow(0 0 22px #3d6fd890)}
+#splash .bar{width:68%;height:6px;margin:18px auto 12px;background:#ffffff14;border:1px solid #e8c46a66;border-radius:6px;overflow:hidden}
+#splash .bar i{display:block;height:100%;width:6%;background:linear-gradient(90deg,#2f7bd8,#9fe7ff,#e8c46a);transition:width .3s}
+#splash p{margin:0;color:#cfd6f5;font-size:15px;letter-spacing:.05em}
+#login{position:fixed;inset:0;z-index:20;overflow:hidden;background:#0b1030;transition:opacity .55s ease}
+#login.leaving{opacity:0;pointer-events:none}
+#login .lbg{position:absolute;inset:0;background:linear-gradient(180deg,#16205a,#070a18) center/cover no-repeat}
+#login.land .lbg{background-image:url(assets/branding/login-bg-desktop.webp);background-position:50% 40%}
+#login.port .lbg{background-image:url(assets/branding/login-bg-mobile.webp);background-position:38% 30%}
+#login .lbg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 62%,#060a1e99,#060a1e22 62%),linear-gradient(180deg,#060a1e55,#060a1e00 30%,#060a1e00 60%,#060a1ecc)}
+#ltop{position:absolute;z-index:3;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));display:flex;gap:6px}
+#ltop button{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;background:#0a1030b8;border:1px solid #e8c46a55;border-radius:17px;color:#e8e2cc;font:500 13px Mitr,sans-serif;cursor:pointer;backdrop-filter:blur(3px)}
+#ltop button:hover{border-color:#e8c46a;background:#16205ad0}
+#login.port #ltop button span{display:none}#login.port #ltop button{width:34px;padding:0;justify-content:center}
+#lwrap{position:absolute;left:50%;top:0;transform-origin:50% 0;display:flex;flex-direction:column;align-items:center;font-size:16px;padding:max(14px,env(safe-area-inset-top)) 0 max(14px,env(safe-area-inset-bottom))}
+#llogo{display:block;width:min(80vw,520px);height:auto;margin:0 0 6px;filter:drop-shadow(0 4px 14px #000a) drop-shadow(0 0 18px #3d6fd866)}
+#login.land #llogo{width:clamp(320px,32vw,560px)}
+#login.port #lwrap{font-size:clamp(14px,4vw,18px)}
+#login .box{position:relative;box-sizing:border-box;width:min(90vw,560px);padding:1.35em 1.5em 1.1em;background:linear-gradient(180deg,#131c44f2,#0a1030f5);border:2px solid #c9a24e;border-radius:14px;
+  box-shadow:0 0 0 1px #3b2a0f,0 0 0 4px #070a18cc,0 0 32px #3d6fd84d,inset 0 0 40px #3d6fd81f,inset 0 1px 0 #ffffff1a;color:var(--txt)}
+#login.land .box{width:clamp(440px,36vw,580px)}
+#login .box::before,#login .box::after{content:'';position:absolute;left:calc(50% - 11px);width:18px;height:18px;transform:rotate(45deg);background:radial-gradient(#cff3ff,#3d8bf0 55%,#163a7a);border:2px solid #e8c46a;box-shadow:0 0 12px #3d8bf0}
+#login .box::before{top:-12px}#login .box::after{bottom:-12px}
+#login h2{margin:0;text-align:center;font:600 1.12em Cinzel,Mitr,serif;letter-spacing:.04em;color:#f4ecd8}
+#login .lsub{margin:.25em 0 .9em;text-align:center;font-size:.78em;color:#b9c2e8}
+#login .tabs{display:flex;gap:.5em;margin-bottom:.8em}
+#login .tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:.45em;height:2.6em;font:500 .9em Mitr,sans-serif;background:#0e1536e6;border:1.5px solid #3b4680;border-radius:9px;color:#e8e2cc;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+#login .tabs button:hover{border-color:#6f86d8}
+#login .tabs button.on{background:linear-gradient(180deg,#1f3270,#132250);border-color:#7fb4ff;color:#fff;box-shadow:0 0 0 1px #7fb4ff66,0 0 14px #3d8bf088}
+#login .tabs button[hidden],#login [hidden]{display:none!important}
+#login .gico{width:1.15em;height:1.15em;flex:none}
+#login label{display:block;font-size:.8em;color:#d8d0b8;margin:.55em 0 .3em}
+#login .fld{position:relative;display:flex;align-items:center;background:#080d26d9;border:1.5px solid #3b4680;border-radius:9px;height:2.75em;transition:border-color .15s,box-shadow .15s}
+#login .fld:focus-within{border-color:#e8c46a;box-shadow:0 0 0 3px #e8c46a33}
+#login .fld i{width:2.2em;text-align:center;font-style:normal;opacity:.8}
+#login .fld input{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:0;color:#fff;font:1em Mitr,sans-serif;padding:0}
+#login .fld input::placeholder{color:#8088aa}
+#login .fld button{background:none;border:0;color:#cfd6f5;font-size:.85em;width:2.6em;height:100%;padding:0;cursor:pointer}
+#login .row{display:flex;align-items:center;justify-content:space-between;margin-top:.6em;font-size:.78em}
+#login .row label{display:flex;align-items:center;gap:.45em;margin:0;font-size:1em;color:#e8e2cc;cursor:pointer}
+#login .row input{width:1.15em;height:1.15em;accent-color:#3d8bf0}
+#login .row a,#login .lnk{color:#8fd0ff;text-decoration:underline;cursor:pointer;background:none;border:0;font:inherit;padding:0}
+#login .hint{font-size:.72em;color:#9fe7ff;margin-top:.35em;min-height:0}
+#login #go{position:relative;display:block;width:100%;margin-top:.85em;height:2.9em;font:600 1.2em Mitr,sans-serif;color:#fff;text-shadow:0 1px 2px #0a1a4a;cursor:pointer;
+  background:linear-gradient(180deg,#6ab0ff,#2a64d8 52%,#1a46a8);border:2px solid #e8c46a;border-radius:11px;box-shadow:0 0 0 3px #0a0d1c,0 0 20px #3d8bf0aa,inset 0 1px 0 #ffffff80,inset 0 -3px 0 #0e2f7a;transition:filter .15s,transform .08s}
+#login #go::before,#login #go::after{content:'';position:absolute;top:calc(50% - 7px);width:12px;height:12px;transform:rotate(45deg);background:radial-gradient(#e8fbff,#5ab0ff);border:2px solid #e8c46a}
+#login #go::before{left:-9px}#login #go::after{right:-9px}
+#login #go:hover{filter:brightness(1.12)}#login #go:active{transform:translateY(1px) scale(.99)}
+#login #go:disabled{filter:grayscale(.35) brightness(.85);cursor:wait}
+#login .spin{display:inline-block;width:.8em;height:.8em;border:3px solid #ffffff55;border-top-color:#fff;border-radius:50%;margin-right:.45em;vertical-align:-2px;animation:lspin .8s linear infinite}
 @keyframes lspin{to{transform:rotate(360deg)}}
-#err{color:#ff9b9b;min-height:1.1em;font-size:.72em;text-align:center;margin-top:.45em;line-height:1.2}
-#lbtns{position:absolute;display:flex}
-#lstage.land #lbtns{left:618px;top:800px;width:440px;height:110px;justify-content:space-between}
-#lstage.port #lbtns{left:120px;top:1460px;width:700px;height:150px;justify-content:space-between}
-#lbtns button{width:96px;height:100%;background:transparent;border:0;cursor:pointer;border-radius:50%}
-#lstage.port #lbtns button{width:150px;background:radial-gradient(circle at 50% 38%,#1d2547 0 34%,#0000 35%);color:#ffe39a;font-size:26px;padding-top:96px;position:relative}
-#lstage.port #lbtns button::before{content:attr(data-g);position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:46px}
-#lstage.land #lbtns button:hover{background:#ffffff14}
-#linfo{position:absolute;display:none;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,86%);box-sizing:border-box;padding:28px;font-size:24px;color:var(--txt);background:#0f1634f8;border:3px solid #e8c46a;border-radius:10px;box-shadow:0 0 0 3px #0a0d1c,0 20px 40px #000c;z-index:3}
-#linfo h3{margin:0 0 10px;color:#ffe39a}#linfo button{margin-top:14px;font-size:22px;padding:6px 24px}
-#login.reg .box{max-height:none}
-#login.reg #lbtns{display:none}
+#err{color:#ff9b9b;min-height:1.15em;font-size:.76em;text-align:center;margin-top:.5em;line-height:1.25}
+#err.shake{animation:eshake .35s}@keyframes eshake{25%{transform:translateX(-5px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+#login .lor{display:flex;align-items:center;gap:.8em;margin:.3em 0 .6em;font-size:.72em;color:#8f97bd}#login .lor::before,#login .lor::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#0000,#6f78a8,#0000)}
+#login .lalt{display:flex;gap:.6em}#login .lalt button{flex:1}
+#login.port .lalt{flex-direction:column}
+#login .lalt button{display:flex;align-items:center;justify-content:center;gap:.6em;height:2.6em;border-radius:9px;font:500 .86em Mitr,sans-serif;cursor:pointer;transition:filter .15s,transform .08s}
+#login .lalt button:active{transform:scale(.98)}#login .lalt button:hover{filter:brightness(1.08)}
+#login .gbtn{background:#f4f6fb;color:#1f2433;border:1px solid #d6dbea}
+#login .xbtn{background:linear-gradient(180deg,#3a4256,#272d3e);color:#f0ecdf;border:1px solid #5a6380}
+#login .gwarn{font-size:.74em;color:#ffd58a;background:#2a200a99;border:1px solid #e8c46a44;border-radius:8px;padding:.5em .7em;margin:.2em 0 .6em;line-height:1.4}
+#login .gnote{font-size:.8em;color:#cfd6f5;line-height:1.45;margin:0 0 .5em}
+#gbtn{display:flex;justify-content:center;min-height:44px;margin:.3em 0 .4em}
+#login .ltag{margin-top:1.1em;font:600 .62em Cinzel,serif;letter-spacing:.42em;color:#e3cf95cc;text-shadow:0 1px 3px #000}
+#login.land.short #lwrap{flex-direction:row;align-items:center;gap:28px}
+#login.land.short #llogo{width:clamp(240px,34vw,420px);margin:0}#login.land.short .ltag{display:none}
+#login.short #ltop{flex-direction:column}#login.short #ltop button span{display:none}#login.short #ltop button{width:34px;padding:0;justify-content:center}
+#login.guestm .lalt,#login.guestm .lor{display:none}
+#login.port.reg #llogo{width:min(56vw,360px)}
+#login.reg .lalt,#login.reg .lor,#login.reg #ltabs,#login.gchar .lalt,#login.gchar .lor,#login.gchar #ltabs{display:none}
+#login.gchar #accflds{display:none}
+#linfo{position:fixed;display:none;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,88vw);box-sizing:border-box;padding:22px;font-size:15px;color:var(--txt);background:#0f1634f8;border:2px solid #e8c46a;border-radius:12px;box-shadow:0 0 0 3px #0a0d1c,0 20px 40px #000c;z-index:30;line-height:1.5}
+#linfo h3{margin:0 0 8px;color:#ffe39a;font-family:Cinzel,Mitr,serif}#linfo button{margin-top:12px;font-size:15px;padding:6px 22px}
+#login .sel{font-size:.85em;margin-top:.35em}#login .sel span{font-size:1em}#login .sel small{width:4.2em;font-size:.85em}#login #preview{width:6em;height:6em;margin:.4em auto .2em}
 #preview{display:block;margin:8px auto 4px;width:144px;height:144px;image-rendering:pixelated;background:radial-gradient(ellipse at 50% 78%,#6fb04f 0 38%,#3f7a33 39% 62%,#0000 63%);border-radius:8px}
 .sel{display:flex;gap:6px;align-items:center;margin-top:6px}.sel button{padding:4px 12px}.sel span{flex:1;text-align:center;font-size:15px}.sel small{width:44px;color:var(--dim);font-size:12px}
 #credit{position:fixed;right:8px;bottom:6px;font-size:10px;z-index:21}#credit a{color:#ffe39acc}
@@ -237,7 +289,9 @@ body.skin #quest{border-color:#c79a3e;background:linear-gradient(90deg,#141a33ee
 #pstat.art .nm{display:contents}
 #pstat.art>*,#pstat.art .nm>*{position:absolute;margin:0}
 #pstat.art #pport{border:0;box-shadow:none;background:radial-gradient(#3b4a8a,#151b38)}
-#pstat.art #lvb{position:absolute;transform:none;border:0;background:none;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#f2d38a;text-shadow:1px 1px 0 #000}
+#lvb{display:flex;align-items:baseline;gap:.25em}#lvb i{font-style:normal;font-size:.8em;opacity:.85}#lvb b{font-weight:inherit}
+#pstat.art #lvb{position:absolute;transform:none;border:0;background:none;padding:0;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden;font-size:1.2rem;line-height:.9;color:#f2d38a;text-shadow:1px 1px 0 #000,-1px 0 0 #000}
+#pstat.art #lvb i{font-size:.6em;letter-spacing:.04em;opacity:.9;margin-bottom:.05em}#pstat.art #lvb b{font-size:1em}#pstat.art #lvb b.d3{font-size:.82em}
 #pstat.art #hName{display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#f6e7c1;text-shadow:1px 1px 0 #000;overflow:hidden;white-space:nowrap}
 #pstat.art #hJob{display:flex;align-items:center;justify-content:center;font-size:.95rem;color:#f2d38a;padding-left:1.2rem}
 #pstat.art .bar{border:1px solid #000;border-radius:.3rem;background:#0d1624;height:auto;box-shadow:inset 0 0 0 1px #ffffff14}
@@ -401,30 +455,44 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
 </head>
 <body>
 <canvas id="game"></canvas>
-<div id="login">
- <div id="lstage" class="land">
-  <div class="box">
-    <h1>LUMIRA</h1>
-    <div class="sub">ONLINE · CHRONICLES OF THE FALLEN STAR</div>
-    <div class="tabs"><button id="tLogin" class="on">เข้าสู่ระบบ</button><button id="tReg">สร้างตัวละคร</button></div>
-    <label for="u">ไอดี</label><div class="fld"><i>👤</i><input id="u" autocomplete="username" maxlength="16" autocapitalize="off" spellcheck="false"><button id="uclr" type="button" aria-label="ล้างไอดี">✕</button></div>
-    <label for="p">รหัสผ่าน</label><div class="fld"><i>🔒</i><input id="p" type="password" autocomplete="current-password" maxlength="64"><button id="peye" type="button" aria-label="แสดงรหัสผ่าน">👁</button></div>
-    <div class="row" id="remrow"><label><input type="checkbox" id="rem" checked>จดจำไอดี</label><a id="forgot">ลืมรหัสผ่าน?</a></div>
-    <div id="regbox" style="display:none">
-      <label>ชื่อตัวละคร</label><div class="fld"><i>✦</i><input id="cn" maxlength="14"></div>
-      <canvas id="preview" width="96" height="96"></canvas>
-      <div class="note" style="text-align:center;margin-top:4px;font-size:.65em">ทุกคนเริ่มเป็น นักผจญภัย Lv1 — เลือกอาชีพได้ที่ Lv 10</div>
-      <div class="sel"><small>ชุด</small><button data-k="cc" data-d="-1">◀</button><span id="v_cc">ชุดเดินทางสีฟ้า</span><button data-k="cc" data-d="1">▶</button></div>
-      <div class="sel"><small>รูปร่าง</small><button data-k="sex" data-d="-1">◀</button><span id="v_sex">ชาย</span><button data-k="sex" data-d="1">▶</button></div>
-      <div class="sel"><small>ทรงผม</small><button data-k="hair" data-d="-1">◀</button><span id="v_hair">ทรงเดิม</span><button data-k="hair" data-d="1">▶</button></div>
-      <div class="sel"><small>สีผม</small><button data-k="hc" data-d="-1">◀</button><span id="v_hc">ธรรมชาติ</span><button data-k="hc" data-d="1">▶</button></div>
+<div id="splash" role="status" aria-live="polite"><div class="in"><img src="assets/branding/elyndra-logo-small.webp" alt="ELYNDRA ONLINE" width="640" height="221"><div class="bar"><i id="spbar"></i></div><p>กำลังเข้าสู่โลก Elyndra...</p></div></div>
+<div id="login" class="land">
+ <div class="lbg"></div>
+ <div id="ltop"><button data-i="news" aria-label="ข่าวสาร">📣<span>ข่าวสาร</span></button><button data-i="guide" aria-label="คู่มือเกม">📖<span>คู่มือ</span></button><button data-i="contact" aria-label="ศูนย์ช่วยเหลือ">🎧<span>ศูนย์ช่วยเหลือ</span></button><button data-i="settings" aria-label="ตั้งค่า">⚙<span>ตั้งค่า</span></button></div>
+ <div id="lwrap">
+  <img id="llogo" src="assets/branding/elyndra-logo-small.webp" srcset="assets/branding/elyndra-logo-small.webp 640w, assets/branding/elyndra-logo.webp 1400w" sizes="(min-width: 900px) 560px, 80vw" alt="ELYNDRA ONLINE" width="640" height="221" onerror="this.style.display='none'">
+  <div class="box" role="form" aria-label="เข้าสู่ระบบ ELYNDRA ONLINE">
+    <h2>ยินดีต้อนรับสู่ ELYNDRA ONLINE</h2>
+    <p class="lsub">มากกว่าการเล่นเกม คือการเริ่มต้นเรื่องราวบทใหม่ของคุณ</p>
+    <div class="tabs" id="ltabs" role="tablist"><button id="tGoogle" role="tab" hidden><svg class="gico" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Google</button><button id="tLogin" role="tab" class="on">✉ อีเมล</button><button id="tGuest" role="tab">👤 Guest</button></div>
+    <div id="pAcc">
+      <div id="accflds">
+        <label for="u">อีเมล หรือ ไอดี</label><div class="fld"><i>✉</i><input id="u" autocomplete="username" maxlength="80" autocapitalize="off" spellcheck="false" inputmode="email" placeholder="กรอกอีเมลหรือไอดีของคุณ"><button id="uclr" type="button" aria-label="ล้างช่อง">✕</button></div>
+        <label for="p">รหัสผ่าน</label><div class="fld"><i>🔒</i><input id="p" type="password" autocomplete="current-password" maxlength="64" placeholder="กรอกรหัสผ่าน"><button id="peye" type="button" aria-label="แสดงรหัสผ่าน">👁</button></div>
+        <div class="row" id="remrow"><label><input type="checkbox" id="rem" checked>จดจำฉันไว้ในอุปกรณ์นี้</label><a id="forgot" role="button" tabindex="0">ลืมรหัสผ่าน?</a></div>
+        <div class="hint" id="lhint"></div>
+      </div>
+      <div id="regbox" style="display:none">
+        <label for="cn">ชื่อตัวละคร</label><div class="fld"><i>✦</i><input id="cn" maxlength="14" placeholder="2-14 ตัวอักษร"></div>
+        <canvas id="preview" width="96" height="96"></canvas>
+        <div class="note" style="text-align:center;margin-top:4px;font-size:.7em">ทุกคนเริ่มเป็น นักผจญภัย Lv1 — เลือกอาชีพได้ที่ Lv 10</div>
+        <div class="sel"><small>ชุด</small><button data-k="cc" data-d="-1">◀</button><span id="v_cc">ชุดเดินทางสีฟ้า</span><button data-k="cc" data-d="1">▶</button></div>
+        <div class="sel"><small>รูปร่าง</small><button data-k="sex" data-d="-1">◀</button><span id="v_sex">ชาย</span><button data-k="sex" data-d="1">▶</button></div>
+        <div class="sel"><small>ทรงผม</small><button data-k="hair" data-d="-1">◀</button><span id="v_hair">ทรงเดิม</span><button data-k="hair" data-d="1">▶</button></div>
+        <div class="sel"><small>สีผม</small><button data-k="hc" data-d="-1">◀</button><span id="v_hc">ธรรมชาติ</span><button data-k="hc" data-d="1">▶</button></div>
+      </div>
+      <button id="go" type="button">เข้าเกม ›</button>
+      <div class="row" style="justify-content:center;margin-top:.5em"><button id="tReg" class="lnk" type="button">ยังไม่มีบัญชี? สร้างตัวละครใหม่</button></div>
     </div>
-    <button id="go">เข้าเกม</button>
+    <div id="pGoogle" hidden><p class="gnote">ใช้บัญชี Google ของคุณเข้าเล่นได้ทันที ข้อมูลตัวละครผูกกับบัญชี Google</p><div id="gbtn"></div></div>
+    <div id="pGuest" hidden><p class="gnote">เข้าเล่นได้ทันทีโดยไม่ต้องสมัคร ระบบจะสร้างตัวละครให้อัตโนมัติ</p><div class="gwarn">⚠ Guest อาจสูญเสียข้อมูลเมื่อเปลี่ยนอุปกรณ์หรือล้างข้อมูลเบราว์เซอร์ — ผูกบัญชีกับอีเมลได้ภายหลังที่ เมนู → ตั้งค่า</div><button id="guestGo" class="xbtn" type="button" style="width:100%">👤 เข้าเล่นแบบ Guest</button></div>
     <div id="err" role="alert"></div>
+    <div class="lor">หรือ</div>
+    <div class="lalt"><button id="altGoogle" class="gbtn" type="button" hidden><svg class="gico" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>เข้าสู่ระบบด้วย Google</button><button id="altGuest" class="xbtn" type="button">👤 เข้าเล่นแบบ Guest</button></div>
   </div>
-  <div id="lbtns"><button data-i="news" data-g="📣" aria-label="ข่าวสาร">ข่าวสาร</button><button data-i="guide" data-g="📖" aria-label="คู่มือเกม">คู่มือเกม</button><button data-i="contact" data-g="🎧" aria-label="ติดต่อเรา">ติดต่อเรา</button><button data-i="settings" data-g="⚙" aria-label="ตั้งค่า">ตั้งค่า</button></div>
-  <div id="linfo"><h3 id="linfoT"></h3><div id="linfoB"></div><button id="linfoX">ปิด</button></div>
+  <div class="ltag">A GREATER WORLD AWAITS</div>
  </div>
+ <div id="linfo"><h3 id="linfoT"></h3><div id="linfoB"></div><button id="linfoX">ปิด</button></div>
 </div>
 <div id="credit"><a href="credits.html" target="_blank">เครดิตภาพ</a></div>
 <div id="hud">
@@ -511,6 +579,10 @@ body.portrait #chat{left:var(--sl);right:var(--sr);bottom:calc(var(--sb) + 22.6r
     <div class="opt"><span>ตัวละคร HD (ต้นแบบ)</span><div class="seg" data-k="chrHD"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
     <div class="opt"><span>แสดง FPS</span><div class="seg" data-k="fps"><button data-v="true">เปิด</button><button data-v="false">ปิด</button></div></div>
     <div class="opt"><span>เต็มจอ</span><div class="seg"><button id="bFull">สลับเต็มจอ</button></div></div>
+    <div id="bindset" style="display:none"><div class="note" style="margin:10px 0 4px;color:var(--gold)">บัญชี Guest → ผูกกับอีเมล/ไอดี</div>
+      <div class="note" style="margin-bottom:6px">ตัวละครจะไม่หายเมื่อเปลี่ยนเครื่อง ใช้อีเมล/ไอดี + รหัสผ่านนี้เข้าเกมได้ทุกที่</div>
+      <input id="bindU" placeholder="อีเมล หรือ ไอดี" maxlength="80" autocapitalize="off" style="width:100%;margin-bottom:6px"><input id="bindP" type="password" placeholder="ตั้งรหัสผ่าน (4 ตัวขึ้นไป)" maxlength="64" style="width:100%;margin-bottom:6px">
+      <button id="bindGo">ผูกบัญชี</button> <span id="bindMsg" class="note"></span></div>
     <div id="sndset"><div class="note" style="margin:10px 0 4px;color:var(--gold)">เสียง</div>
       <div class="opt vol"><span>เสียงรวม</span><input type="range" min="0" max="100" step="1" data-k="master"><output></output></div>
       <div class="opt vol"><span>เพลง</span><input type="range" min="0" max="100" step="1" data-k="music"><output></output></div>

@@ -1,5 +1,5 @@
 'use strict';
-// ============================================================ LUMIRA ONLINE — HUD helpers
+// ============================================================ ELYNDRA ONLINE — HUD helpers
 // Original 16x16 pixel icons drawn in code (no third-party art), responsive UI scale and player settings.
 (function () {
   // ---------------------------------------------------------- icons
