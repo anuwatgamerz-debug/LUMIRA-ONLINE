@@ -309,7 +309,7 @@ function onMsg(m) {
     case 'bindres': $('bindMsg').textContent = m.m; if (m.ok) { store.set('ely_guest', null); $('bindP').value = ''; } break;
     case 'err': if (m.code === 'session') { const g = store.get('ely_guest'); if (mode === 'guest' && g) store.set('ely_guest', null); else store.set('ely_session', null); }
       if (typeof setBusy === 'function' && loginBusy) { setBusy(false); loginErr(m.m); break; } $('err').textContent = m.m; if (me) log(m.m, '#ff8b8b'); break;
-    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; { const L = $('login'); setBusy(true, 'กำลังเข้าสู่โลก Elyndra...'); L.classList.add('leaving'); setTimeout(() => { L.style.display = 'none'; }, 560); loginBusy = false; } $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked && mode === 'login') localStorage.setItem('lmo_u', $('u').value.trim().toLowerCase()); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6;
+    case 'welcome': myId = m.id; ITEMS = m.items; MOBN = m.mobs; { const L = $('login'); setBusy(true, 'กำลังเข้าสู่โลก Elyndra...'); L.classList.add('leaving'); setTimeout(() => { L.style.display = 'none'; }, 560); loginBusy = false; } $('credit').style.display = 'none'; $('hud').style.display = 'block'; HUD.layout(); renderLog(); try { if ($('rem').checked && mode === 'login') localStorage.setItem('lmo_u', $('u').value.trim().toLowerCase()); } catch (e) { } for (const k in MOBN) { const sp = MOBN[k].spr; if (!sp) img('m_' + k); else if (!sp.startsWith('proc:')) img(sp); } SK = m.skills || {}; MELEE_R = m.melee || 1.6; if (V) V.bind(m.vfx);
       QDEF = m.quests || {}; GUIDE = m.guide || null; CLSDEF = m.classes || {}; WORLD = m.world || null; RECIPES = m.recipes || {}; RARITY = m.rarity || []; img('h_knight_m'); img('h_knight_f'); break;
     case 'map': { const first = !map; map = m.map; snd('map', map, first); } ents.clear(); ghosts.length = 0; cam.x = (m.x + 0.5) * TP; cam.y = (m.y + 0.5) * TP; $('mmn').textContent = map.name; $('bmn').textContent = map.name; if ($('mm').classList.contains('art')) fitText($('mmn')); closeWins(); clearTarget(); bakeMap(map); for (const n of map.npcs) { if (n.look && typeof n.look === 'object') img(heroOf(n.look)); else if (NPC_SPR[n.look]) img(NPC_SPR[n.look]); } for (const k in nodeCd) delete nodeCd[k]; break;
     case 'me': { const prev = me; me = m.c; updHud(); snd('me', prev, me); break; }
@@ -381,23 +381,61 @@ function drawDevice(d, tn) {
   ctx.globalAlpha = 1; ctx.fillStyle = c; for (let j = 0; j < 8; j++) { const a = j / 8 * 6.283; ctx.fillRect(Math.round(x + Math.cos(a) * 7), Math.round(y + Math.sin(a) * 3), 2, 2); }
   R(ctx, x - 2, y - 2, 4, 3, d.kind === 'mine' ? '#e8fbff' : '#5a4020');
 }
+// ---- skill VFX (public/vfx.js): which skill a hit belongs to comes from the caster's last cast
+const V = window.VFX || null, lastCast = new Map(), projAt = new Map(), multiHit = new Map();
+if (V) V.init({ ent: id => ents.get(id), me: () => myId, isPlayer: id => { const e = ents.get(id); return !!(e && e.kind === 'p'); },
+  party: id => { const e = ents.get(id); return !!(e && e.kind === 'p' && e.party && typeof PARTY !== 'undefined' && PARTY && e.party === PARTY.id); },
+  boss: id => { const e = ents.get(id); return !!(e && e.kind === 'm' && MOBN[e.type] && (MOBN[e.type].boss || MOBN[e.type].elite)); } });
+// a heal / buff that a registry skill just played its own effect for: skip the generic sparkles
+function vfxSelf(id, t) { const c = lastCast.get(id), b = c && t - c.t < 400 + c.ms && V && V.of(c.s); return !!(b && b[0]); }
+// returns true when the hit was drawn by the registry (false = fall back to the old slash for unregistered skills)
+function vfxHit(m, a, wt, delay, t) {
+  const o = { from: m.from, to: m.to, owner: m.from };
+  if (!m.dmg) { V.play('miss.whiff', o); return true; } // MISS: a whiff, never a full impact
+  if (m.how === 'absorb') { V.play('block.spark', o); return true; } // barrier / block: deflect spark
+  let id;
+  if (m.skill) {
+    const c = lastCast.get(m.from), b = c && t - c.t < 700 + c.ms && V.of(c.s);
+    if (!b) return false; // second-class skills keep their current effect until their own VFX phase
+    id = b[2]; const pa = projAt.get(m.from + ':' + m.to); if (pa && pa > t - 60) delay = Math.max(delay, pa - t);
+    const k = m.from + ':' + m.to + ':' + c.s, prev = multiHit.get(k), idx = prev && t - prev.t < 80 ? prev.n + 1 : 0; // multi-hit skills: one visible strike each
+    multiHit.set(k, { t: idx ? prev.t : t, n: idx }); if (multiHit.size > 200) multiHit.clear(); if (projAt.size > 200) projAt.clear();
+    o.alt = idx; delay += idx * 110;
+  } else id = a && a.kind === 'm' ? 'atk.mob' : V.attack(wt);
+  o.delay = delay; if (id) V.play(id, o);
+  if (m.crit) V.play('crit.flash', { to: m.to, owner: m.from, delay });
+  return true;
+}
 function onFx(m) {
   const t = performance.now();
   if (fx.length > 300) fx.splice(0, fx.length - 300);
   if (m.k === 'hit') {
     const e = ents.get(m.to); const a = ents.get(m.from);
     if (a) { a.atkT = now(); if (e) face(a, e); }
-    if (a && e && a.kind === 'p' && a.wpn && ITEMS[a.wpn] && ITEMS[a.wpn].wt === 'bow' && Math.hypot(a.x - e.x, a.y - e.y) > 1.8) fx.push(fxNew({ k: 'proj', from: m.from, to: m.to, x: a.x, y: a.y, t, col: '#e8d9a8' }));
+    const wt = a && a.kind === 'p' && a.wpn && ITEMS[a.wpn] ? ITEMS[a.wpn].wt : '';
+    let delay = 0;
+    if (a && e && a.kind === 'p' && !m.skill && !m.dot && Math.hypot(a.x - e.x, a.y - e.y) > 1.8) { // ranged basic attack: the shot flies first
+      if (V) { const pj = V.attackProj(wt); if (pj) delay = V.play(pj, { from: m.from, to: m.to, owner: m.from }); }
+      else if (wt === 'bow') fx.push(fxNew({ k: 'proj', from: m.from, to: m.to, x: a.x, y: a.y, t, col: '#e8d9a8' }));
+    }
     if (m.from === myId) { lastHit = m.to; lastMyHitT = t; }
     if (!e) return;
     e.hitT = now();
     if (m.dot) { addNum(e, m.to, '' + m.dmg, DOT_COL[m.dot] || '#9fe07a', false); return; } // damage over time: small coloured numbers, no slash
-    if (m.how === 'evade') { addNum(e, m.to, 'หลบ!', '#9fe7ff', true); return; }
+    if (m.how === 'evade') { addNum(e, m.to, 'หลบ!', '#9fe7ff', true); if (V) V.play('evade.whiff', { from: m.from, to: m.to, owner: m.from }); return; }
     addNum(e, m.to, m.dmg ? (m.crit ? 'CRIT ' + m.dmg : '' + m.dmg) : 'MISS', m.to === myId ? '#ff6b6b' : m.crit ? '#ffd34d' : m.skill ? '#ff9f43' : m.dmg ? '#ffffff' : '#b9c3d6', m.crit || m.skill);
-    if (m.dmg) { e.hurtT = now(); fx.push(fxNew({ k: 'slash', x: e.x, y: e.y, t, skill: m.skill, crit: m.crit, r: Math.random() })); }
+    if (m.dmg) e.hurtT = now();
+    if (!(V && vfxHit(m, a, wt, delay, t)) && m.dmg) fx.push(fxNew({ k: 'slash', x: e.x, y: e.y, t, skill: m.skill, crit: m.crit, r: Math.random() }));
   } else if (m.k === 'cast') {
-    const a = ents.get(m.id), e = ents.get(m.to), sk = SK[m.s];
+    const a = ents.get(m.id), e = ents.get(m.to), sk = SK[m.s], b = V && V.of(m.s);
     if (a) { a.atkT = a.castT = now(); if (e) face(a, e); fx.push(fxNew({ k: 'sname', id: m.id, v: sk ? sk.th : m.s, t })); }
+    lastCast.set(m.id, { s: m.s, t, ms: m.ms || 0 });
+    if (b) { // registry effects (beginner + first class): cast on the caster, projectile, area — hits come with the server's hit
+      if (b[0]) V.play(b[0], { on: m.id, from: m.id, to: m.to || 0, owner: m.id });
+      if (b[1] && m.to) { const tr = V.play(b[1], { from: m.id, to: m.to, owner: m.id }); if (tr) projAt.set(m.id + ':' + m.to, t + tr); }
+      if (b[3]) V.play(b[3], { on: m.id, owner: m.id, r: b[4] || 2 });
+      return;
+    }
     const kind = sk && sk.fx || (m.s === 'bolt' ? 'bolt' : m.s === 'cleave' ? 'ring' : '');
     if (m.x != null) fx.push(fxNew({ k: 'aoe2', x: m.x, y: m.y, r: (sk && sk.r) || 2, ms: Math.max(350, m.ms || 0), t, col: SKCOL[sk && sk.element] || '#7fd4ff' })); // area on the target
     else if (sk && sk.tier === 2 && sk.type === 'area') fx.push(fxNew({ k: 'aoe2', x: a ? a.x : 0, y: a ? a.y : 0, r: sk.range || 2, ms: 380, t, col: SKCOL[sk.element] || '#ffd34d', on: m.id }));
@@ -408,11 +446,11 @@ function onFx(m) {
   else if (m.k === 'lvup') fx.push(fxNew({ k: 'lvup', id: m.id, t, cls: m.cls }));
   else if (m.k === 'mshot') fx.push(fxNew({ k: 'proj', from: m.from, to: m.to, x: 0, y: 0, t, col: m.magic ? '#c49bff' : '#d8c8a8' }));
   else if (m.k === 'mheal') { fx.push(fxNew({ k: 'heal', id: m.to, t })); const e = ents.get(m.to); if (e && m.v) addNum(e, m.to, '+' + m.v, '#7dff8a', false); }
-  else if (m.k === 'buff' || m.k === 'gather') fx.push(fxNew({ k: 'heal', id: m.id, t, buff: 1 }));
+  else if (m.k === 'buff' || m.k === 'gather') { if (!vfxSelf(m.id, t)) fx.push(fxNew({ k: 'heal', id: m.id, t, buff: 1 })); }
   else if (m.k === 'phase') fx.push(fxNew({ k: 'ring', id: m.id, t, col: '#ff4d4d' }));
   else if (m.k === 'aoe') fx.push(fxNew({ k: 'aoe', x: m.x, y: m.y, r: m.r, ms: m.ms, t }));
   else if (m.k === 'heal') {
-    fx.push(fxNew({ k: 'heal', id: m.id, t }));
+    if (!vfxSelf(m.id, t)) fx.push(fxNew({ k: 'heal', id: m.id, t }));
     const e = ents.get(m.id);
     if (e && m.v > 0) addNum(e, m.id, '+' + m.v, '#7dff8a', false);
     if (e && m.sp > 0) addNum(e, m.id, '+' + m.sp + ' SP', '#8fc8ff', false);
@@ -882,7 +920,7 @@ function frame(t) {
   // portals: magic circles
   for (const p of portals) drawMagicCircle(p.x, p.y, tn);
   if (clickMark && t - clickMark.t < 600) { const a = (t - clickMark.t) / 600; ctx.fillStyle = `rgba(255,236,150,${1 - a})`; const cx = clickMark.x * TP + 16, cy = clickMark.y * TP + 16, r = Math.round(4 + a * 8); ctx.fillRect(cx - r, cy, 3, 1); ctx.fillRect(cx + r - 2, cy, 3, 1); ctx.fillRect(cx, cy - r, 1, 3); ctx.fillRect(cx, cy + r - 2, 1, 3); }
-  labels.length = 0;
+  labels.length = 0; if (V) V.frame();
   const list = [];
   for (const p of props) if (p.x > vx0 - 140 && p.x < vx1 + 140 && p.y > vy0 && p.y < vy1 + 60) list.push({ y: p.sort ?? p.y, f: () => { if (p.sh) shadow(p.x, p.y, p.sh); if (!drawProp(p.n, p.x, p.y, p.tree ? canopyAlpha(p) : 1) && p.fb && META.px[p.fb]) { if (p.fsh) shadow(p.x, p.y - 4, p.fsh); drawProp(p.fb, p.x, p.y + (p.fy || 0) - (p.tree ? 4 : 0)); } } });
   for (const n of map.npcs) {
@@ -914,6 +952,7 @@ function frame(t) {
       if (sc !== 1) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); drawChar(nm, an, at, e.row ?? 2, 0, 0); ctx.restore(); } else drawChar(nm, an, at, e.row ?? 2, x, y);
       if (fl) ctx.filter = 'none';
       const info = MOBN[e.type]; const hh = Math.round((e.type === 'kingjel' ? 92 : (META.lpc[nm] ? 56 : 34)) * (e.type === 'kingjel' ? 1 : sc));
+      if (V && e.st) V.status(ctx, x, y, hh, e.st, tn); // poison bubbles, burn, stun stars, slow ring ...
       if (id === selected || e.tg === myId || (e.hitT && tn - e.hitT < 4) || (info && (info.boss || info.elite))) hpBar(x, y - hh, e.hp / e.maxhp, big ? 40 : 22, '#e5484d'); // in combat / targeted / bosses
       if (info && HUD.S.names) labels.push([x, y + 6, info.elite ? `★ ${info.n}` : `${info.n}`, info.boss ? '#ff8b8b' : info.elite ? '#ffd34d' : '#ffffff', info.boss || info.elite ? 'boss' : 'mob', info.lv]);
     } });
@@ -923,6 +962,7 @@ function frame(t) {
       if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, false);
       lastPaperSet = null;
       drawHero(e.look, an, at, e.row ?? 2, x, y, 1, e.head, ctx, { wpn: e.wpn, arm: e.arm, cls: e.cls });
+      if (V && id === myId && me) V.buffs(ctx, x, y, me.buffs, tn); // my shield / wind / veil, faint so the hero stays visible
       e.top = lastPaperSet === 'hd' || lastPaperSet === 'lpc' ? heroTopOf(lastPaperSet, typeof e.head === 'string' ? e.head : (e.head && ITEMS[e.head] && ITEMS[e.head].vis) || '') : 60;
       if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, true);
       hpBar(x, y + 4, e.hp / e.maxhp, 24, '#58d65a');
@@ -935,7 +975,8 @@ function frame(t) {
     const x = (g.x + 0.5) * TP, y = (g.y + 0.5) * TP + 12;
     list.push({ y: y - 1, f: () => { const sc = mobScale(g.type), nm = mobSprite(g.type) || 'm_' + g.type; if (sc !== 1) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); drawChar(nm, 'hurt', age, g.row ?? 2, 0, 0, Math.min(1, (1.4 - age) / 0.5)); ctx.restore(); } else drawChar(nm, 'hurt', age, g.row ?? 2, x, y, Math.min(1, (1.4 - age) / 0.5)); } });
   }
-  for (const f of fx) if (f.k === 'aoe') drawAoe(f, t - f.t); // boss slam warnings lie on the ground, under everyone
+  if (V) V.drawGround(ctx); // skill circles / dust on the ground
+  for (const f of fx) if (f.k === 'aoe') drawAoe(f, t - f.t); // boss slam warnings lie on the ground, under everyone — drawn after the skill VFX so nothing hides them (no quality setting turns them off)
   for (const f of fx) if (f.k === 'aoe2') drawSkillArea(f, t - f.t);
   for (const [id, d] of DEVS) { if (t > d.until) { DEVS.delete(id); continue; } drawDevice(d, tn); }
   list.sort((a, b) => a.y - b.y);
@@ -990,6 +1031,7 @@ function frame(t) {
       ctx.globalAlpha = 1;
     }
   }
+  if (V) V.draw(ctx); // skill VFX above the characters
   // ---- overlay text at device resolution
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   drawLight(t);

@@ -30,3 +30,5 @@ server-crash.log
 __pycache__/
 *.pyc
 RESTART-REQUEST
+
+tests/out/

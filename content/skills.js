@@ -38,6 +38,19 @@ const SKILLS = {
 };
 // sound ids (public/audio-registry.js) per skill: castSound when used, hitSound when it lands
 const SOUNDS = { bash: ['skill_slash_cast', 'skill_slash_hit'], heal: ['skill_heal_cast'], bolt: ['skill_lightning_cast', 'skill_lightning_hit'], focus: ['skill_buff_cast'], cleave: ['skill_slash_cast', 'skill_bomb_hit'], twin: ['skill_slash_cast', 'skill_slash_hit'], v_wall: ['skill_buff_cast'], v_strike: ['skill_slash_cast', 'skill_slash_hit'], v_charge: ['skill_teleport', 'skill_slash_hit'], r_pierce: ['bow_shoot', 'arrow_hit'], r_volley: ['bow_shoot', 'arrow_hit'], r_step: ['skill_wind_cast'], a_ember: ['skill_fire_cast', 'skill_fire_hit'], a_frost: ['skill_ice_cast', 'skill_ice_hit'], a_nova: ['skill_fire_cast', 'skill_bomb_hit'], c_mend: ['skill_heal_cast'], c_smite: ['skill_holy_cast', 'skill_holy_hit'], c_bless: ['skill_holy_cast'], g_back: ['dagger_swing', 'skill_slash_hit'], g_venom: ['dagger_swing', 'skill_poison_hit'], g_veil: ['skill_stealth'], t_hammer: ['mace_swing', 'heavy_hit'], t_bomb: ['skill_fire_cast', 'skill_bomb_hit'], t_repair: ['skill_buff_cast'] };
+// visual effects: ids from the VFX registry (public/vfx.js) — skills never point at image files.
+// [castVfx (on the caster), projectileVfx (caster -> target), hitVfx (each confirmed hit), areaVfx (the area itself)]
+const VFX = {
+  bash: ['cast.glint', 0, 'bash.hit', 0], heal: ['heal.self', 0, 0, 0], bolt: ['bolt.cast', 'bolt.proj', 'bolt.hit', 0], focus: ['focus.self', 0, 0, 0],
+  cleave: [0, 0, 'cleave.hit', 'cleave.area'], twin: [0, 0, 'twin.hit', 0],
+  v_wall: ['vg.bulwark', 0, 0, 0], v_strike: ['vg.taunt', 0, 'vg.strike', 0], v_charge: ['vg.charge', 0, 'vg.charge.hit', 0],
+  r_pierce: ['rg.draw', 'rg.pierce', 'rg.pierce.hit', 0], r_volley: ['rg.draw', 'rg.volley', 'rg.volley.hit', 0], r_step: ['rg.windstep', 0, 0, 0],
+  a_ember: ['ar.cast.fire', 'ar.ember', 'ar.ember.hit', 0], a_frost: ['ar.cast.ice', 'ar.frost', 'ar.frost.hit', 0], a_nova: ['ar.cast.nova', 0, 'ar.nova.hit', 'ar.nova'],
+  c_mend: ['cl.mend', 0, 0, 0], c_smite: ['cl.cast', 'cl.smite', 'cl.smite.hit', 0], c_bless: ['cl.bless', 0, 0, 0],
+  g_back: ['rq.shadow', 0, 'rq.fang', 0], g_venom: [0, 0, 'rq.venom', 0], g_veil: ['rq.veil', 0, 0, 0],
+  t_hammer: [0, 't.hammer', 't.hammer.hit', 0], t_bomb: [0, 0, 't.bomb.hit', 't.bomb'], t_repair: ['t.repair', 0, 0, 0],
+};
+for (const id in VFX) { const [castVfx, projectileVfx, hitVfx, areaVfx] = VFX[id]; Object.assign(SKILLS[id], { castVfx: castVfx || undefined, projectileVfx: projectileVfx || undefined, hitVfx: hitVfx || undefined, areaVfx: areaVfx || undefined }); }
 for (const id in SKILLS) { SKILLS[id].id = id; if (SOUNDS[id]) { SKILLS[id].castSound = SOUNDS[id][0]; if (SOUNDS[id][1]) SKILLS[id].hitSound = SOUNDS[id][1]; } }
 // ---- second-class skills (content/skills2.js): sounds picked from what the skill does
 const { SKILLS2 } = require('./skills2');

@@ -862,11 +862,13 @@ const GUIDE = (() => {
 const SOC = require('./engine/social')({ players, send, sys, getDb: () => db, setDirty: () => { dirty = true; }, ITEMS, addItem, countItem, takeItem, me, MAPS, itemsChanged: p => Q.onItems(p) });
 setInterval(() => SOC.tick(), 500);
 // static game data the client needs once (monster visuals, world map, quest texts, classes, recipes)
+// skill -> visual effect ids for every skill (other players' skills too), from content/skills.js
+const VFX_BIND = Object.fromEntries(Object.entries(SKILLS).filter(([, s]) => s.castVfx || s.projectileVfx || s.hitVfx || s.areaVfx).map(([id, s]) => [id, [s.castVfx || 0, s.projectileVfx || 0, s.hitVfx || 0, s.areaVfx || 0, s.areaVfx ? s.r || s.range || 2 : 0]]));
 function welcomeData(c) {
   return {
     items: ITEMS, rarity: C.RARITY,
     mobs: Object.fromEntries(Object.entries(MOBS).map(([k, v]) => [k, { n: v.n, lv: v.lv, boss: !!v.boss, elite: !!v.elite, aggro: !!v.aggro, family: v.family, fam: C.FAMILIES[v.family] ? C.FAMILIES[v.family].th : '', behavior: v.behavior, element: v.element, size: v.size, spr: v.spr, tint: v.tint, scale: v.scale, range: v.range, d: v.d, bgm: v.bgm, spawnSound: v.spawnSound, idleSound: v.idleSound, attackSound: v.attackSound, hitSound: v.hitSound, deathSound: v.deathSound }])),
-    skills: skillDefs(c), melee: MELEE,
+    skills: skillDefs(c), melee: MELEE, vfx: VFX_BIND,
     classes: Object.fromEntries(Object.values(CLASSES).map(k => [k.id, { th: k.th, en: k.en, tier: k.tier, parent: k.parent, reqLv: k.reqLv, status: k.status, role: k.role, d: k.d }])),
     world: { regions: C.REGIONS, maps: C.MAPS_META, links: C.LINKS },
     quests: Object.fromEntries(Object.values(QUESTS).map(q => [q.id, { th: q.th, type: q.type, giver: q.giver, stages: q.stages.map(s => ({ k: s.k, d: s.d, n: s.n || 1, npc: typeof s.npc === 'string' ? s.npc : undefined, mob: s.mob, item: s.item, node: s.node, map: s.map, x: s.x, y: s.y, r: s.r })), lv: q.req.lv || 1 }])),

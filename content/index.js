@@ -66,6 +66,7 @@ function validate(MAPS) {
   for (const r of Object.values(RECIPES)) for (const [it] of [r.out, ...r.in]) if (!itemOk(it)) err.push(`recipe ${r.id}: unknown item ${it}`);
   for (const d of Object.values(MOBS)) for (const t of DROP_TIERS) for (const [it] of d.drops[t] || []) if (!itemOk(it)) err.push(`drops ${d.id}: unknown item ${it}`);
   for (const s of Object.values(SKILLS)) if (s.cls && !CLASSES[s.cls]) err.push(`skill ${s.id}: unknown class`);
+  { const { VFX_DEF } = require('../public/vfx.js'); for (const s of Object.values(SKILLS)) for (const k of ['castVfx', 'projectileVfx', 'hitVfx', 'areaVfx']) if (s[k] && !VFX_DEF[s[k]]) err.push(`skill ${s.id}: unknown ${k} ${s[k]}`); }
   for (const it of Object.values(ITEMS)) for (const c of it.cls || []) if (!CLASSES[c]) err.push(`item ${it.id}: unknown class ${c}`);
   const npcOk = v => typeof v === 'string' ? npcKey.has(v) : Object.values(v).every(x => npcKey.has(x));
   for (const qd of Object.values(QUESTS)) {

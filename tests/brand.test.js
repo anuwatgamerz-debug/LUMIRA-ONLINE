@@ -81,6 +81,7 @@ async function run(srv, R) {
       ok(/^ELYNDRA ONLINE/.test(r.title) && r.logo && !/LUMIRA/i.test(r.txt), 'login page: ELYNDRA title + logo, no LUMIRA text', r.title);
       ok(/login-bg-mobile/.test(r.bg) && !r.google && r.guest, 'portrait uses the mobile background; Google hidden (not configured); Guest offered', r.bg);
       await pg.click('#altGuest'); await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block', null, { timeout: 8000 }).catch(() => { });
+      await pg.waitForFunction(() => localStorage.getItem('ely_guest'), null, { timeout: 4000 }).catch(() => { }); // the token message can land just after the HUD opens
       const gs = await pg.evaluate(() => ({ g: localStorage.getItem('ely_guest'), all: JSON.stringify(localStorage) }));
       ok(!!gs.g && /guest:/.test(gs.g) && !/pass1234/i.test(gs.all), 'Guest button logs in and keeps only a token on the device', JSON.stringify(gs));
       await pg.context().close();

@@ -1,0 +1,172 @@
+{
+ "slash_arc": {
+  "file": "sword/slash_arc.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/slash_02.png"
+ },
+ "slash_wide": {
+  "file": "sword/slash_wide.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/slash_04.png"
+ },
+ "slash_thin": {
+  "file": "sword/slash_thin.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/slash_03.png"
+ },
+ "claw": {
+  "file": "melee/claw.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/scratch_01.png"
+ },
+ "star_hit": {
+  "file": "impact/star_hit.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/star_07.png"
+ },
+ "flash": {
+  "file": "impact/flash.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/star_09.png"
+ },
+ "burst": {
+  "file": "impact/burst.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/scorch_01.png"
+ },
+ "spark": {
+  "file": "impact/spark.webp",
+  "size": 32,
+  "source": "source/kenney_particle_pack/star_04.png"
+ },
+ "compass": {
+  "file": "impact/compass.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/magic_03.png"
+ },
+ "dust": {
+  "file": "environment/dust.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/smoke_04.png"
+ },
+ "flame": {
+  "file": "fire/flame.webp",
+  "size": 48,
+  "source": "source/kenney_particle_pack/flame_05.png"
+ },
+ "blast": {
+  "file": "fire/blast.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/fire_01.png"
+ },
+ "muzzle": {
+  "file": "fire/muzzle.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/muzzle_02.png"
+ },
+ "needle": {
+  "file": "ice/needle.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/trace_06.png"
+ },
+ "crystal": {
+  "file": "ice/crystal.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/magic_04.png"
+ },
+ "bolt": {
+  "file": "lightning/bolt.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/spark_05.png"
+ },
+ "arc": {
+  "file": "lightning/arc.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/spark_01.png"
+ },
+ "runes": {
+  "file": "holy/runes.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/magic_02.png"
+ },
+ "halo": {
+  "file": "holy/halo.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/circle_02.png"
+ },
+ "glow": {
+  "file": "holy/glow.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/light_01.png"
+ },
+ "starlight": {
+  "file": "holy/starlight.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/star_06.png"
+ },
+ "ring": {
+  "file": "buff/ring.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/circle_03.png"
+ },
+ "rune_arc": {
+  "file": "buff/rune_arc.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/magic_01.png"
+ },
+ "barrier": {
+  "file": "shield/barrier.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/light_03.png"
+ },
+ "shell": {
+  "file": "shield/shell.webp",
+  "size": 96,
+  "source": "source/kenney_particle_pack/circle_01.png"
+ },
+ "trail": {
+  "file": "arrow/trail.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/trace_01.png"
+ },
+ "twirl": {
+  "file": "wind/twirl.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/twirl_01.png"
+ },
+ "streak": {
+  "file": "wind/streak.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/trace_02.png"
+ },
+ "smoke": {
+  "file": "dark/smoke.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/smoke_07.png"
+ },
+ "bubble": {
+  "file": "poison/bubble.webp",
+  "size": 32,
+  "source": "source/kenney_particle_pack/circle_05.png"
+ },
+ "sparkle": {
+  "file": "heal/sparkle.webp",
+  "size": 48,
+  "source": "source/kenney_particle_pack/star_01.png"
+ },
+ "splash": {
+  "file": "alchemy/splash.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/dirt_01.png"
+ },
+ "weld": {
+  "file": "mechanical/weld.webp",
+  "size": 64,
+  "source": "source/kenney_particle_pack/spark_07.png"
+ },
+ "stun": {
+  "file": "status/stun.webp",
+  "size": 32,
+  "source": "source/kenney_particle_pack/symbol_02.png"
+ }
+}
