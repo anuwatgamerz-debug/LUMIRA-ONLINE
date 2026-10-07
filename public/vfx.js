@@ -105,7 +105,124 @@ const VFX_DEF = {
   't.bomb':      { size: 'L', ms: 620, layers: [{ m: 'ground', tex: 'splash', col: '#60d030', rr: 0.7, ms: 600, s0: 0.5, s1: 1, a: 0.45 }, { m: 'burst', tex: 'blast', col: '#ff7a20', n: 4, rr: 0.4, sz: 26, ms: 450, a: 0.9 }, { m: 'pop', tex: 'flash', col: '#ffd060', sz: 28, ms: 200, add: 1, q: 1 }, { m: 'burst', tex: 'bubble', col: '#80e040', n: 8, rr: 0.5, sz: 8, ms: 600, q: 1 }] },
   't.bomb.hit':  { size: 'S', ms: 220, layers: [{ m: 'pop', tex: 'spark', col: '#ffb030', sz: 22, ms: 200 }] },
   't.repair':    { size: 'M', ms: 620, layers: [{ m: 'ground', tex: 'ring', col: '#3aa0e0', sz: 48, ms: 600, s0: 0.5, s1: 1, a: 0.75 }, { m: 'burst', tex: 'weld', col: '#ffb040', n: 4, r: 16, sz: 22, ms: 500 }, { m: 'rise', tex: 'sparkle', col: '#ffc020', n: 6, r: 12, sz: 10, ms: 600, q: 1 }] },
+
+  // ================================================================ Phase 2: second classes (each line keeps its first class's colours, grown stronger)
+  // ---------------------------------------------------------------- Knight: royal blue / gold / steel, holy weight
+  'kn.cast':      { size: 'S', ms: 220, layers: [{ m: 'pop', tex: 'starlight', col: '#ffd34d', sz: 22, ms: 220, y: -22, spin: 3 }] },
+  'kn.bash.hit':  { size: 'M', ms: 380, layers: [{ m: 'pop', tex: 'shell', col: '#4a7ae8', sz: 46, ms: 340, s0: 0.6, s1: 1.15, aim: 1 }, { m: 'pop', tex: 'flash', col: '#ffd34d', sz: 40, ms: 260, add: 1 }, { m: 'burst', tex: 'starlight', col: '#ffe48a', n: 5, r: 20, sz: 10, ms: 380, q: 1 }] },
+  'kn.stance':    { size: 'M', ms: 760, layers: [{ m: 'ground', tex: 'runes', col: '#e0b030', sz: 60, ms: 740, spin: 1.2, s0: 0.5, s1: 1, a: 0.85 }, { m: 'pop', tex: 'barrier', col: '#7fa8ff', sz: 54, ms: 700, a: 0.55, y: -14 }, { m: 'rise', tex: 'spark', col: '#ffd34d', n: 7, r: 14, sz: 9, ms: 740, q: 1 }] },
+  'kn.taunt':     { size: 'L', ms: 620, layers: [{ m: 'ground', tex: 'ring', col: '#ff5a3a', rr: 1, ms: 600, s0: 0.15, s1: 1, a: 0.8 }, { m: 'ground', tex: 'ring', col: '#ffd34d', rr: 0.7, ms: 520, d: 80, s0: 0.15, s1: 1, a: 0.6, q: 1 }, { m: 'pop', tex: 'compass', col: '#ff6a3a', sz: 30, ms: 500, y: -40, spin: 3 }] },
+  'kn.iron':      { size: 'M', ms: 700, layers: [{ m: 'pop', tex: 'shell', col: '#9ea8c0', sz: 58, ms: 680, s0: 0.7, s1: 1.05, a: 0.75, y: -12 }, { m: 'ground', tex: 'shell', col: '#5a7ac0', sz: 54, ms: 680, a: 0.7 }, { m: 'burst', tex: 'spark', col: '#e8ecf8', n: 6, r: 20, sz: 9, ms: 500, q: 1 }] },
+  'kn.wave':      { size: 'L', ms: 640, layers: [{ m: 'ground', tex: 'ring', col: '#4a90ff', rr: 1, ms: 600, s0: 0.2, s1: 1.05, a: 0.8 }, { m: 'ground', tex: 'shell', col: '#ffd34d', rr: 0.6, ms: 500, s0: 0.4, s1: 1, a: 0.55 }, { m: 'burst', tex: 'shell', col: '#7fb0ff', n: 6, rr: 0.5, sz: 18, ms: 560, q: 1 }] },
+  'kn.wave.hit':  { size: 'S', ms: 260, layers: [{ m: 'pop', tex: 'shell', col: '#6a9aff', sz: 28, ms: 240, s0: 0.6, s1: 1.1 }] },
+  // ---------------------------------------------------------------- Berserker: blood red / ember orange, raw force
+  'bs.cast':      { size: 'S', ms: 240, layers: [{ m: 'pop', tex: 'flame', col: '#ff3a2a', sz: 22, ms: 240, y: -20 }] },
+  'bs.rage.hit':  { size: 'M', ms: 380, layers: [{ m: 'slash', tex: 'slash_wide', col: '#ff3a2a', sz: 60, ms: 340 }, { m: 'pop', tex: 'blast', col: '#ff7a20', sz: 44, ms: 320, s0: 0.5, s1: 1.15, a: 0.85 }, { m: 'ground', tex: 'dust', col: '#8a5a4a', sz: 40, ms: 380, a: 0.5, q: 1 }] },
+  'bs.whirl':     { size: 'L', ms: 560, layers: [{ m: 'orbit', tex: 'slash_wide', col: '#ff4a30', sz: 50, ms: 440 }, { m: 'ground', tex: 'twirl', col: '#c03020', rr: 0.9, ms: 540, spin: 9, a: 0.6 }, { m: 'ground', tex: 'dust', col: '#8a6a5a', rr: 0.8, ms: 540, a: 0.45, q: 1 }] },
+  'bs.whirl.hit': { size: 'S', ms: 220, layers: [{ m: 'slash', tex: 'slash_thin', col: '#ff6a40', sz: 36, ms: 210 }] },
+  'bs.fury':      { size: 'M', ms: 800, layers: [{ m: 'ground', tex: 'ring', col: '#ff3a1a', sz: 58, ms: 760, s0: 0.4, s1: 1, a: 0.85 }, { m: 'rise', tex: 'flame', col: '#ff5a20', n: 8, r: 14, sz: 14, ms: 780 }, { m: 'pop', tex: 'glow', col: '#ff3020', sz: 46, ms: 600, a: 0.5, y: -14, add: 1, q: 1 }] },
+  'bs.exec.hit':  { size: 'M', ms: 440, layers: [{ m: 'slash', tex: 'slash_wide', col: '#c01020', sz: 70, ms: 380 }, { m: 'pop', tex: 'flash', col: '#ffffff', sz: 46, ms: 220, add: 1 }, { m: 'burst', tex: 'spark', col: '#ff3a2a', n: 8, r: 26, sz: 10, ms: 420, q: 1 }] },
+  'bs.warcry':    { size: 'L', ms: 760, layers: [{ m: 'ground', tex: 'ring', col: '#ff8a20', sz: 90, ms: 700, s0: 0.15, s1: 1, a: 0.8 }, { m: 'pop', tex: 'burst', col: '#ff5a20', sz: 56, ms: 420, s0: 0.4, s1: 1.2, a: 0.8, y: -14 }, { m: 'rise', tex: 'spark', col: '#ffd34d', n: 8, r: 20, sz: 9, ms: 740, q: 1 }] },
+  // ---------------------------------------------------------------- Sharpshooter: gold / wind green, precision
+  'ss.draw':      { size: 'S', ms: 200, layers: [{ m: 'pop', tex: 'sparkle', col: '#ffd34d', sz: 20, ms: 200, y: -16 }] },
+  'ss.pierce':    { size: 'S', ms: 200, speed: 1.3, layers: [{ m: 'proj', tex: 'trail', col: '#ffd060', sz: 42, n: 3 }, { m: 'proj', tex: 'streak', col: '#fff0b0', sz: 26, n: 0, q: 1 }] },
+  'ss.pierce.hit':{ size: 'S', ms: 280, layers: [{ m: 'pop', tex: 'star_hit', col: '#ffd34d', sz: 36, ms: 240 }, { m: 'pop', tex: 'streak', col: '#ffffff', sz: 30, ms: 200, aim: 1, add: 1, q: 1 }] },
+  'ss.charge':    { size: 'M', ms: 480, layers: [{ m: 'ground', tex: 'compass', col: '#ffd34d', sz: 44, ms: 460, spin: 4, a: 0.85 }, { m: 'pop', tex: 'glow', col: '#ffe080', sz: 30, ms: 420, y: -18, add: 1 }] },
+  'ss.charged':   { size: 'M', ms: 240, speed: 1.1, layers: [{ m: 'proj', tex: 'trail', col: '#ffc020', sz: 50, n: 4 }, { m: 'proj', tex: 'sparkle', col: '#fff3a0', sz: 18, n: 2, add: 1, q: 1 }] },
+  'ss.charged.hit':{ size: 'M', ms: 400, layers: [{ m: 'pop', tex: 'blast', col: '#ffb020', sz: 50, ms: 380, s0: 0.5, s1: 1.2, a: 0.9 }, { m: 'pop', tex: 'flash', col: '#fff3a0', sz: 34, ms: 220, add: 1 }, { m: 'burst', tex: 'spark', col: '#ffd34d', n: 6, r: 22, sz: 9, ms: 380, q: 1 }] },
+  'ss.focus':     { size: 'M', ms: 700, layers: [{ m: 'ground', tex: 'compass', col: '#ffc020', sz: 54, ms: 680, spin: 2, s0: 0.6, s1: 1, a: 0.85 }, { m: 'rise', tex: 'sparkle', col: '#ffe080', n: 7, r: 12, sz: 10, ms: 680, q: 1 }] },
+  'ss.eagle':     { size: 'M', ms: 700, layers: [{ m: 'pop', tex: 'halo', col: '#7ad860', sz: 40, ms: 660, y: -30, s0: 0.5, s1: 1, a: 0.85 }, { m: 'rise', tex: 'streak', col: '#9ae070', n: 6, r: 14, sz: 16, ms: 660, q: 1 }] },
+  'ss.rain':      { size: 'L', ms: 900, layers: [{ m: 'ground', tex: 'ring', col: '#ffd060', rr: 1, ms: 860, s0: 0.5, s1: 1, a: 0.7 }, { m: 'burst', tex: 'trail', col: '#e0c070', n: 9, rr: 0.8, sz: 22, ms: 760, rot: 1.57 }, { m: 'ground', tex: 'dust', col: '#a08a60', rr: 0.8, ms: 860, a: 0.4, q: 1 }] },
+  'ss.rain.hit':  { size: 'S', ms: 200, layers: [{ m: 'pop', tex: 'star_hit', col: '#ffd060', sz: 24, ms: 190 }] },
+  // ---------------------------------------------------------------- Beasthunter: forest green / earth brown, traps and claws
+  'bh.cast':      { size: 'S', ms: 200, layers: [{ m: 'pop', tex: 'claw', col: '#7ac040', sz: 22, ms: 200, y: -16 }] },
+  'bh.snare':     { size: 'M', ms: 640, layers: [{ m: 'ground', tex: 'ring', col: '#c8a86a', rr: 1, ms: 620, s0: 0.4, s1: 1, a: 0.85 }, { m: 'ground', tex: 'runes', col: '#8a6a3a', rr: 0.7, ms: 620, spin: 2, a: 0.7, q: 1 }, { m: 'burst', tex: 'spark', col: '#e0c890', n: 5, r: 14, sz: 8, ms: 500, q: 1 }] },
+  'bh.mark.hit':  { size: 'S', ms: 340, layers: [{ m: 'pop', tex: 'compass', col: '#ff5a3a', sz: 30, ms: 320, spin: 4, y: -10 }, { m: 'pop', tex: 'claw', col: '#7ac040', sz: 30, ms: 220 }] },
+  'bh.ptrap':     { size: 'M', ms: 680, layers: [{ m: 'ground', tex: 'splash', col: '#60d030', rr: 0.9, ms: 660, s0: 0.5, s1: 1, a: 0.55 }, { m: 'rise', tex: 'bubble', col: '#80e040', n: 8, r: 18, sz: 8, ms: 660 }] },
+  'bh.instinct':  { size: 'M', ms: 720, layers: [{ m: 'ground', tex: 'twirl', col: '#5ab030', sz: 58, ms: 700, spin: 6, a: 0.8 }, { m: 'burst', tex: 'claw', col: '#8ad050', n: 4, r: 18, sz: 18, ms: 600 }, { m: 'rise', tex: 'streak', col: '#9ae070', n: 5, r: 12, sz: 14, ms: 700, q: 1 }] },
+  'bh.rapid':     { size: 'S', ms: 180, speed: 1.3, layers: [{ m: 'proj', tex: 'trail', col: '#80c050', sz: 30, n: 2 }] },
+  'bh.rapid.hit': { size: 'S', ms: 200, layers: [{ m: 'slash', tex: 'claw', col: '#7ac040', sz: 28, ms: 190 }] },
+  // ---------------------------------------------------------------- Elementalist: fire orange / ice blue / storm violet-white
+  'el.cast':      { size: 'M', ms: 420, layers: [{ m: 'ground', tex: 'rune_arc', col: '#5aa0ff', sz: 50, ms: 400, spin: 3.5, a: 0.9 }, { m: 'pop', tex: 'arc', col: '#bfe0ff', sz: 22, ms: 300, y: -20, rnd: 1, q: 1 }] },
+  'el.chain':     { size: 'S', ms: 240, speed: 0.9, layers: [{ m: 'proj', tex: 'arc', col: '#bfe0ff', sz: 24, n: 2, spin: 16 }, { m: 'proj', tex: 'sparkle', col: '#7fb8ff', sz: 16, n: 3, q: 1 }] },
+  'el.chain.hit': { size: 'M', ms: 340, layers: [{ m: 'pop', tex: 'bolt', col: '#9fd0ff', sz: 46, ms: 300, y: -8 }, { m: 'pop', tex: 'arc', col: '#ffffff', sz: 34, ms: 260, rnd: 1, add: 1 }, { m: 'burst', tex: 'spark', col: '#bfe0ff', n: 5, r: 18, sz: 8, ms: 320, q: 1 }] },
+  'el.frost':     { size: 'L', ms: 900, layers: [{ m: 'ground', tex: 'crystal', col: '#7fd0ff', rr: 1, ms: 860, s0: 0.4, s1: 1, a: 0.7, spin: 0.6 }, { m: 'ground', tex: 'ring', col: '#c4ecff', rr: 1, ms: 700, s0: 0.2, s1: 1, a: 0.7 }, { m: 'burst', tex: 'needle', col: '#a0e0ff', n: 8, rr: 0.6, sz: 18, ms: 700 }, { m: 'rise', tex: 'bubble', col: '#e0f6ff', n: 8, r: 26, sz: 6, ms: 860, q: 1 }] },
+  'el.frost.hit': { size: 'S', ms: 280, layers: [{ m: 'pop', tex: 'crystal', col: '#80d0ff', sz: 30, ms: 260, spin: 3 }] },
+  'el.shield':    { size: 'M', ms: 780, layers: [{ m: 'pop', tex: 'barrier', col: '#9ac8ff', sz: 56, ms: 740, a: 0.55, y: -14 }, { m: 'ground', tex: 'rune_arc', col: '#ff8a30', sz: 54, ms: 740, spin: 2, a: 0.7 }, { m: 'ground', tex: 'rune_arc', col: '#4ab0ff', sz: 44, ms: 740, spin: -3, a: 0.7, q: 1 }] },
+  'el.meteor':    { size: 'L', ms: 980, layers: [{ m: 'beam', tex: 'flame', col: '#ff7020', sz: 96, ms: 420, a: 0.95 }, { m: 'ground', tex: 'blast', col: '#ff5a10', rr: 1, ms: 700, d: 260, s0: 0.3, s1: 1.1, a: 0.85 }, { m: 'pop', tex: 'flash', col: '#ffd060', sz: 48, ms: 260, d: 280, add: 1 }, { m: 'burst', tex: 'flame', col: '#ff8a30', n: 8, rr: 0.6, sz: 18, ms: 700, d: 280, q: 1 }] },
+  'el.meteor.hit':{ size: 'S', ms: 300, layers: [{ m: 'pop', tex: 'blast', col: '#ff6a20', sz: 32, ms: 280, s0: 0.5, s1: 1.1 }] },
+  'el.surge':     { size: 'L', ms: 860, layers: [{ m: 'ground', tex: 'twirl', col: '#9a7aff', rr: 1, ms: 820, spin: 8, a: 0.75 }, { m: 'burst', tex: 'arc', col: '#bfe0ff', n: 7, rr: 0.7, sz: 22, ms: 700 }, { m: 'burst', tex: 'flame', col: '#ff8a30', n: 4, rr: 0.5, sz: 16, ms: 600, d: 120, q: 1 }] },
+  'el.surge.hit': { size: 'S', ms: 260, layers: [{ m: 'pop', tex: 'arc', col: '#c0a8ff', sz: 30, ms: 240, rnd: 1 }] },
+  // ---------------------------------------------------------------- Warlock: void violet / sickly green, shadow and curses
+  'wl.cast':      { size: 'M', ms: 420, layers: [{ m: 'ground', tex: 'runes', col: '#7a3ae0', sz: 48, ms: 400, spin: -2, a: 0.85 }, { m: 'pop', tex: 'smoke', col: '#4a1a6a', sz: 26, ms: 360, y: -18, a: 0.8, q: 1 }] },
+  'wl.bolt':      { size: 'S', ms: 280, speed: 0.6, layers: [{ m: 'proj', tex: 'smoke', col: '#5a2a8a', sz: 26, n: 4 }, { m: 'proj', tex: 'sparkle', col: '#c08aff', sz: 14, n: 0, add: 1, q: 1 }] },
+  'wl.bolt.hit':  { size: 'M', ms: 380, layers: [{ m: 'pop', tex: 'blast', col: '#7a3ae0', sz: 44, ms: 360, s0: 0.5, s1: 1.15, a: 0.85 }, { m: 'burst', tex: 'smoke', col: '#3a1450', n: 4, r: 16, sz: 18, ms: 380, a: 0.7, q: 1 }] },
+  'wl.curse.hit': { size: 'M', ms: 520, layers: [{ m: 'pop', tex: 'compass', col: '#9a5aff', sz: 36, ms: 500, spin: -3, y: -16 }, { m: 'rise', tex: 'smoke', col: '#4a1a6a', n: 4, r: 10, sz: 16, ms: 500, a: 0.7 }] },
+  'wl.drain.hit': { size: 'M', ms: 480, layers: [{ m: 'pop', tex: 'smoke', col: '#7a1a3a', sz: 36, ms: 440, a: 0.8 }, { m: 'rise', tex: 'bubble', col: '#ff4a6a', n: 6, r: 10, sz: 8, ms: 460 }, { m: 'pop', tex: 'sparkle', col: '#ff6a8a', sz: 20, ms: 360, at: 'src', add: 1, q: 1 }] },
+  'wl.mark.hit':  { size: 'S', ms: 420, layers: [{ m: 'pop', tex: 'runes', col: '#9a5aff', sz: 34, ms: 400, spin: 4, y: -10 }] },
+  'wl.nova':      { size: 'L', ms: 900, layers: [{ m: 'ground', tex: 'runes', col: '#6a2ad0', rr: 1, ms: 860, spin: -1.5, s0: 0.6, s1: 1, a: 0.9 }, { m: 'ground', tex: 'ring', col: '#2a0a3a', rr: 1, ms: 600, s0: 0.2, s1: 1.05, a: 0.8 }, { m: 'burst', tex: 'smoke', col: '#4a1a6a', n: 7, rr: 0.6, sz: 24, ms: 760, a: 0.75 }, { m: 'pop', tex: 'flash', col: '#c08aff', sz: 40, ms: 240, add: 1, q: 1 }] },
+  'wl.nova.hit':  { size: 'S', ms: 280, layers: [{ m: 'pop', tex: 'smoke', col: '#5a2a8a', sz: 30, ms: 260, a: 0.8 }] },
+  // ---------------------------------------------------------------- Priest: white / gold, pillars of light
+  'pr.heal':      { size: 'L', ms: 960, layers: [{ m: 'beam', tex: 'trail', col: '#ffe080', sz: 90, ms: 520, a: 0.9 }, { m: 'ground', tex: 'runes', col: '#f0c030', sz: 70, ms: 900, spin: 1.2, s0: 0.5, s1: 1, a: 0.9 }, { m: 'rise', tex: 'starlight', col: '#fff0a0', n: 10, r: 16, sz: 12, ms: 940 }, { m: 'pop', tex: 'glow', col: '#ffffff', sz: 50, ms: 600, a: 0.45, y: -14, add: 1, q: 1 }] },
+  'pr.barrier':   { size: 'L', ms: 900, layers: [{ m: 'ground', tex: 'halo', col: '#ffd34d', sz: 76, ms: 860, s0: 0.3, s1: 1, a: 0.8 }, { m: 'pop', tex: 'barrier', col: '#fff0b0', sz: 60, ms: 820, a: 0.55, y: -14 }, { m: 'rise', tex: 'starlight', col: '#ffe080', n: 8, r: 18, sz: 11, ms: 860, q: 1 }] },
+  'pr.group':     { size: 'L', ms: 1000, layers: [{ m: 'ground', tex: 'halo', col: '#70e080', sz: 96, ms: 960, s0: 0.2, s1: 1, a: 0.75 }, { m: 'ground', tex: 'runes', col: '#f0c030', sz: 64, ms: 960, spin: 1.5, a: 0.8 }, { m: 'rise', tex: 'sparkle', col: '#90ff9a', n: 12, r: 30, sz: 11, ms: 980, q: 1 }] },
+  'pr.purify':    { size: 'L', ms: 900, layers: [{ m: 'ground', tex: 'halo', col: '#fffbe0', rr: 1, ms: 860, s0: 0.3, s1: 1.05, a: 0.85 }, { m: 'burst', tex: 'starlight', col: '#ffe080', n: 8, rr: 0.7, sz: 14, ms: 760 }, { m: 'pop', tex: 'flash', col: '#ffffff', sz: 46, ms: 260, add: 1, q: 1 }] },
+  'pr.purify.hit':{ size: 'S', ms: 260, layers: [{ m: 'pop', tex: 'starlight', col: '#fff3a0', sz: 26, ms: 240, spin: 3 }] },
+  'pr.revive':    { size: 'L', ms: 1100, layers: [{ m: 'beam', tex: 'trail', col: '#fff0a0', sz: 96, ms: 900, a: 0.95 }, { m: 'ground', tex: 'halo', col: '#ffd34d', sz: 84, ms: 1060, s0: 0.3, s1: 1.1, a: 0.85 }, { m: 'rise', tex: 'starlight', col: '#ffffff', n: 12, r: 20, sz: 12, ms: 1080, q: 1 }] },
+  // ---------------------------------------------------------------- Oracle: sky blue / starlight gold, constellations
+  'or.fate':      { size: 'L', ms: 900, layers: [{ m: 'ground', tex: 'compass', col: '#74c2f2', sz: 80, ms: 860, spin: 1, s0: 0.4, s1: 1, a: 0.8 }, { m: 'rise', tex: 'starlight', col: '#c4ecff', n: 10, r: 26, sz: 11, ms: 880, q: 1 }] },
+  'or.haste':     { size: 'L', ms: 760, layers: [{ m: 'ground', tex: 'twirl', col: '#74c2f2', sz: 84, ms: 720, spin: 10, a: 0.75 }, { m: 'rise', tex: 'streak', col: '#c4ecff', n: 8, r: 26, sz: 16, ms: 740, q: 1 }] },
+  'or.fortune':   { size: 'L', ms: 860, layers: [{ m: 'pop', tex: 'starlight', col: '#ffd34d', sz: 54, ms: 820, y: -40, spin: 2, s0: 0.4, s1: 1 }, { m: 'ground', tex: 'halo', col: '#74c2f2', sz: 76, ms: 820, s0: 0.3, s1: 1, a: 0.7 }, { m: 'rise', tex: 'sparkle', col: '#ffe080', n: 10, r: 26, sz: 10, ms: 840, q: 1 }] },
+  'or.foresight': { size: 'M', ms: 760, layers: [{ m: 'pop', tex: 'halo', col: '#9ad8ff', sz: 40, ms: 720, y: -34, s0: 0.5, s1: 1, a: 0.85 }, { m: 'pop', tex: 'compass', col: '#c4ecff', sz: 26, ms: 720, y: -34, spin: -3, q: 1 }] },
+  'or.ward':      { size: 'L', ms: 880, layers: [{ m: 'ground', tex: 'runes', col: '#5ab0f0', sz: 78, ms: 840, spin: -1.2, s0: 0.5, s1: 1, a: 0.85 }, { m: 'pop', tex: 'shell', col: '#9ad8ff', sz: 58, ms: 800, a: 0.55, y: -12 }, { m: 'rise', tex: 'starlight', col: '#c4ecff', n: 8, r: 22, sz: 10, ms: 840, q: 1 }] },
+  // ---------------------------------------------------------------- Assassin: crimson / black, quick lethal cuts
+  'as.cast':      { size: 'S', ms: 240, layers: [{ m: 'pop', tex: 'smoke', col: '#1a0a10', sz: 28, ms: 240, a: 0.75 }] },
+  'as.back.hit':  { size: 'M', ms: 340, layers: [{ m: 'slash', tex: 'claw', col: '#e01a3a', sz: 46, ms: 300 }, { m: 'slash', tex: 'slash_thin', col: '#2a0a14', sz: 40, ms: 260, flip: 1 }, { m: 'pop', tex: 'flash', col: '#ff6a7a', sz: 30, ms: 200, add: 1, q: 1 }] },
+  'as.venom.hit': { size: 'S', ms: 300, layers: [{ m: 'slash', tex: 'claw', col: '#40d020', sz: 36, ms: 260 }, { m: 'burst', tex: 'bubble', col: '#70e030', n: 5, r: 14, sz: 7, ms: 300, q: 1 }] },
+  'as.step':      { size: 'M', ms: 340, layers: [{ m: 'streak', tex: 'trail', col: '#3a0a1a', sz: 24, ms: 320, a: 0.85 }, { m: 'pop', tex: 'smoke', col: '#2a0a14', sz: 32, ms: 320, at: 'src', a: 0.7, q: 1 }] },
+  'as.step.hit':  { size: 'S', ms: 220, layers: [{ m: 'slash', tex: 'slash_thin', col: '#ff3a4a', sz: 34, ms: 210 }] },
+  'as.mark.hit':  { size: 'S', ms: 420, layers: [{ m: 'pop', tex: 'compass', col: '#ff2a3a', sz: 32, ms: 400, spin: 5, y: -12 }] },
+  'as.exec.hit':  { size: 'M', ms: 440, layers: [{ m: 'slash', tex: 'slash_wide', col: '#c0102a', sz: 66, ms: 380 }, { m: 'slash', tex: 'claw', col: '#1a0a10', sz: 50, ms: 320, flip: 1 }, { m: 'pop', tex: 'flash', col: '#ffffff', sz: 40, ms: 200, add: 1 }, { m: 'burst', tex: 'spark', col: '#ff2a3a', n: 7, r: 22, sz: 9, ms: 420, q: 1 }] },
+  // ---------------------------------------------------------------- Shadowdancer: violet shadow / teal glint, afterimages
+  'sd.dash':      { size: 'M', ms: 340, layers: [{ m: 'streak', tex: 'trail', col: '#6a3ab0', sz: 26, ms: 320, a: 0.85 }, { m: 'burst', tex: 'smoke', col: '#3a1a5a', n: 3, r: 10, sz: 18, ms: 320, at: 'src', a: 0.7, q: 1 }] },
+  'sd.dash.hit':  { size: 'S', ms: 220, layers: [{ m: 'slash', tex: 'claw', col: '#a070ff', sz: 34, ms: 210 }] },
+  'sd.veil':      { size: 'L', ms: 900, layers: [{ m: 'ground', tex: 'smoke', col: '#2a1438', rr: 1, ms: 860, a: 0.8 }, { m: 'burst', tex: 'smoke', col: '#5a2a8a', n: 7, rr: 0.6, sz: 24, ms: 860, a: 0.7 }, { m: 'rise', tex: 'sparkle', col: '#5ae0d0', n: 6, r: 22, sz: 8, ms: 860, q: 1 }] },
+  'sd.phantom':   { size: 'L', ms: 620, layers: [{ m: 'orbit', tex: 'claw', col: '#a070ff', sz: 40, ms: 520 }, { m: 'ground', tex: 'twirl', col: '#5a2a8a', rr: 0.8, ms: 600, spin: -9, a: 0.6 }] },
+  'sd.phantom.hit':{ size: 'S', ms: 220, layers: [{ m: 'slash', tex: 'slash_thin', col: '#c09aff', sz: 34, ms: 210 }] },
+  'sd.dance':     { size: 'M', ms: 780, layers: [{ m: 'ground', tex: 'twirl', col: '#8a5ae0', sz: 60, ms: 760, spin: 11, a: 0.8 }, { m: 'rise', tex: 'streak', col: '#5ae0d0', n: 7, r: 14, sz: 15, ms: 760 }, { m: 'burst', tex: 'sparkle', col: '#c09aff', n: 5, r: 18, sz: 8, ms: 600, q: 1 }] },
+  'sd.nightfall': { size: 'L', ms: 980, layers: [{ m: 'ground', tex: 'smoke', col: '#140a20', rr: 1.1, ms: 940, s0: 0.4, s1: 1.1, a: 0.85 }, { m: 'burst', tex: 'claw', col: '#a070ff', n: 6, rr: 0.6, sz: 26, ms: 760, d: 120 }, { m: 'pop', tex: 'flash', col: '#5ae0d0', sz: 36, ms: 220, add: 1, q: 1 }] },
+  'sd.nightfall.hit':{ size: 'S', ms: 240, layers: [{ m: 'slash', tex: 'claw', col: '#8a5ae0', sz: 32, ms: 220 }] },
+  // ---------------------------------------------------------------- Alchemist: potion green / orange flame / glass
+  'al.cast':      { size: 'S', ms: 240, layers: [{ m: 'pop', tex: 'bubble', col: '#80e040', sz: 18, ms: 240, y: -18 }] },
+  'al.flask':     { size: 'S', ms: 300, speed: 0.55, layers: [{ m: 'proj', tex: 'bubble', col: '#9af060', sz: 16, n: 3, spin: 12 }] },
+  'al.acid.hit':  { size: 'M', ms: 420, layers: [{ m: 'pop', tex: 'splash', col: '#b8e030', sz: 44, ms: 400, s0: 0.5, s1: 1.1, a: 0.85 }, { m: 'rise', tex: 'bubble', col: '#d0f040', n: 6, r: 12, sz: 7, ms: 420 }] },
+  'al.mist':      { size: 'L', ms: 960, layers: [{ m: 'ground', tex: 'splash', col: '#40d0a0', sz: 90, ms: 920, s0: 0.4, s1: 1, a: 0.5 }, { m: 'rise', tex: 'smoke', col: '#9af0d0', n: 6, r: 26, sz: 22, ms: 920, a: 0.5 }, { m: 'rise', tex: 'bubble', col: '#c0ffe0', n: 8, r: 26, sz: 7, ms: 920, q: 1 }] },
+  'al.bomb':      { size: 'L', ms: 700, layers: [{ m: 'ground', tex: 'splash', col: '#60d030', rr: 0.8, ms: 680, s0: 0.5, s1: 1, a: 0.5 }, { m: 'burst', tex: 'blast', col: '#ff7a20', n: 5, rr: 0.45, sz: 28, ms: 520, a: 0.9 }, { m: 'pop', tex: 'flash', col: '#ffd060', sz: 34, ms: 220, add: 1 }, { m: 'burst', tex: 'bubble', col: '#a0f040', n: 8, rr: 0.6, sz: 8, ms: 680, q: 1 }] },
+  'al.bomb.hit':  { size: 'S', ms: 240, layers: [{ m: 'pop', tex: 'blast', col: '#ff8a30', sz: 26, ms: 220 }] },
+  'al.catalyst':  { size: 'M', ms: 700, layers: [{ m: 'ground', tex: 'ring', col: '#60d030', sz: 52, ms: 680, s0: 0.5, s1: 1, a: 0.8 }, { m: 'rise', tex: 'bubble', col: '#a0f060', n: 9, r: 12, sz: 8, ms: 680 }] },
+  'al.transmute': { size: 'M', ms: 800, layers: [{ m: 'ground', tex: 'runes', col: '#e0b030', sz: 58, ms: 780, spin: 2.5, a: 0.85 }, { m: 'burst', tex: 'weld', col: '#ffd060', n: 4, r: 16, sz: 20, ms: 600 }, { m: 'rise', tex: 'sparkle', col: '#9af060', n: 7, r: 12, sz: 10, ms: 780, q: 1 }] },
+  // ---------------------------------------------------------------- Machinist: copper / spark orange / electric cyan
+  'mc.cast':      { size: 'S', ms: 200, layers: [{ m: 'pop', tex: 'muzzle', col: '#ffb040', sz: 26, ms: 180, aim: 1 }] },
+  'mc.shot':      { size: 'S', ms: 160, speed: 1.4, layers: [{ m: 'proj', tex: 'streak', col: '#ffc060', sz: 20, n: 2 }] },
+  'mc.shot.hit':  { size: 'S', ms: 220, layers: [{ m: 'burst', tex: 'spark', col: '#ffd060', n: 5, r: 14, sz: 8, ms: 220 }, { m: 'pop', tex: 'star_hit', col: '#ffb040', sz: 22, ms: 180 }] },
+  'mc.mine':      { size: 'M', ms: 600, layers: [{ m: 'ground', tex: 'ring', col: '#7fd4ff', rr: 1, ms: 580, s0: 0.3, s1: 1, a: 0.8 }, { m: 'pop', tex: 'arc', col: '#bfeaff', sz: 26, ms: 320, rnd: 1, y: 6 }] },
+  'mc.overcharge':{ size: 'M', ms: 760, layers: [{ m: 'ground', tex: 'ring', col: '#ff9a30', sz: 56, ms: 740, s0: 0.4, s1: 1, a: 0.85 }, { m: 'rise', tex: 'arc', col: '#7fd4ff', n: 5, r: 12, sz: 16, ms: 740 }, { m: 'burst', tex: 'weld', col: '#ffd060', n: 4, r: 16, sz: 18, ms: 500, q: 1 }] },
+  'mc.drone':     { size: 'M', ms: 760, layers: [{ m: 'pop', tex: 'compass', col: '#7fd4ff', sz: 28, ms: 740, y: -38, spin: 6 }, { m: 'rise', tex: 'sparkle', col: '#9ae8ff', n: 7, r: 12, sz: 9, ms: 740, q: 1 }] },
+  'mc.turret':    { size: 'M', ms: 640, layers: [{ m: 'ground', tex: 'ring', col: '#ffd27a', rr: 1, ms: 620, s0: 0.3, s1: 1, a: 0.75 }, { m: 'burst', tex: 'weld', col: '#ffb040', n: 4, r: 14, sz: 18, ms: 520 }, { m: 'burst', tex: 'spark', col: '#ffe0a0', n: 5, r: 16, sz: 8, ms: 520, q: 1 }] },
+
+  // ================================================================ world feedback (not skills)
+  'lvup.burst':   { size: 'L', ms: 1150, layers: [{ m: 'beam', tex: 'trail', col: '#ffe080', sz: 96, ms: 900, a: 0.95 }, { m: 'ground', tex: 'halo', col: '#ffd34d', sz: 80, ms: 1100, s0: 0.2, s1: 1.1, a: 0.85 }, { m: 'ground', tex: 'runes', col: '#74c2f2', sz: 60, ms: 1100, spin: 1.5, a: 0.75, q: 1 }, { m: 'rise', tex: 'starlight', col: '#fff3a0', n: 12, r: 18, sz: 12, ms: 1120 }] },
+  'mob.die':      { size: 'M', ms: 520, layers: [{ m: 'pop', tex: 'smoke', col: '#d8d0e8', sz: 40, ms: 500, s0: 0.5, s1: 1.2, a: 0.6 }, { m: 'burst', tex: 'sparkle', col: '#ffe9a0', n: 6, r: 18, sz: 9, ms: 500 }, { m: 'pop', tex: 'flash', col: '#ffffff', sz: 26, ms: 180, add: 1, q: 1 }] },
+  'boss.die':     { size: 'L', ms: 1150, layers: [{ m: 'pop', tex: 'blast', col: '#ffb040', sz: 84, ms: 900, s0: 0.4, s1: 1.2, a: 0.85 }, { m: 'ground', tex: 'ring', col: '#ffd34d', sz: 96, ms: 1100, s0: 0.2, s1: 1.1, a: 0.8 }, { m: 'burst', tex: 'starlight', col: '#fff3a0', n: 12, r: 36, sz: 13, ms: 1100 }, { m: 'pop', tex: 'flash', col: '#ffffff', sz: 60, ms: 260, add: 1, q: 1 }] },
+  'walk.dust':    { size: 'S', ms: 360, layers: [{ m: 'ground', tex: 'dust', col: '#b8a888', sz: 16, ms: 340, s0: 0.5, s1: 1.2, a: 0.45 }] },
 };
+// every large (area) skill effect gets a soft filled glow under its rings, so the whole area reads on grass, sand or stone
+for (const [id, d] of Object.entries(VFX_DEF)) {
+  if (d.size !== 'L' || /^(lvup|boss|mob)\./.test(id)) continue;
+  const g = d.layers.find(L => L.m === 'ground'); if (!g) continue;
+  for (const L of d.layers) if (L.m === 'ground' && /^(ring|runes|rune_arc|halo|compass|crystal|shell)$/.test(L.tex)) L.add = 1; // magic circles glow (lighter blend)
+  d.layers.unshift({ m: 'ground', tex: 'glow', col: g.col, rr: g.rr || undefined, sz: g.rr ? undefined : g.sz, ms: g.ms || d.ms, s0: 0.7, s1: 1, a: 0.55, d: g.d });
+}
 // basic attack hit effect by weapon type (no weapon = sword swing)
 const VFX_ATTACK = { sword: 'atk.sword', greatsword: 'atk.heavy', mace: 'atk.heavy', spear: 'atk.spear', dagger: 'atk.dagger', bow: 'atk.bow', staff: 'atk.magic', wand: 'atk.magic', device: 'atk.device' };
 const VFX_ATTACK_PROJ = { bow: 'proj.arrow', wand: 'proj.magic', device: 'proj.arrow' };
@@ -169,6 +286,7 @@ else window.VFX = (function () {
     const f = pool.pop() || {};
     f.def = def; f.id = id; f.t0 = now + (o.delay || 0); f.on = o.on || 0; f.from = o.from || 0; f.to = o.to || 0; f.owner = owner || 0; f.alt = o.alt || 0;
     f.x = o.x; f.y = o.y; f.r = o.r || 0; f.q = q; f.pr = pr; f.seed = Math.random() * 1000; f.travel = travel; f.end = (def.speed ? travel : def.ms) + 80;
+    f.k = /^(atk|proj|miss|evade|block|dot|walk)\./.test(id) ? 1.25 : 1.7; // on-screen scale: skills read clearly on a phone, basic hits stay lighter
     // fixed source/target points for effects that don't follow anyone after they start
     const s = o.from ? posOf(o.from, BODY) : null, d = o.to ? posOf(o.to, BODY) : null;
     f.sx = s ? s[0] : 0; f.sy = s ? s[1] : 0; f.dx = d ? d[0] : 0; f.dy = d ? d[1] : 0;
@@ -198,10 +316,11 @@ else window.VFX = (function () {
     const ms = L.ms || f.def.ms, t = age - (L.d || 0);
     if (L.m !== 'proj' && L.m !== 'streak' && (t < 0 || t > ms)) return;
     const p = Math.max(0, Math.min(1, t / ms)), A = (L.a ?? 1);
-    const sz = L.rr && L.m !== 'burst' ? (f.r || 2) * TP * 2 * L.rr : L.sz || VFX_SIZE[f.def.size]; // burst: rr is the spread, not the size
+    const sz = (L.rr && L.m !== 'burst' ? (f.r || 2) * TP * 2 * L.rr : (L.sz || VFX_SIZE[f.def.size]) * f.k); // burst: rr is the spread, not the size · area rings keep the real skill radius
     ctx.globalCompositeOperation = L.add ? 'lighter' : 'source-over'; // normal blend reads on bright and dark ground; add:1 = glow
     const [ax, ay0] = anchor(f, L), ay = ay0 + (L.y || 0);
-    const sc = (L.s0 ?? 0.9) + ((L.s1 ?? 1.05) - (L.s0 ?? 0.9)) * p;
+    const s0 = L.rr ? Math.max(0.5, L.s0 ?? 0.9) : (L.s0 ?? 0.9); // area rings start at half the radius, so the area reads at once
+    const sc = s0 + ((L.s1 ?? 1.05) - s0) * p;
     const fade = p < 0.12 ? p / 0.12 : p < 0.55 ? 1 : 1 - (p - 0.55) / 0.45; // quick in, hold, fade out
     const spin = (L.spin || 0) * t / 1000;
     switch (L.m) {
@@ -225,13 +344,13 @@ else window.VFX = (function () {
         ctx.globalAlpha = Math.min(1, a); ctx.save(); ctx.translate(gx, gy); ctx.scale(1, 0.5); if (spin) ctx.rotate(spin); ctx.drawImage(c, -w / 2, -w / 2, w, w); ctx.restore(); break;
       }
       case 'burst': {
-        const n = Math.max(1, Math.round((L.n || 4) * PART[f.q])), R = L.rr ? (f.r || 2) * TP * L.rr : (L.r || 16);
+        const n = Math.max(1, Math.round((L.n || 4) * PART[f.q])), R = L.rr ? (f.r || 2) * TP * L.rr : (L.r || 16) * f.k;
         for (let j = 0; j < n; j++) { const a = (j / n) * 6.283 + rnd(f.seed, j) * 0.8, d = R * (0.3 + 0.7 * p) * (0.6 + 0.4 * rnd(f.seed, j + 9)); sprite(ctx, L, ax + Math.cos(a) * d, ay + Math.sin(a) * d * 0.6, sz, sz, a + Math.PI / 2, A * (1 - p)); }
         break;
       }
       case 'rise': {
         const n = Math.max(1, Math.round((L.n || 6) * PART[f.q]));
-        for (let j = 0; j < n; j++) { const ph = (p + rnd(f.seed, j) * 0.5) % 1, ox = (rnd(f.seed, j + 3) - 0.5) * 2 * (L.r || 12); sprite(ctx, L, ax + ox + Math.sin(t / 160 + j) * 2, ay + 10 - ph * 40, sz, sz, 0, A * (1 - ph) * (p < 0.85 ? 1 : (1 - p) / 0.15)); }
+        for (let j = 0; j < n; j++) { const ph = (p + rnd(f.seed, j) * 0.5) % 1, ox = (rnd(f.seed, j + 3) - 0.5) * 2 * (L.r || 12) * f.k; sprite(ctx, L, ax + ox + Math.sin(t / 160 + j) * 2, ay + 10 - ph * 40 * f.k, sz, sz, 0, A * (1 - ph) * (p < 0.85 ? 1 : (1 - p) / 0.15)); }
         break;
       }
       case 'proj': { // flies source -> target; the hit effect waits for it (game.js delays it by the travel time)

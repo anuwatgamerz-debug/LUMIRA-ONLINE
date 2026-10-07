@@ -2,8 +2,8 @@
 // ============================================================ ELYNDRA ONLINE — layered characters (paperdoll)
 // Players and NPCs are drawn from layer sheets made by tools/art. Two sets share one renderer:
 //   v1  assets/characters/chars.json  64x64 frames, ~42px characters (every look)
-//   hd  assets/chr_hd/chars.json      64x80 frames, ~50px HD characters (every class + NPC role; tools/art/build_characters_hd.py)
-//   lpc assets/chr_lpc/chars.json     128x128 frames, LPC art (fallback when a look needs a layer HD doesn't have)
+//   lpc assets/chr_lpc/chars.json     128x128 frames, LPC art (preferred; every class incl. second-class outfits; tools/art/lpc/build_chars.py)
+//   hd  assets/chr_hd/chars.json      64x80 frames, ~50px HD characters (fallback; tools/art/build_characters_hd.py)
 // Layers (same frames, pivot and timing): base -> face -> armor/clothes -> class gear -> costume -> hair -> weapon /
 // shield -> headgear, back items behind (or over the back in the N view); aura is drawn by the engine.
 // A character is drawn in HD only when every layer it needs exists in the HD set (never half HD, half v1), and
@@ -104,13 +104,13 @@ let lastPaperSet = null;
 // draw one character; returns false if nothing could be drawn yet (caller uses the old renderer meanwhile)
 function drawPaper(look, gear, anim, tt, row, x, y, alpha = 1, g = ctx, scale = 1) {
   look = look || {};
-  if (CHRHD && hdWanted()) { // ELYNDRA HD set (our own art): preferred whenever every layer exists
-    const L = paperLayers(look, gear, CHRHD, true);
-    if (L && pdDraw(CHRHD, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'hd'; return true; }
-  }
-  if (CHRLPC && hdWanted()) { // LPC set (Liberated Pixel Cup art): fallback for looks the HD set doesn't cover
+  if (CHRLPC && hdWanted()) { // LPC set (Liberated Pixel Cup art): preferred whenever every layer exists
     const L = paperLayers(look, gear, CHRLPC, true);
     if (L && pdDraw(CHRLPC, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'lpc'; return true; }
+  }
+  if (CHRHD && hdWanted()) { // ELYNDRA HD set: fallback for looks the LPC set doesn't cover
+    const L = paperLayers(look, gear, CHRHD, true);
+    if (L && pdDraw(CHRHD, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'hd'; return true; }
   }
   const L = paperLayers(look, gear, CHR); if (!L) return false;
   if (pdDraw(CHR, L, look, anim, tt, row, x, y, alpha, g, scale)) { lastPaperSet = 'v1'; return true; }

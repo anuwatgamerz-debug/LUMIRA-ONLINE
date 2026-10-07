@@ -5,7 +5,7 @@ const cv = $('game'); const ctx = cv.getContext('2d');
 const TP = 32; // art pixels per tile
 let DPR = 1, Z = 2, VW = 0, VH = 0, DW = 0, DH = 0;
 // art pixels visible across the short side of the screen, per view-distance setting
-const ZOOM_ART = { near: 400, normal: 520, far: 660 };
+const ZOOM_ART = { near: 380, normal: 450, far: 600 }; // normal shows characters and skill effects ~15% larger than before (phones)
 function resize() {
   DPR = Math.min(3, devicePixelRatio || 1);
   DW = Math.round(innerWidth * DPR); DH = Math.round(innerHeight * DPR);
@@ -438,10 +438,10 @@ function onFx(m) {
     const a = ents.get(m.id), e = ents.get(m.to), sk = SK[m.s], b = V && V.of(m.s);
     if (a) { a.atkT = a.castT = now(); if (e) face(a, e); fx.push(fxNew({ k: 'sname', id: m.id, v: sk ? sk.th : m.s, t })); }
     lastCast.set(m.id, { s: m.s, t, ms: m.ms || 0 });
-    if (b) { // registry effects (beginner + first class): cast on the caster, projectile, area — hits come with the server's hit
+    if (b) { // registry effects (every class): cast on the caster, projectile, area — hits come with the server's hit
       if (b[0]) V.play(b[0], { on: m.id, from: m.id, to: m.to || 0, owner: m.id });
       if (b[1] && m.to) { const tr = V.play(b[1], { from: m.id, to: m.to, owner: m.id }); if (tr) projAt.set(m.id + ':' + m.to, t + tr); }
-      if (b[3]) V.play(b[3], { on: m.id, owner: m.id, r: b[4] || 2 });
+      if (b[3]) V.play(b[3], m.x != null ? { x: m.x, y: m.y, owner: m.id, r: (sk && sk.r) || b[4] || 2 } : { on: m.id, owner: m.id, r: b[4] || 2 }); // ground-targeted skills land on the chosen spot
       return;
     }
     const kind = sk && sk.fx || (m.s === 'bolt' ? 'bolt' : m.s === 'cleave' ? 'ring' : '');
@@ -450,8 +450,10 @@ function onFx(m) {
     if (m.ms && a) fx.push(fxNew({ k: 'ring', id: m.id, t, col: '#9fe7ff' })); // charging
     if (a && e && (kind === 'bolt' || kind === 'arrow')) fx.push(fxNew({ k: 'proj', from: m.id, to: m.to, x: a.x, y: a.y, t, col: kind === 'arrow' ? '#e8d9a8' : sk && sk.element === 'fire' ? '#ff9f43' : sk && sk.element === 'holy' ? '#fff3a0' : null }));
     if (a && kind === 'ring') fx.push(fxNew({ k: 'ring', id: m.id, t }));
-  } else if (m.k === 'die') { const e = ents.get(m.id); if (e) { if (ghosts.length > 60) ghosts.shift(); ghosts.push({ ...e, dieT: now() }); ents.delete(m.id); if (selected === m.id) selected = 0; } }
-  else if (m.k === 'lvup') fx.push(fxNew({ k: 'lvup', id: m.id, t, cls: m.cls }));
+  } else if (m.k === 'die') { const e = ents.get(m.id); if (e) {
+      if (V && e.kind === 'm') { const info = MOBN[e.type]; V.play(info && info.boss ? 'boss.die' : 'mob.die', { x: e.x, y: e.y, owner: m.id, delay: 120 }); } // a puff of smoke + sparkles as it falls
+      if (ghosts.length > 60) ghosts.shift(); ghosts.push({ ...e, dieT: now() }); ents.delete(m.id); if (selected === m.id) selected = 0; } }
+  else if (m.k === 'lvup') { fx.push(fxNew({ k: 'lvup', id: m.id, t, cls: m.cls })); if (V) V.play('lvup.burst', { on: m.id, owner: m.id }); }
   else if (m.k === 'mshot') fx.push(fxNew({ k: 'proj', from: m.from, to: m.to, x: 0, y: 0, t, col: m.magic ? '#c49bff' : '#d8c8a8' }));
   else if (m.k === 'mheal') { fx.push(fxNew({ k: 'heal', id: m.to, t })); const e = ents.get(m.to); if (e && m.v) addNum(e, m.to, '+' + m.v, '#7dff8a', false); }
   else if (m.k === 'buff' || m.k === 'gather') { if (!vfxSelf(m.id, t)) fx.push(fxNew({ k: 'heal', id: m.id, t, buff: 1 })); }
@@ -981,6 +983,7 @@ function frame(t) {
     else if (e.kind === 'p') list.push({ y, f: () => {
       const nm = heroOf(e.look); charShadow(x, y);
       const [an, at] = entAnim(e, nm, tn);
+      if (V && an === 'walk' && tn - (e.dustT || 0) > 0.32 && V.quality() >= 1) { e.dustT = tn; V.play('walk.dust', { x: e.x, y: e.y, owner: id }); } // footstep puffs
       if (e.look && e.look.aura) drawAura(ctx, x, y, e.look.aura, tn, false);
       lastPaperSet = null;
       drawHero(e.look, an, at, e.row ?? 2, x, y, 1, e.head, ctx, { wpn: e.wpn, arm: e.arm, cls: e.cls });

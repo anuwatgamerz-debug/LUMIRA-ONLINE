@@ -54,14 +54,21 @@ async function run(srv, R) {
       if (need.length) ok(false, `${id}: missing ${need.join(', ')} VFX`);
     }
     ok(true, 'all 24 beginner + first class skills: hit / projectile / area / cast effects bound by id');
-    ok(Object.values(C.SKILLS).filter(s => s.tier === 2).every(s => !s.castVfx && !s.hitVfx && !s.projectileVfx && !s.areaVfx), 'second class skills untouched (their VFX phase has not started)');
+    // Phase 2: every active second-class skill shows something; damage skills show their hit, areas their area
+    const t2 = Object.values(C.SKILLS).filter(s => s.tier === 2), miss2 = [];
+    for (const s of t2) {
+      const any = s.castVfx || s.hitVfx || s.projectileVfx || s.areaVfx;
+      if (s.type === 'passive') { if (any) miss2.push(s.id + ' (passive with VFX)'); continue; }
+      if (!any) miss2.push(s.id); else if (s.mult && s.type === 'target' && !s.hitVfx) miss2.push(s.id + ' hit'); else if ((s.type === 'area' || s.type === 'ground') && !s.areaVfx && !s.castVfx) miss2.push(s.id + ' area');
+    }
+    ok(!miss2.length && t2.filter(s => s.type !== 'passive').length === 60, 'all 60 active second-class skills: cast / projectile / hit / area effects bound by id (passives none)', miss2.join(' '));
     ok(!/assets\//.test(fs.readFileSync(path.join(H.ROOT, 'content/skills.js'), 'utf8').replace(/skills\/<id>/g, '')), 'skills never reference an image path, only VFX ids');
   }
   // ---------------------------------------------------------------- welcome sends the bindings
   {
     const c = H.client(srv.ws); await c.open; c.send({ t: 'login', u: 'vfx_mob', p: H.PW });
     const w = await c.wait(m => m.t === 'welcome', 6000);
-    ok(w && w.vfx && Object.keys(w.vfx).length === 24 && w.vfx.a_nova[3] === 'ar.nova' && w.vfx.a_nova[4] > 2 && w.vfx.bolt[1] === 'bolt.proj', 'welcome carries the skill -> VFX table (24 skills, area radius included)');
+    ok(w && w.vfx && Object.keys(w.vfx).length === 84 && w.vfx.a_nova[3] === 'ar.nova' && w.vfx.a_nova[4] > 2 && w.vfx.bolt[1] === 'bolt.proj' && w.vfx.el_meteor[3] === 'el.meteor', 'welcome carries the skill -> VFX table (84 skills: 24 + 60 second-class, area radius included)');
     c.close(); await H.sleep(200);
   }
   // ---------------------------------------------------------------- browser

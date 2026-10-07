@@ -1,16 +1,24 @@
 # Build the LUMIRA "lpc" paperdoll set from the Universal LPC Spritesheet sources.
-# python3 build_chars.py <out_dir (public/assets/chr_lpc)>
-import json, os, sys, subprocess, numpy as np
+# python3 build_chars.py <out_dir (public/assets/chr_lpc)> [only-name-fragment ...]
+# LPC_ROOT = a clone of https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator
+# (a blobless clone is enough: `git clone --filter=blob:none --no-checkout`, sheets are fetched on demand).
+import json, os, sys, time, subprocess, numpy as np
 from PIL import Image
-L = '/home/claude/px/lpc'; SD = L + '/sheet_definitions/'
-TREE = set(open('/tmp/lpc_tree.txt').read().split('\n'))
+L = os.environ.get('LPC_ROOT', '/home/claude/px/lpc').replace('\\', '/'); SD = L + '/sheet_definitions/'
+_tree = os.environ.get('LPC_TREE', '/tmp/lpc_tree.txt')
+TREE = set(open(_tree, encoding='utf-8-sig').read().split('\n')) if os.path.exists(_tree) else \
+    set(subprocess.run(['git', '-C', L, 'ls-tree', '-r', '--name-only', 'HEAD'], capture_output=True, text=True).stdout.split('\n'))
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/tmp/chr_lpc'
 CELL = 128
 FETCHED = set()
 
 def hexrgb(h): h = h.lstrip('#'); return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 PALS = {}
+ITEM_BASE = {}   # 'material|definition' -> palette colour the item's sheets are drawn in (e.g. cape_trim = brown)
 def palette(mat):
+    if '|' in mat:
+        real = mat.split('|', 1)[0]; base, p = palette(real)
+        return ITEM_BASE.get(mat, base), p
     if mat not in PALS:
         meta = json.load(open(f'{L}/palette_definitions/{mat}/meta_{mat}.json'))
         PALS[mat] = (meta['base'], json.load(open(f'{L}/palette_definitions/{mat}/{mat}_ulpc.json')))
@@ -28,16 +36,25 @@ def apply_map(im, m):
     return Image.fromarray(a)
 
 def need(paths):
+    """check out the sheets we use (blobless clones fetch them on demand); small retried batches"""
     miss = [p for p in paths if p not in FETCHED and not os.path.exists(L + '/' + p)]
-    for i in range(0, len(miss), 150):
-        subprocess.run(['git', '-C', L, 'checkout', 'HEAD', '--'] + miss[i:i + 150], check=True, capture_output=True)
+    for i in range(0, len(miss), 20):
+        chunk = miss[i:i + 20]
+        for attempt in range(4):
+            if subprocess.run(['git', '-C', L, 'checkout', '--ignore-skip-worktree-bits', 'HEAD', '--'] + chunk, capture_output=True).returncode == 0: break
+            time.sleep(2 + attempt * 3)
+        else:
+            for p in chunk:
+                if subprocess.run(['git', '-C', L, 'checkout', '--ignore-skip-worktree-bits', 'HEAD', '--', p], capture_output=True).returncode: print('  !! could not fetch', p, flush=True)
     FETCHED.update(paths)
 
 ANIM_FILE = {'walk': 'walk', 'slash': 'slash', 'spell': 'spellcast', 'shoot': 'shoot', 'hurt': 'hurt', 'thrust': 'thrust'}
 def item_layers(defpath, body, color):
     j = json.load(open(SD + defpath)); res = []
-    mat = (j.get('recolors') or {}).get('material')
-    if j.get('match_body_color') or defpath.startswith('head/heads') or defpath.startswith('body/'): mat = 'body'
+    rc = j.get('recolors') or {}
+    mat = rc.get('material')
+    if j.get('match_body_color') or defpath.startswith('head/heads') or (defpath.startswith('body/') and not defpath.startswith('body/wings')): mat = 'body'
+    if mat and rc.get('base'): ITEM_BASE[mat + '|' + defpath] = rc['base']; mat = mat + '|' + defpath
     for k, v in j.items():
         if not (k.startswith('layer_') and isinstance(v, dict)): continue
         p = v.get(body) or (v.get('male') if body != 'female' else None) or v.get('female') or v.get('male')
@@ -75,15 +92,20 @@ def frames_for(items, body, key):
                 if not custom.startswith(anim + '_'): continue
                 size = int(custom.split('_')[-1]) if custom.split('_')[-1].isdigit() else 192
             else: size = 64
-            f = resolve(p, anim, color, custom)
-            if f: jobs.append((z, f, size, mat, color, f.endswith(f'/{color}.png') if color else False))
+            f = resolve(p, anim, color, custom); pad = 0
+            if not f and not custom and anim in ('thrust', 'shoot'):   # some clothes (e.g. the female robe) have no thrust / shoot sheet:
+                f = resolve(p, 'slash', color, custom); pad = {'thrust': 8, 'shoot': 13}[anim]   # wear the slash frames instead of vanishing
+            if f: jobs.append((z, f, size, mat, color, f.endswith(f'/{color}.png') if color else False, pad))
     need(sorted(set(j[1] for j in jobs)))
     jobs.sort(key=lambda j: j[0])
     nrows = 1 if key == 'hurt' else 4
     out = {}
-    for z, f, size, mat, color, variant_file in jobs:
+    for z, f, size, mat, color, variant_file, pad in jobs:
         im = Image.open(L + '/' + f).convert('RGBA')
         if mat and color and not variant_file: im = apply_map(im, recolor_map(mat, color))
+        if pad and im.width // size < pad:   # stretch the borrowed frames over the animation's frame count
+            src = im; k = src.width // size; im = Image.new('RGBA', (pad * size, src.height))
+            for c in range(pad): sc = min(k - 1, c * k // pad); im.paste(src.crop((sc * size, 0, sc * size + size, src.height)), (c * size, 0))
         n = im.width // size
         for r in range(min(nrows, im.height // size)):
             row = out.setdefault(r, {})
@@ -178,11 +200,44 @@ CLASS = {
     'rogue': lambda b: [('arms/arms_gloves.json', 'iron'), ('torso/waist/belt_double.json', None)],
     'artisan': lambda b: [('torso/aprons/torso_aprons_apron.json', 'brown')],
 }
+# second classes: the first-class identity grows into its own outfit (drawn over whatever armor is worn) + its own back item
+CLASS2 = {
+    'knight':       lambda b: [('torso/jacket/torso_jacket_tabard.json', 'navy'), ('arms/shoulders/shoulders_legion.json', 'gold'), ('arms/wrists/arms_bracers.json', 'gold')],
+    'berserker':    lambda b: [('torso/torso_bandages.json', None), ('arms/bauldron.json', 'iron'), ('arms/shoulders/shoulders_mantal.json', 'brown'), ('torso/waist/belt_belly.json', None)],
+    'sharpshooter': lambda b: [('torso/vest/torso_clothes_vest.json', 'forest'), ('arms/wrists/arms_bracers.json', 'brass'), ('torso/waist/belt_double.json', None), ('headwear/neck/neck_capetie.json', 'green')],
+    'beasthunter':  lambda b: [('arms/shoulders/shoulders_mantal.json', 'tan'), ('headwear/neck/neck_necklace_beaded_large.json', None), ('arms/wrists/arms_bracers.json', 'bronze'), ('torso/waist/belt_leather2.json', None)],
+    'elementalist': lambda b: [('torso/waist/belt_mage.json', 'silver'), ('headwear/neck/charms/neck_gem_round.json', None), ('arms/shoulders/shoulders_epaulets.json', 'silver'), ('arms/wrists/wrists_cuffs.json', 'sky')],
+    'warlock':      lambda b: [('torso/waist/belt_mage.json', 'gold'), ('headwear/neck/charms/neck_amulet_spider.json', None), ('arms/wrists/wrists_cuffs.json', 'black')],
+    'priest':       lambda b: [('arms/shoulders/shoulders_epaulets.json', 'gold'), ('headwear/neck/charms/neck_amulet_star.json', None), ('torso/waist/belt_sash.json', 'yellow')],
+    'oracle':       lambda b: [('headwear/neck/charms/neck_charm_star.json', None), ('torso/waist/belt_sash_narrow.json', 'sky'), ('arms/wrists/wrists_cuffs_lace.json', 'white')],
+    'assassin':     lambda b: [('headwear/neck/neck_scarf.json', 'red'), ('arms/arms_gloves.json', 'iron'), ('torso/waist/belt_double.json', None)],
+    'shadowdancer': lambda b: [('torso/waist/obi/belt_obi.json', 'purple'), ('headwear/neck/neck_scarf.json', 'purple'), ('arms/wrists/wrists_cuffs.json', 'purple')],
+    'alchemist':    lambda b: [('torso/aprons/torso_aprons_apron_full.json', 'tan'), ('headwear/neck/charms/neck_charm_box.json', None), ('torso/waist/belt_leather2.json', None)],
+    'machinist':    lambda b: [('arms/shoulders/shoulders_epaulets.json', 'copper'), ('arms/arms_gloves.json', 'brass'), ('torso/aprons/torso_aprons_apron_half.json', 'brown')],
+}
+CLASS_BASE = {'knight': 'vanguard', 'berserker': 'vanguard', 'sharpshooter': 'ranger', 'beasthunter': 'ranger', 'elementalist': 'arcanist', 'warlock': 'arcanist',
+              'priest': 'cleric', 'oracle': 'cleric', 'assassin': 'rogue', 'shadowdancer': 'rogue', 'alchemist': 'artisan', 'machinist': 'artisan'}
+CLASS_BACK = {'knight': 'knight', 'berserker': 'berserker', 'sharpshooter': 'ranger', 'beasthunter': 'beasthunter', 'elementalist': 'elementalist',
+              'warlock': 'warlock', 'priest': 'priest', 'oracle': 'oracle', 'assassin': 'assassin', 'shadowdancer': 'shadowdancer',
+              'alchemist': 'alchemist', 'machinist': 'machinist'}
+CLASS.update(CLASS2)
 for c, f in CLASS.items():
     for b in ('male', 'female'): add(f'chr_class_{c}_{b}', lambda f=f, b=b: f(b))
 BACK = {'adventurer': [('torso/backpack/backpack.json', None)], 'ranger': [('torso/backpack/quiver.json', None)],
         'cape_blue': [('torso/cape/cape_solid.json', 'blue')], 'cape_red': [('torso/cape/cape_solid.json', 'red')],
-        'cape_gold': [('torso/cape/cape_solid.json', 'yellow')], 'cape_violet': [('torso/cape/cape_solid.json', 'purple')]}
+        'cape_gold': [('torso/cape/cape_solid.json', 'yellow')], 'cape_violet': [('torso/cape/cape_solid.json', 'purple')],
+        # second-class back items (capes, wings, packs)
+        'knight': [('torso/cape/cape_trim.json', 'navy')],
+        'berserker': [('torso/cape/cape_tattered.json', 'red')],
+        'beasthunter': [('torso/backpack/quiver.json', None), ('torso/cape/cape_tattered.json', 'brown')],
+        'elementalist': [('torso/cape/cape_trim.json', 'lavender')],
+        'warlock': [('body/wings/wings_bat.json', 'violet'), ('torso/cape/cape_tattered.json', 'black')],
+        'priest': [('body/wings/wings_feathered.json', 'white'), ('torso/cape/cape_trim.json', 'white')],
+        'oracle': [('body/wings/wings_lunar.json', 'sky')],
+        'assassin': [('torso/cape/cape_tattered.json', 'charcoal')],
+        'shadowdancer': [('torso/cape/cape_tattered.json', 'purple')],
+        'alchemist': [('torso/backpack/backpack_squarepack.json', None)],
+        'machinist': [('torso/backpack/backpack_jetpack.json', 'gold'), ('torso/backpack/backpack_jetpack_fins.json', 'gold')]}
 for k, v in BACK.items():
     for b in ('male', 'female'): add(f'chr_back_{k}_{b}', lambda v=v: v)
 HAIR = {'short': 'hair/short/hair_plain.json', 'spiky': 'hair/spiky/hair_spiked.json', 'ponytail': 'hair/braids/hair_ponytail.json',
@@ -262,6 +317,7 @@ if __name__ == '__main__':
          'variants': {'bow': {'b': 'c'}, 'device': {'b': 'd'}, 'spear': {'b': 'd'}, 'staff': {'b': 'd'}}, 'height': 48, 'head': [18, 16], 'layers': layers, 'bowGroups': sorted(layers.keys()),
          'keys': {'hair': HAIR_KEYS, 'skin': []}, 'tint': ['hair'], 'tunic': list(TUNIC.keys()), 'hair': list(HAIR.keys()),
          'headgear': list(HEAD.keys()), 'weapons': list(WEAP.keys()), 'outfits': OUTFITS, 'classes': list(CLASS.keys()),
+         'classBase': CLASS_BASE, 'classBack': CLASS_BACK,
          'order': {'S': ['back', 'base', 'armor', 'class', 'costume', 'hair', 'weapon', 'shield', 'head'], 'N': ['base', 'armor', 'class', 'costume', 'back', 'hair', 'weapon', 'shield', 'head'], 'E': ['shield', 'back', 'base', 'armor', 'class', 'costume', 'hair', 'weapon', 'head']},
          'slots': ['base', 'hair', 'armor', 'weapon', 'shield', 'back', 'head', 'costume', 'aura'], 'sexed': ['weapon', 'shield', 'hair', 'head']}
     json.dump(S, open(mp, 'w'))

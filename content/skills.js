@@ -67,4 +67,20 @@ for (const [id, S2] of Object.entries(SKILLS2)) {
   else S2.castSound = S2.buff && S2.buff.stealth ? 'skill_stealth' : 'skill_buff_cast';
   SKILLS[id] = S2;
 }
+// VFX Phase 2: second-class skills, same [cast, projectile, hit, area] layout as above (passives have none)
+const VFX2 = {
+  kn_bash: ['kn.cast', 0, 'kn.bash.hit', 0], kn_stance: ['kn.stance', 0, 0, 0], kn_taunt: [0, 0, 0, 'kn.taunt'], kn_iron: ['kn.iron', 0, 0, 0], kn_wave: [0, 0, 'kn.wave.hit', 'kn.wave'],
+  bs_rage: ['bs.cast', 0, 'bs.rage.hit', 0], bs_whirl: [0, 0, 'bs.whirl.hit', 'bs.whirl'], bs_fury: ['bs.fury', 0, 0, 0], bs_exec: ['bs.cast', 0, 'bs.exec.hit', 0], bs_warcry: ['bs.warcry', 0, 0, 0],
+  ss_pierce: ['ss.draw', 'ss.pierce', 'ss.pierce.hit', 0], ss_charged: ['ss.charge', 'ss.charged', 'ss.charged.hit', 0], ss_focus: ['ss.focus', 0, 0, 0], ss_eagle: ['ss.eagle', 0, 0, 0], ss_rain: ['ss.draw', 0, 'ss.rain.hit', 'ss.rain'],
+  bh_snare: ['bh.cast', 0, 0, 'bh.snare'], bh_mark: ['bh.cast', 0, 'bh.mark.hit', 0], bh_ptrap: ['bh.cast', 0, 0, 'bh.ptrap'], bh_instinct: ['bh.instinct', 0, 0, 0], bh_rapid: ['bh.cast', 'bh.rapid', 'bh.rapid.hit', 0],
+  el_chain: ['el.cast', 'el.chain', 'el.chain.hit', 0], el_frost: ['el.cast', 0, 'el.frost.hit', 'el.frost'], el_shield: ['el.shield', 0, 0, 0], el_meteor: ['el.cast', 0, 'el.meteor.hit', 'el.meteor'], el_surge: ['el.cast', 0, 'el.surge.hit', 'el.surge'],
+  wl_bolt: ['wl.cast', 'wl.bolt', 'wl.bolt.hit', 0], wl_curse: ['wl.cast', 0, 'wl.curse.hit', 0], wl_drain: ['wl.cast', 0, 'wl.drain.hit', 0], wl_mark: ['wl.cast', 0, 'wl.mark.hit', 0], wl_nova: ['wl.cast', 0, 'wl.nova.hit', 'wl.nova'],
+  pr_heal: ['pr.heal', 0, 0, 0], pr_barrier: ['pr.barrier', 0, 0, 0], pr_group: ['pr.group', 0, 0, 0], pr_purify: [0, 0, 'pr.purify.hit', 'pr.purify'], pr_resurrect: ['pr.revive', 0, 0, 0],
+  or_fate: ['or.fate', 0, 0, 0], or_haste: ['or.haste', 0, 0, 0], or_fortune: ['or.fortune', 0, 0, 0], or_foresight: ['or.foresight', 0, 0, 0], or_ward: ['or.ward', 0, 0, 0],
+  as_backstab: ['as.cast', 0, 'as.back.hit', 0], as_venom: [0, 0, 'as.venom.hit', 0], as_step: ['as.step', 0, 'as.step.hit', 0], as_mark: ['as.cast', 0, 'as.mark.hit', 0], as_execute: ['as.cast', 0, 'as.exec.hit', 0],
+  sd_dash: ['sd.dash', 0, 'sd.dash.hit', 0], sd_veil: [0, 0, 0, 'sd.veil'], sd_phantom: [0, 0, 'sd.phantom.hit', 'sd.phantom'], sd_dance: ['sd.dance', 0, 0, 0], sd_nightfall: [0, 0, 'sd.nightfall.hit', 'sd.nightfall'],
+  al_acid: ['al.cast', 'al.flask', 'al.acid.hit', 0], al_mist: ['al.mist', 0, 0, 0], al_bomb: ['al.cast', 0, 'al.bomb.hit', 'al.bomb'], al_catalyst: ['al.catalyst', 0, 0, 0], al_transmute: ['al.transmute', 0, 0, 0],
+  mc_burst: ['mc.cast', 'mc.shot', 'mc.shot.hit', 0], mc_mine: ['mc.cast', 0, 0, 'mc.mine'], mc_overcharge: ['mc.overcharge', 0, 0, 0], mc_drone: ['mc.drone', 0, 0, 0], mc_turret: ['mc.cast', 0, 0, 'mc.turret'],
+};
+for (const id in VFX2) { const [castVfx, projectileVfx, hitVfx, areaVfx] = VFX2[id]; Object.assign(SKILLS[id], { castVfx: castVfx || undefined, projectileVfx: projectileVfx || undefined, hitVfx: hitVfx || undefined, areaVfx: areaVfx || undefined }); }
 module.exports = { SKILLS };

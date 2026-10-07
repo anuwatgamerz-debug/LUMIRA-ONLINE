@@ -69,6 +69,137 @@ Status: MISSING → DOWNLOADED → INTEGRATED → TESTED → FINAL (FINAL after 
 | Sanctum Blessing (me) | gold star motes | starlight | TESTED |
 | Smoke Veil (me) | dark wisp | smoke | TESTED |
 
-## Not in Phase 1
+## Phase 2: second classes (60 active skills, passives have no effect)
 
-Second-class skills (72) keep their current effects until the Phase 2 review. Boss warnings (red circles) are unchanged and are drawn after every skill effect, at every quality setting.
+Every class keeps its first class's colours, grown stronger. Large (area) effects also get a soft filled glow under their rings (added in `public/vfx.js`), and every skill effect is drawn 1.7x (basic hits 1.25x) so it reads on a phone.
+
+### Knight
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| โล่กระแทก `kn_bash` | `kn.cast` | — | `kn.bash.hit` | — | starlight shell flash | TESTED |
+| ท่าผู้พิทักษ์ `kn_stance` | `kn.stance` | — | — | — | runes barrier spark | TESTED |
+| ยั่วยุ `kn_taunt` | — | — | — | `kn.taunt` | glow ring compass | TESTED |
+| ปราการเหล็ก `kn_iron` | `kn.iron` | — | — | — | shell spark | TESTED |
+| คลื่นโล่ `kn_wave` | — | — | `kn.wave.hit` | `kn.wave` | shell glow ring | TESTED |
+
+### Berserker
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| ฟันโทสะ `bs_rage` | `bs.cast` | — | `bs.rage.hit` | — | flame slash_wide blast dust | TESTED |
+| พายุหมุน `bs_whirl` | — | — | `bs.whirl.hit` | `bs.whirl` | slash_thin glow slash_wide twirl dust | TESTED |
+| โลหิตเดือด `bs_fury` | `bs.fury` | — | — | — | ring flame glow | TESTED |
+| ประหาร `bs_exec` | `bs.cast` | — | `bs.exec.hit` | — | flame slash_wide flash spark | TESTED |
+| คำรามศึก `bs_warcry` | `bs.warcry` | — | — | — | glow ring burst spark | TESTED |
+
+### Sharpshooter
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| ศรเจาะทะลวง `ss_pierce` | `ss.draw` | `ss.pierce` | `ss.pierce.hit` | — | sparkle trail streak star_hit | TESTED |
+| ศรอัดพลัง `ss_charged` | `ss.charge` | `ss.charged` | `ss.charged.hit` | — | compass glow trail sparkle blast flash spark | TESTED |
+| สมาธิคริติคอล `ss_focus` | `ss.focus` | — | — | — | compass sparkle | TESTED |
+| ตาเหยี่ยว `ss_eagle` | `ss.eagle` | — | — | — | halo streak | TESTED |
+| ฝนศร `ss_rain` | `ss.draw` | — | `ss.rain.hit` | `ss.rain` | sparkle star_hit glow ring trail dust | TESTED |
+
+### Beasthunter
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| กับดักบ่วง `bh_snare` | `bh.cast` | — | — | `bh.snare` | claw ring runes spark | TESTED |
+| รอยล่า `bh_mark` | `bh.cast` | — | `bh.mark.hit` | — | claw compass | TESTED |
+| กับดักพิษ `bh_ptrap` | `bh.cast` | — | — | `bh.ptrap` | claw splash bubble | TESTED |
+| สัญชาตญาณสัตว์ป่า `bh_instinct` | `bh.instinct` | — | — | — | twirl claw streak | TESTED |
+| ล่าไม่หยุด `bh_rapid` | `bh.cast` | `bh.rapid` | `bh.rapid.hit` | — | claw trail | TESTED |
+
+### Elementalist
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| สายฟ้าลูกโซ่ `el_chain` | `el.cast` | `el.chain` | `el.chain.hit` | — | rune_arc arc sparkle bolt spark | TESTED |
+| ทุ่งน้ำแข็ง `el_frost` | `el.cast` | — | `el.frost.hit` | `el.frost` | rune_arc arc crystal glow ring needle bubble | TESTED |
+| โล่ธาตุ `el_shield` | `el.shield` | — | — | — | barrier rune_arc | TESTED |
+| อุกกาบาตเพลิง `el_meteor` | `el.cast` | — | `el.meteor.hit` | `el.meteor` | rune_arc arc blast glow flame flash | TESTED |
+| พายุธาตุ `el_surge` | `el.cast` | — | `el.surge.hit` | `el.surge` | rune_arc arc glow twirl flame | TESTED |
+
+### Warlock
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| ลูกศรเงา `wl_bolt` | `wl.cast` | `wl.bolt` | `wl.bolt.hit` | — | runes smoke sparkle blast | TESTED |
+| คำสาปอ่อนแรง `wl_curse` | `wl.cast` | — | `wl.curse.hit` | — | runes smoke compass | TESTED |
+| ดูดชีวิต `wl_drain` | `wl.cast` | — | `wl.drain.hit` | — | runes smoke bubble sparkle | TESTED |
+| ตราวิญญาณ `wl_mark` | `wl.cast` | — | `wl.mark.hit` | — | runes smoke | TESTED |
+| โนวาทมิฬ `wl_nova` | `wl.cast` | — | `wl.nova.hit` | `wl.nova` | runes smoke glow ring flash | TESTED |
+
+### Priest
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| ฟื้นฟูขั้นสูง `pr_heal` | `pr.heal` | — | — | — | glow trail runes starlight | TESTED |
+| บาเรียศักดิ์สิทธิ์ `pr_barrier` | `pr.barrier` | — | — | — | glow halo barrier starlight | TESTED |
+| รักษาหมู่ `pr_group` | `pr.group` | — | — | — | glow halo runes sparkle | TESTED |
+| ชำระล้าง `pr_purify` | — | — | `pr.purify.hit` | `pr.purify` | starlight glow halo flash | TESTED |
+| คืนชีพ `pr_resurrect` | `pr.revive` | — | — | — | glow trail halo starlight | TESTED |
+
+### Oracle
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| พรแห่งโชคชะตา `or_fate` | `or.fate` | — | — | — | glow compass starlight | TESTED |
+| เร่งเวลา `or_haste` | `or.haste` | — | — | — | glow twirl streak | TESTED |
+| ดวงดาวนำโชค `or_fortune` | `or.fortune` | — | — | — | glow starlight halo sparkle | TESTED |
+| หยั่งรู้อนาคต `or_foresight` | `or.foresight` | — | — | — | halo compass | TESTED |
+| ผนึกดวงดาว `or_ward` | `or.ward` | — | — | — | glow runes shell starlight | TESTED |
+
+### Assassin
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| แทงข้างหลัง `as_backstab` | `as.cast` | — | `as.back.hit` | — | smoke claw slash_thin flash | TESTED |
+| แทงพิษ `as_venom` | — | — | `as.venom.hit` | — | claw bubble | TESTED |
+| ก้าวเงา `as_step` | `as.step` | — | `as.step.hit` | — | trail smoke slash_thin | TESTED |
+| ตราจุดตาย `as_mark` | `as.cast` | — | `as.mark.hit` | — | smoke compass | TESTED |
+| ปลิดชีพ `as_execute` | `as.cast` | — | `as.exec.hit` | — | smoke slash_wide claw flash spark | TESTED |
+
+### Shadowdancer
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| พุ่งเงา `sd_dash` | `sd.dash` | — | `sd.dash.hit` | — | trail smoke claw | TESTED |
+| ม่านเงามืด `sd_veil` | — | — | — | `sd.veil` | glow smoke sparkle | TESTED |
+| ฟันมายา `sd_phantom` | — | — | `sd.phantom.hit` | `sd.phantom` | slash_thin glow claw twirl | TESTED |
+| ระบำหลบหลีก `sd_dance` | `sd.dance` | — | — | — | twirl streak sparkle | TESTED |
+| รัตติกาล `sd_nightfall` | — | — | `sd.nightfall.hit` | `sd.nightfall` | claw glow smoke flash | TESTED |
+
+### Alchemist
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| ขวดกรด `al_acid` | `al.cast` | `al.flask` | `al.acid.hit` | — | bubble splash | TESTED |
+| หมอกรักษา `al_mist` | `al.mist` | — | — | — | glow splash smoke bubble | TESTED |
+| ส่วนผสมระเบิด `al_bomb` | `al.cast` | — | `al.bomb.hit` | `al.bomb` | bubble blast glow splash flash | TESTED |
+| ตัวเร่งปฏิกิริยา `al_catalyst` | `al.catalyst` | — | — | — | ring bubble | TESTED |
+| เร่งแปรธาตุ `al_transmute` | `al.transmute` | — | — | — | runes weld sparkle | TESTED |
+
+### Machinist
+
+| Skill | Cast | Projectile | Hit | Area | Textures | Status |
+|---|---|---|---|---|---|---|
+| ยิงรัว `mc_burst` | `mc.cast` | `mc.shot` | `mc.shot.hit` | — | muzzle streak spark star_hit | TESTED |
+| ทุ่นช็อต `mc_mine` | `mc.cast` | — | — | `mc.mine` | muzzle ring arc | TESTED |
+| โอเวอร์ชาร์จ `mc_overcharge` | `mc.overcharge` | — | — | — | ring arc weld | TESTED |
+| โดรนซ่อมแซม `mc_drone` | `mc.drone` | — | — | — | compass sparkle | TESTED |
+| ตั้งป้อมปืน `mc_turret` | `mc.cast` | — | — | `mc.turret` | muzzle ring weld spark | TESTED |
+
+## World feedback
+
+| Case | Effect | Textures | Status |
+|---|---|---|---|
+| Level up / class change | `lvup.burst` | trail halo runes starlight | TESTED |
+| Monster dies | `mob.die` | smoke sparkle flash | TESTED |
+| Boss dies | `boss.die` | blast ring starlight flash | TESTED |
+| Player walking (Medium+ quality) | `walk.dust` | dust | TESTED |
+
+Boss warnings (red circles) are unchanged and are drawn after every skill effect, at every quality setting.
