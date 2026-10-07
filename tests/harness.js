@@ -16,16 +16,16 @@ function mkChar(name, o = {}) {
 }
 function account(char) { const salt = crypto.randomBytes(12).toString('hex'); return { salt, hash: crypto.scryptSync(PW, salt, 32).toString('hex'), char, created: Date.now() }; }
 
-async function startServer(accounts, port) {
+async function startServer(accounts, port, extraEnv) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lumira-test-'));
   const db = path.join(dir, 'db.json');
   fs.writeFileSync(db, JSON.stringify({ accounts }));
-  const proc = spawn(process.execPath, [path.join(ROOT, 'server.js')], { env: { ...process.env, PORT: String(port), LUMIRA_DATA: db }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const proc = spawn(process.execPath, [path.join(ROOT, 'server.js')], { env: { ...process.env, PORT: String(port), LUMIRA_DATA: db, BCRYPT_COST: '4', RL_LOGIN_IP: '100000', RL_REGISTER_IP: '100000', RL_TOKEN_IP: '100000', RL_NEWCHAR_IP: '100000', BACKUP_HOURS: '0', NODE_ENV: 'development', ...(extraEnv || {}) }, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; proc.stdout.on('data', d => { log += d; }); proc.stderr.on('data', d => { log += d; });
   let exited = false; proc.once('exit', () => { exited = true; });
   const t0 = Date.now(); while (!/running/.test(log)) { if (exited || Date.now() - t0 > 8000) throw new Error('server did not start:\n' + log); await sleep(50); }
   return {
-    port, http: `http://localhost:${port}`, ws: `ws://localhost:${port}`, dir, db, log: () => log, alive: () => !exited,
+    port, pid: proc.pid, http: `http://localhost:${port}`, ws: `ws://localhost:${port}`, dir, db, log: () => log, alive: () => !exited,
     async stop() { if (!exited) { proc.kill('SIGTERM'); await new Promise(r => proc.once('exit', r)); } fs.rmSync(dir, { recursive: true, force: true }); },
   };
 }
@@ -72,4 +72,12 @@ function reporter(title) {
   return r;
 }
 
-module.exports = { ROOT, PW, sleep, mkChar, account, startServer, client, login, me, myPos, mobsOf, cheb, reporter };
+// read the test server's SQLite database (WAL: safe while the server runs)
+function sql(srv, q, ...args) { const { DatabaseSync } = require('node:sqlite'); const d = new DatabaseSync(path.join(srv.dir, 'elyndra.db')); try { return d.prepare(q).all(...args); } finally { d.close(); } }
+// UI login: after "เข้าเกม" the character select appears (accounts can hold several characters) -> enter the first one.
+// Sign-up goes straight into the new character, so this also simply waits for the HUD.
+async function uiEnter(pg, timeout = 9000) {
+  await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' || (document.getElementById('chsel') && !document.getElementById('chsel').hidden && document.querySelector('#chcards .chcard:not(.empty)')), null, { timeout }).catch(() => { });
+  if (await pg.evaluate(() => document.getElementById('hud').style.display !== 'block' && !document.getElementById('chsel').hidden)) await pg.click('#chEnter');
+}
+module.exports = { uiEnter, sql, ROOT, PW, sleep, mkChar, account, startServer, client, login, me, myPos, mobsOf, cheb, reporter };

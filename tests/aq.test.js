@@ -26,7 +26,7 @@ async function open(b, opts, srv) {
 }
 async function loginAs(b, opts, srv, u) {
   const pg = await open(b, opts, srv);
-  await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go');
+  await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
   await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && typeof ents !== 'undefined' && ents.has(myId) && GUIDE, null, { timeout: 10000 });
   await pg.waitForTimeout(800); return pg;
 }

@@ -95,7 +95,7 @@ async function run(srv, R) {
     const other = await login(URL, 'so_ui2');
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }); await ctx.addInitScript(SPY);
     const pg = await ctx.newPage(); pg.errs = []; pg.on('pageerror', e => pg.errs.push(e.message)); await pg.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
-    await pg.goto(srv.http + '/'); await pg.fill('#u', 'so_ui'); await pg.fill('#p', H.PW); await pg.click('#go');
+    await pg.goto(srv.http + '/'); await pg.fill('#u', 'so_ui'); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
     await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && typeof ents !== 'undefined' && [...ents.values()].some(e => e.kind === 'p' && e.name === 'SoUiTwo'), null, { timeout: 10000 });
     await pg.waitForTimeout(1500);
     const pt = await pg.evaluate(() => { const [id, e] = [...ents].find(([, e]) => e.kind === 'p' && e.name === 'SoUiTwo'); const [ox, oy] = viewOrigin(), r = $('game').getBoundingClientRect(); return { id, x: r.left + ((e.x + 0.5) * TP + ox) * Z / DPR, y: r.top + ((e.y + 0.5) * TP + 12 - 20 + oy) * Z / DPR }; });

@@ -36,8 +36,8 @@ async function run(srv, R) {
     const [c, w] = await conn(URL, { t: 'register', u: 'po_new', p: 'pass1234', name: 'PoNewbie', sex: 1, hair: 0, hc: 0, cc: 0, portrait: 'portrait_006' });
     ok(w && w.t === 'welcome' && H.me(c).portraitId === 'portrait_006', 'create character with a portrait');
     c.close(); await H.sleep(400);
-    const db = JSON.parse(fs.readFileSync(srv.db, 'utf8'));
-    ok(db.accounts.po_new && db.accounts.po_new.char.portraitId === 'portrait_006', 'portraitId saved in the character data');
+    const row = H.sql(srv, "SELECT c.portrait_id FROM characters c JOIN accounts a ON a.id = c.account_id WHERE a.login = 'po_new'")[0];
+    ok(row && row.portrait_id === 'portrait_006', 'portraitId saved in the character data (SQLite)');
     const [c2] = await conn(URL, { t: 'login', u: 'po_new', p: 'pass1234' });
     ok(H.me(c2).portraitId === 'portrait_006', 'logout / login again: same portrait'); c2.close();
     const [c3, w3] = await conn(URL, { t: 'register', u: 'po_x1', p: 'pass1234', name: 'PoHacker', portrait: 'https://random-site.com/image.png' });
@@ -94,7 +94,7 @@ async function run(srv, R) {
         await pg.click('#crgal .pcell[data-id="portrait_004"]'); await pg.waitForTimeout(300);
         ok(await pg.evaluate(() => getComputedStyle($('pbig')).display === 'flex' && /full\/portrait_004/.test(document.querySelector('#pbig .pfull').src)), 'tap the selected one again: big preview with the HUD sample');
         await pg.click('#pbig .px');
-        await pg.fill('#cn', 'PoBrowser'); await pg.fill('#u', 'po_browser'); await pg.fill('#p', 'pass1234'); await pg.click('#go');
+        await pg.fill('#cn', 'PoBrowser'); await pg.fill('#u', 'po_browser'); await pg.fill('#p', 'pass1234'); await pg.click('#go'); await H.uiEnter(pg);
         await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && me, null, { timeout: 9000 }); await pg.waitForTimeout(800);
         const hud = await pg.evaluate(() => ({ id: me.portraitId, src: $('pimg').getAttribute('src'), vis: getComputedStyle($('pimg')).display, fit: getComputedStyle($('pimg')).objectFit, r: getComputedStyle($('pimg')).borderRadius, inside: (() => { const a = $('pimg').getBoundingClientRect(), f = $('pport').getBoundingClientRect(); return a.left >= f.left - 1 && a.right <= f.right + 1 && a.top >= f.top - 1 && a.bottom <= f.bottom + 1; })() }));
         ok(hud.id === 'portrait_004' && /hud\/portrait_004/.test(hud.src) && hud.vis === 'block' && hud.fit === 'cover' && hud.r === '50%' && hud.inside, 'in game: HUD shows the chosen portrait, round mask, object-fit cover, inside the frame');

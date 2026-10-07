@@ -331,7 +331,7 @@ async function browserTests(srv, R) {
     for (const [u, mapId] of [['a_vil', 'lumira'], ['a_cap', 'solkara']]) {
       const ctx = await b.newContext({ viewport: { width: 844, height: 390 } }), pg = await ctx.newPage(), errs = [];
       pg.on('pageerror', e => errs.push(e.message)); await pg.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
-      await pg.goto(srv.http + '/'); await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go');
+      await pg.goto(srv.http + '/'); await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
       await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && typeof CHR !== 'undefined' && CHR && Object.keys(WSPR).length && ents.get(myId), null, { timeout: 10000 });
       // first pass asks for every layer sheet this map needs (they load lazily), then measure
       await pg.evaluate(() => { const g = document.createElement('canvas').getContext('2d'), e = ents.get(myId); drawPaper(e.look, { wpn: e.wpn, arm: e.arm, cls: e.cls }, 'walk', 0.3, 2, 32, 60, 1, g); for (const n of map.npcs) if (n.look && typeof n.look === 'object') drawPaper(n.look, {}, 'idle', 0, 2, 32, 60, 1, g); });

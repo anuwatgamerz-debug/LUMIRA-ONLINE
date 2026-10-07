@@ -183,7 +183,7 @@ async function run(srv, R) {
   try {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }), pg = await ctx.newPage(); const errs = [];
     pg.on('pageerror', e => errs.push(e.message)); await pg.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
-    await pg.goto(srv.http + '/'); await pg.fill('#u', 'k_bers'); await pg.fill('#p', H.PW); await pg.click('#go');
+    await pg.goto(srv.http + '/'); await pg.fill('#u', 'k_bers'); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
     await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && me && SK.bs_rage, null, { timeout: 10000 });
     await pg.evaluate(() => openSkills(-1)); await pg.waitForTimeout(300);
     const w = await pg.evaluate(() => ({ secs: [...document.querySelectorAll('#skillbody .sksec')].map(e => e.textContent), learn: [...document.querySelectorAll('#skillbody .learn')].length, icon: getComputedStyle(document.querySelector('#sk1 .pi')).backgroundImage }));

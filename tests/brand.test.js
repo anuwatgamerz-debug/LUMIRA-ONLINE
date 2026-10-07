@@ -49,8 +49,8 @@ async function run(srv, R) {
     ok(w5 && w5.t === 'err', 'a forged token is refused'); c5.close();
     const [c6, w6] = await conn(URL, { t: 'register', u: 'bad mail@x', p: 'pass1234', name: 'Nope' });
     ok(w6 && w6.t === 'err' && /อีเมล/.test(w6.m), 'invalid e-mail / id rejected with a short message'); c6.close();
-    const db = JSON.parse(fs.readFileSync(srv.db, 'utf8') || '{}');
-    ok(!JSON.stringify(db).includes(ses.tok), 'tokens are stored hashed only');
+    const rows = H.sql(srv, 'SELECT token_hash FROM sessions');
+    ok(rows.length > 0 && !JSON.stringify(rows).includes(ses.tok) && rows.every(r => /^h1:[0-9a-f]{64}$/.test(r.token_hash) || /^[0-9a-f]{64}$/.test(r.token_hash)), 'tokens are stored hashed only (HMAC)');
   }
   // guests
   {
@@ -91,7 +91,7 @@ async function run(srv, R) {
       await pg.waitForFunction(() => !document.getElementById('splash'), null, { timeout: 7000 }).catch(() => { });
       const bg = await pg.evaluate(() => getComputedStyle(document.querySelector('#login .lbg')).backgroundImage);
       ok(/login-bg-desktop/.test(bg), 'landscape uses the desktop background');
-      await pg.fill('#u', 'br_lv'); await pg.fill('#p', H.PW); await pg.click('#go');
+      await pg.fill('#u', 'br_lv'); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
       const busy = await pg.$eval('#go', e => e.textContent);
       await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && me, null, { timeout: 8000 });
       await pg.waitForTimeout(900);
@@ -101,14 +101,14 @@ async function run(srv, R) {
       ok(fit.inside && fit.txt === 'Lv45', 'level badge: "Lv" + number stay inside the portrait frame slot', JSON.stringify(fit));
       const p2 = pg; await p2.reload(); await p2.waitForFunction(() => !document.getElementById('splash'), null, { timeout: 7000 }).catch(() => { });
       const pre = await p2.evaluate(() => ({ u: $('u').value, hint: $('lhint').textContent }));
-      await p2.click('#go'); const back = await p2.waitForFunction(() => document.getElementById('hud').style.display === 'block', null, { timeout: 8000 }).then(() => true).catch(() => false);
+      await p2.click('#go'); await H.uiEnter(p2); const back = await p2.waitForFunction(() => document.getElementById('hud').style.display === 'block', null, { timeout: 8000 }).then(() => true).catch(() => false);
       ok(pre.u === 'br_lv' && /จดจำ/.test(pre.hint) && back, 'reload: remembered user is prefilled and enters with one tap (token login)', JSON.stringify(pre));
       await p2.context().close();
     }
     {
       const pg = await open({ viewport: { width: 1280, height: 720 } }); await pg.waitForFunction(() => !document.getElementById('splash'), null, { timeout: 7000 }).catch(() => { });
       await pg.evaluate(() => localStorage.clear());
-      await pg.fill('#u', 'br_lv150'); await pg.fill('#p', H.PW); await pg.click('#go');
+      await pg.fill('#u', 'br_lv150'); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
       await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && me, null, { timeout: 8000 }); await pg.waitForTimeout(600);
       const fit = await pg.evaluate(() => { const b = $('lvb'), r = b.getBoundingClientRect(), n = b.querySelector('b').getBoundingClientRect(); return { inside: n.left >= r.left - 1 && n.right <= r.right + 1, txt: b.textContent }; });
       ok(fit.inside && fit.txt === 'Lv150', 'level badge fits a 3-digit level (Lv 150)', JSON.stringify(fit));

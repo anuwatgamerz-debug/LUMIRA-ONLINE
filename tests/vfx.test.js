@@ -72,7 +72,7 @@ async function run(srv, R) {
     const ctx = await b.newContext(vp), pg = await ctx.newPage(); pg.errs = []; pg.on('pageerror', e => pg.errs.push(e.message));
     await pg.route(/fonts\.(googleapis|gstatic)/, r => r.abort()); await pg.goto(srv.http + '/');
     await pg.waitForFunction(() => !document.getElementById('splash'), null, { timeout: 7000 }).catch(() => { });
-    await pg.evaluate(() => localStorage.clear()); await pg.fill('#u', user); await pg.fill('#p', H.PW); await pg.click('#go');
+    await pg.evaluate(() => localStorage.clear()); await pg.fill('#u', user); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
     await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && me && map, null, { timeout: 9000 });
     await pg.waitForTimeout(500); return pg;
   };
@@ -82,7 +82,7 @@ async function run(srv, R) {
       const ctx = await b.newContext({ viewport: { width: 1280, height: 720 } }), pg = await ctx.newPage(); pg.errs = []; pg.on('pageerror', e => pg.errs.push(e.message));
       await pg.route(/fonts\.(googleapis|gstatic)/, r => r.abort()); await pg.goto(srv.http + '/');
       await pg.waitForFunction(() => !document.getElementById('splash'), null, { timeout: 7000 }).catch(() => { });
-      await pg.evaluate(() => localStorage.clear()); await pg.fill('#u', 'vfx_arc'); await pg.fill('#p', H.PW); await pg.click('#go');
+      await pg.evaluate(() => localStorage.clear()); await pg.fill('#u', 'vfx_arc'); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
       await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && me && map, null, { timeout: 9000 });
       ok(await pg.evaluate(() => !!window.VFX && VFX.of('a_ember') && VFX.of('a_ember')[1] === 'ar.ember'), 'client loaded the registry and the bindings');
       const tex = await pg.evaluate(async () => { await new Promise(r => setTimeout(r, 800)); return Object.keys(VFX.TEX).every(k => { const i = new Image(); i.src = 'assets/vfx/' + VFX.TEX[k]; return true; }); });

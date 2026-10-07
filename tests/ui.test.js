@@ -40,14 +40,14 @@ async function open(b, opts, srv) {
 }
 async function loginAs(b, opts, srv, u) {
   const pg = await open(b, opts, srv);
-  await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go');
+  await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
   await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && typeof ents !== 'undefined' && ents.size > 0, null, { timeout: 8000 });
   await pg.waitForTimeout(800); return pg;
 }
 async function register(b, opts, srv, tag) {
   const pg = await open(b, opts, srv); await pg.click('#tReg');
   const name = tag + (Date.now() % 1e4);
-  await pg.fill('#u', 'r' + name.toLowerCase()); await pg.fill('#p', 'pass1234'); await pg.fill('#cn', name); await pg.click('#go');
+  await pg.fill('#u', 'r' + name.toLowerCase()); await pg.fill('#p', 'pass1234'); await pg.fill('#cn', name); await pg.click('#go'); await H.uiEnter(pg);
   await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block', null, { timeout: 8000 });
   // the first map bake can take a moment on a busy machine: wait until the minimap shows the real position
   await pg.waitForFunction(() => typeof ents !== 'undefined' && ents.has(myId) && /^\d+,\d+$/.test(document.getElementById('mmxy2').textContent) && document.getElementById('mmxy2').textContent !== '0,0', null, { timeout: 8000 }).catch(() => { });
@@ -397,7 +397,7 @@ async function phaseA(b, srv, R) {
   const h1 = await qh(), win = await pg.$eval('#wQuest', e => e.style.display);
   const col = await pg.evaluate(() => ({ c: document.getElementById('quest').classList.contains('col'), t: document.getElementById('qtitle').textContent, p: document.getElementById('qprog').textContent, s: JSON.parse(localStorage.getItem('lmo_set')).qCol }));
   R.ok(col.c && col.s === true && h1 < h0 * 0.75 && win !== 'block' && col.t && /\d+\/\d+/.test(col.p), `A-UI quest tracker folds to icon + short name + progress (${h0.toFixed(0)}px -> ${h1.toFixed(0)}px, "${col.t}" ${col.p}) and remembers it`);
-  await pg.reload(); await pg.fill('#u', 'r' + pg.name.toLowerCase()); await pg.fill('#p', 'pass1234'); await pg.click('#go');
+  await pg.reload(); await pg.fill('#u', 'r' + pg.name.toLowerCase()); await pg.fill('#p', 'pass1234'); await pg.click('#go'); await H.uiEnter(pg);
   await waitFor(pg, () => document.getElementById('hud').style.display === 'block'); await pg.waitForTimeout(600);
   R.ok(await pg.evaluate(() => document.getElementById('quest').classList.contains('col')), 'A-UI folded quest tracker stays folded after reload');
   await pg.tap('#quest'); await pg.waitForTimeout(150);

@@ -51,7 +51,7 @@ async function run(srv, R) {
   const open = async (u, vp) => {
     const ctx = await b.newContext(vp || { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }); await ctx.addInitScript(SPY);
     const pg = await ctx.newPage(); pg.errs = []; pg.on('pageerror', e => pg.errs.push(e.message)); await pg.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
-    await pg.goto(srv.http + '/'); await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go');
+    await pg.goto(srv.http + '/'); await pg.fill('#u', u); await pg.fill('#p', H.PW); await pg.click('#go'); await H.uiEnter(pg);
     await pg.waitForFunction(() => document.getElementById('hud').style.display === 'block' && typeof ents !== 'undefined' && ents.has(myId) && me && me.sk, null, { timeout: 10000 });
     await pg.waitForTimeout(1200); return pg;
   };
