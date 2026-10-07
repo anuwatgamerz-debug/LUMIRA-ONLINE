@@ -54,7 +54,7 @@ def item_layers(defpath, body, color):
     rc = j.get('recolors') or {}
     mat = rc.get('material')
     if j.get('match_body_color') or defpath.startswith('head/heads') or (defpath.startswith('body/') and not defpath.startswith('body/wings')): mat = 'body'
-    if mat and rc.get('base'): ITEM_BASE[mat + '|' + defpath] = rc['base']; mat = mat + '|' + defpath
+    if mat and rc.get('base'): ITEM_BASE[mat + '|' + defpath] = rc['base'].split('.')[-1]; mat = mat + '|' + defpath   # 'ulpc.green' -> 'green'
     for k, v in j.items():
         if not (k.startswith('layer_') and isinstance(v, dict)): continue
         p = v.get(body) or (v.get('male') if body != 'female' else None) or v.get('female') or v.get('male')
